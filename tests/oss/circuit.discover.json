@@ -1943,7 +1943,7 @@
       "targets": [],
       "test_tasks": {
         "test": [
-          "testDebugUnitTest"
+          "testReleaseUnitTest"
         ]
       },
       "implicit": false

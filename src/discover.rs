@@ -7,9 +7,11 @@
 //! Anything computed at configuration time (convention plugins, loops over
 //! directories) is invisible statically; `--gradle-export` asks Gradle itself.
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
@@ -1241,14 +1243,15 @@ fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
         "jvm" => vec![format!("{target}Test")],
         "android" | "androidTarget" | "androidLibrary" => {
             // Only what the build or the layout states: a guessed task name fails the Gradle invocation.
+            let unit = format!("test{}UnitTest", project.test_build_type);
             if project.android_target_call {
-                vec!["testDebugUnitTest".into()]
+                vec![unit]
             } else if project.android_host_tests
                 && (project.kmp_android_library || !project.android_unit_dir)
             {
                 vec!["testAndroidHostTest".into()]
             } else if project.android_unit_dir {
-                vec!["testDebugUnitTest".into()]
+                vec![unit]
             } else {
                 vec![]
             }
@@ -1288,6 +1291,9 @@ struct ProjectShape {
     target_kinds: BTreeMap<String, String>,
     /// Android product flavors (one dimension): unit tests run per flavor, `test<Flavor>DebugUnitTest`.
     flavors: Vec<String>,
+    /// The build type unit and connected tests run under (`testBuildType`, capitalised): `Debug`
+    /// unless the script sets another. AGP 9 creates unit tests for this build type only.
+    test_build_type: String,
 }
 
 impl ProjectShape {
@@ -1307,6 +1313,7 @@ fn test_tasks_for(
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     if !shape.kmp {
+        let bt = shape.test_build_type.as_str();
         let flavor_of = |prefix: &str| {
             shape
                 .flavors
@@ -1315,24 +1322,24 @@ fn test_tasks_for(
         };
         if name == "test" && shape.android && !shape.flavors.is_empty() {
             for f in &shape.flavors {
-                out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+                out.insert(format!("test{}{bt}UnitTest", capitalize(f)));
             }
         } else if name == "test" {
             out.insert(if shape.android {
-                "testDebugUnitTest".into()
+                format!("test{bt}UnitTest")
             } else {
                 "test".into()
             });
         } else if name == "androidTest" && !shape.flavors.is_empty() {
             for f in &shape.flavors {
-                out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+                out.insert(format!("connected{}{bt}AndroidTest", capitalize(f)));
             }
         } else if name == "androidTest" {
-            out.insert("connectedDebugAndroidTest".into());
+            out.insert(format!("connected{bt}AndroidTest"));
         } else if let Some(f) = flavor_of("test").filter(|_| shape.android) {
-            out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+            out.insert(format!("test{}{bt}UnitTest", capitalize(f)));
         } else if let Some(f) = flavor_of("androidTest").filter(|_| shape.android) {
-            out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+            out.insert(format!("connected{}{bt}AndroidTest", capitalize(f)));
         } else if let Some(build_type) = name
             .strip_prefix("test")
             .filter(|r| shape.android && r.starts_with(|c: char| c.is_ascii_uppercase()))
@@ -1376,6 +1383,14 @@ fn test_tasks_for(
         out.extend(leaf_test_tasks(&t, shape));
     }
     out
+}
+
+/// `testBuildType = "release"` (Groovy: `testBuildType "release"`), capitalised.
+fn test_build_type(text: &str) -> Option<String> {
+    static RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r#"(?m)^[^/\n]*\btestBuildType\s*=?\s*["']([A-Za-z][A-Za-z0-9_]*)["']"#).unwrap()
+    });
+    RE.captures(text).map(|c| capitalize(&c[1]))
 }
 
 /// The flavors a `productFlavors { create("x") }` (or `register`, `maybeCreate`, Groovy `x { }`) block
@@ -1781,6 +1796,10 @@ pub fn discover(root: &Path) -> Build {
             } else {
                 vec![]
             },
+            test_build_type: android
+                .then(|| test_build_type(&text))
+                .flatten()
+                .unwrap_or_else(|| "Debug".into()),
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.
