@@ -86,4 +86,5 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |
 | `test-only-change` | Editing a test selects that test class and no other test of the same code. |
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |
+| `unnamed-receiver-chain` | Calls on receivers the linker cannot type are followed hop after hop: tests calling the outer service run; one calling a same-named member elsewhere does not. |
 
