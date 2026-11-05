@@ -2000,6 +2000,63 @@ mod tests {
         );
     }
 
+    #[test]
+    fn private_members_link_only_inside_their_top_level_declaration_and_qualified_names_link() {
+        let root = tmp("private-fq");
+        let mut clock = 0;
+        write(
+            &root,
+            "settings.gradle.kts",
+            "include(\":a\")\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/build.gradle.kts",
+            "plugins { kotlin(\"jvm\") }\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/demo/Stores.kt",
+            "package demo\n\nclass One(private val q: Int) {\n    fun a() = q\n    class Inner { fun b(o: One) = o.q }\n}\n\nclass Two(private val q: Int) {\n    fun c() = q\n}\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/demo/model/Money.kt",
+            "package demo.model\n\nclass Money(val cents: Int) {\n    fun format() = cents.toString()\n}\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/other/Use.kt",
+            "package other\n\nfun use() = demo.model.Money(1).format()\n",
+            &mut clock,
+        );
+        let build = discover::discover(&root);
+        let dir = root.join("build/g");
+        update(&root, &build, &dir, true).unwrap();
+        let edges = dump_edges(&Packed::open(&dir.join("graph.bin")).unwrap());
+        let has = |from: &str, to: &str| {
+            edges.iter().any(|e| {
+                e.starts_with("ref\t")
+                    && e.ends_with(&format!("#{to}"))
+                    && e.contains(&format!("#{from}\t"))
+            })
+        };
+        assert!(has("One/a", "One/q"), "{edges:#?}");
+        assert!(
+            has("One/Inner/b", "One/q"),
+            "a nested class sees its outer's private member"
+        );
+        assert!(has("Two/c", "Two/q"));
+        assert!(!has("Two/c", "One/q"), "{edges:#?}");
+        assert!(!has("One/a", "Two/q"));
+        assert!(has("use", "Money"), "{edges:#?}");
+        assert!(has("use", "Money/format"), "{edges:#?}");
+    }
+
     fn walk_both(root: &Path) -> (Vec<(String, u64, u64)>, Vec<(String, u64, u64)>) {
         let key = |v: Vec<Entry>| {
             let mut v: Vec<(String, u64, u64)> =

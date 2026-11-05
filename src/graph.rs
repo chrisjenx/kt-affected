@@ -646,6 +646,17 @@ impl<'a> Linker<'a> {
                     far.retain(|x| !near.contains(x));
                 }
             }
+            // A private class member is visible only inside its class, so never from another
+            // top-level declaration of the file (the file-wide name table offers it there).
+            let foreign_private = |t: &u32| {
+                let ti = *t as usize;
+                s.flags[ti] & FLAG_PRIVATE != 0
+                    && s.parent[ti] >= 0
+                    && s.file[ti] == s.file[n as usize]
+                    && self.root[ti] != self.root[n as usize]
+            };
+            near.retain(|t| !foreign_private(t));
+            far.retain(|t| !foreign_private(t));
             for &t in &near {
                 add(&mut bits, n, t, E_STRONG);
             }
