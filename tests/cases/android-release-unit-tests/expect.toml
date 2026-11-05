@@ -1,0 +1,3 @@
+why = "An Android module's test source set runs under every build type's unit test task: `check` runs testDebugUnitTest and testReleaseUnitTest, and a test can fail under release alone (resources, minification, a Robolectric bump)."
+must = ["demo.app.InvoiceTest@:app:testDebugUnitTest", "demo.app.InvoiceTest@:app:testReleaseUnitTest"]
+known_gap = "the test source set maps to testDebugUnitTest only; adding the release task roughly doubles Android unit-test selection, so it needs a decision on cost (projects can drop it with [tasks] only) and replay evidence"

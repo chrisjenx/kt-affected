@@ -1,0 +1,39 @@
+# Public repositories the replay runs on. One table per target; `python3 replay/replay.py run <name>`.
+#
+#   repo          GitHub owner/name
+#   workflows     workflow files whose runs carry test results (the oracle reads only these)
+#   ci_tasks      test task names CI runs on pull requests; selection shares count only these tasks
+#   artifacts     name globs of uploaded artifacts that hold Gradle test reports or JUnit XML
+#   include_projects  optional: stand-in for a settings script that includes projects in a loop
+#                 static discovery cannot read (`dir` searched to `max_depth`, every directory with a
+#                 build script becomes a project). Runs as a separate "kt-affected+assist" strategy;
+#                 the plain "kt-affected" strategy is always the tool as shipped.
+#
+# Adding a target is one table. For example (not yet replayed):
+#
+# [confetti]
+# repo = "joreilly/Confetti"
+# workflows = ["build.yml"]
+# ci_tasks = ["jvmTest", "testDebugUnitTest"]
+# artifacts = ["*"]
+
+[element-x-android]
+repo = "element-hq/element-x-android"
+workflows = ["tests.yml", "quality.yml"]
+ci_tasks = ["testDebugUnitTest", "testGplayDebugUnitTest", "test"]
+artifacts = ["tests-and-screenshot-tests-results"]
+include_projects = [
+  { dir = "features", max_depth = 1 },
+  { dir = "libraries", max_depth = 1 },
+  { dir = "services", max_depth = 1 },
+  { dir = "enterprise", max_depth = 2 },
+]
+
+[circuit]
+repo = "slackhq/circuit"
+workflows = ["ci.yml"]
+ci_tasks = [
+  "jvmTest", "test", "testAndroidHostTest", "testDebugUnitTest", "testReleaseUnitTest",
+  "jsBrowserTest", "wasmJsBrowserTest", "iosSimulatorArm64Test",
+]
+artifacts = ["reports-build", "reports-snapshots", "reports-*"]

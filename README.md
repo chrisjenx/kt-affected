@@ -173,6 +173,7 @@ for like on one runner.
 - [CI and pre-push](docs/ci.md)
 - [Library](docs/library.md): the Rust API
 - [Accuracy](docs/accuracy.md): how it was validated, and what is not yet measured
+- [Public replay](docs/replay.md): the same check on public repositories, rerunnable by anyone
 - [Benchmarks](docs/benchmarks.md)
 
 ## Credits

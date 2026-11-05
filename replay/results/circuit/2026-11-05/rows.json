@@ -1,0 +1,2815 @@
+[
+ {
+  "attribution": "c",
+  "by": "auto-flake",
+  "changedDeclarations": [
+   "samples/star/src/androidDeviceTest/kotlin/com/slack/circuit/star/petdetail/PetDetailTest.kt: PetDetailTest.petDetail_emits_event_when_tapping_on_full_bio_button",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/home/HomeUiTest.kt: (whole file)",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDetail_usesCompactLandscapeLayout",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDetail_scrollsCompactLandscapeDetails",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDetail_usesRegularLandscapeLayoutWhenHeightIsNotCompact",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDescriptionMarkdown_linkInheritsBodyTypography",
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDetail_emits_event_when_tapping_on_full_bio_button",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeContent",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeTestConstants",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeTestConstants.BOTTOM_NAVIGATION_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeTestConstants.NAVIGATION_RAIL_ITEM_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeTestConstants.NAVIGATION_RAIL_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeNavigationLayout",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: NavigationVisibilityLayout",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: BottomNavigationBar",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/home/HomeScreen.kt: HomeNavigationRail",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: toPetDetailState",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: normalizePetDescriptionMarkdown",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: MALFORMED_BOLD_LABEL",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants.COMPACT_CLOSE_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants.COMPACT_DETAILS_PANE_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants.COMPACT_PHOTO_PANE_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants.DESCRIPTION_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailTestConstants.PET_NAME_TAG",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetail",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: TopBar",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetName",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: ShowAnimal",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: ShowAnimalCompactLandscape",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: PetDetailDescriptions",
+   "samples/star/src/commonMain/kotlin/com/slack/circuit/star/petdetail/PetDetailScreen.kt: petDescriptionMarkdownTypography",
+   "samples/star/src/commonTest/kotlin/com/slack/circuit/star/petdetail/PetDescriptionMarkdownTest.kt: (whole file)"
+  ],
+  "class": "com.slack.circuit.star.petdetail.PetDetailUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt"
+  ],
+  "firstFailure": "2026-08-12T16:46:28Z",
+  "flake": {
+   "basePushes": [
+    31629688178
+   ],
+   "otherPrs": [
+    "branch:slackhq/circuit:renovate/compose.runtime",
+    "pr:2842",
+    "pr:2843",
+    "pr:2844"
+   ]
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-08-12T16:46:28Z",
+    "headSha": "ee02d5cdaac346fcc887749ef11a4886a878b69a",
+    "runId": 31619272208,
+    "source": "html-report"
+   }
+  ],
+  "path": [
+   {
+    "declaration": "PetDetailUiTest",
+    "how": "seed"
+   }
+  ],
+  "pr": 2841,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "class",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": true
+ },
+ {
+  "attribution": "c",
+  "by": "auto-flake",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petdetail.PetDetailUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt"
+  ],
+  "firstFailure": "2026-08-13T08:34:21Z",
+  "flake": {
+   "basePushes": [
+    31629688178
+   ],
+   "otherPrs": [
+    "branch:slackhq/circuit:renovate/compose.runtime",
+    "pr:2841",
+    "pr:2842",
+    "pr:2843"
+   ]
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-08-13T08:34:21Z",
+    "headSha": "853309389e2b8de4c2bcbcb02a2ece7a853d4d11",
+    "runId": 31682648484,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2844,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "auto-flake",
+  "changedDeclarations": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt: PetDetailUiTest.petDetail_scrollsCompactLandscapeDetails"
+  ],
+  "class": "com.slack.circuit.star.petdetail.PetDetailUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt"
+  ],
+  "firstFailure": "2026-08-13T04:07:17Z",
+  "flake": {
+   "basePushes": [
+    31629688178
+   ],
+   "otherPrs": [
+    "branch:slackhq/circuit:renovate/compose.runtime",
+    "pr:2841",
+    "pr:2842",
+    "pr:2844"
+   ]
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-08-13T04:07:17Z",
+    "headSha": "0af65e727dde4f7922dd3c3d1fa9a067815a7685",
+    "runId": 31666004481,
+    "source": "html-report"
+   }
+  ],
+  "path": [
+   {
+    "declaration": "PetDetailUiTest",
+    "how": "seed"
+   }
+  ],
+  "pr": 2843,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": true
+ },
+ {
+  "attribution": "c",
+  "by": "auto-flake",
+  "changedDeclarations": [
+   "circuit-foundation/src/androidDeviceTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainDeviceTest.kt: NavigableCircuitFirstPartyRetainDeviceTest",
+   "circuit-foundation/src/androidDeviceTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainDeviceTest.kt: NavigableCircuitFirstPartyRetainDeviceTest.previousUseFirstParty",
+   "circuit-foundation/src/androidDeviceTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainDeviceTest.kt: NavigableCircuitFirstPartyRetainDeviceTest.tearDown",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/FirstPartyRetainRecordLifecycleTest.kt: FirstPartyRetainRecordLifecycleTest",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/FirstPartyRetainRecordLifecycleTest.kt: FirstPartyRetainRecordLifecycleTest.previousUseFirstParty",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/FirstPartyRetainRecordLifecycleTest.kt: FirstPartyRetainRecordLifecycleTest.tearDown",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainAndroidTest.kt: NavigableCircuitFirstPartyRetainAndroidTest",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainAndroidTest.kt: NavigableCircuitFirstPartyRetainAndroidTest.retainScopedToBackstackWithRecreations",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainPushPopTest.kt: NavigableCircuitFirstPartyRetainPushPopTest",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainPushPopTest.kt: NavigableCircuitFirstPartyRetainPushPopTest.retainSurvivesPushAndPop",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainTestActivity.kt: NavigableCircuitFirstPartyRetainTestActivity",
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainTestActivity.kt: NavigableCircuitFirstPartyRetainTestActivity.onCreate",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/CircuitRetainedSettingsTest.kt: (whole file)",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.previousUseFirstParty",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.tearDown",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.rememberRetainedSupportsRememberObserver",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.keyedRetainSupportsRememberObserver",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.runRememberObserverRecreation",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.rememberedCount",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.forgottenCount",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.abandonedCount",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.onRemembered",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.onForgotten",
+   "circuit-retained/src/androidDeviceTest/kotlin/com/slack/circuit/retained/android/FirstPartyBackedRegistryTest.kt: FirstPartyBackedRegistryTest.TrackingRememberObserver.onAbandoned",
+   "circuit-retained/src/androidMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.android.kt: (whole file)",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.kt: CircuitRetainedSettings",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.kt: CircuitRetainedSettings.useFirstParty",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.kt: CircuitRetainedSettings.enforceRetainObserverCompatibility",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.kt: useFirstPartyByDefault",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/RememberRetained.kt: rememberRetainedInternal",
+   "circuit-retained/src/commonMain/kotlin/com/slack/circuit/retained/RememberRetained.kt: requireRetainObserverCompatibility",
+   "circuit-retained/src/jvmMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.jvm.kt: (whole file)",
+   "circuit-retained/src/jvmTest/kotlin/com/slack/circuit/retained/CircuitRetainedSettingsTest.kt: (whole file)",
+   "circuit-retained/src/jvmTest/kotlin/com/slack/circuit/retained/RememberObserverCompatibilityTest.kt: (whole file)",
+   "circuit-retained/src/nativeMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.native.kt: (whole file)",
+   "circuit-retained/src/webMain/kotlin/com/slack/circuit/retained/CircuitRetainedSettings.web.kt: (whole file)",
+   "samples/counter/apps/src/jvmMain/kotlin/com/slack/circuit/sample/counter/desktop/DesktopCounterCircuit.kt: main",
+   "samples/counter/apps/src/wasmJsMain/kotlin/com/slack/circuit/sample/counter/browser/main.kt: main"
+  ],
+  "class": "com.slack.circuit.star.petdetail.PetDetailUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt"
+  ],
+  "firstFailure": "2026-08-13T03:06:08Z",
+  "flake": {
+   "basePushes": [
+    31629688178
+   ],
+   "otherPrs": [
+    "branch:slackhq/circuit:renovate/compose.runtime",
+    "pr:2841",
+    "pr:2843",
+    "pr:2844"
+   ]
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-08-13T03:49:04Z",
+    "headSha": "5c29b99d97e08eb8688a50ccbbb3ef1a7d491af7",
+    "runId": 31665061984,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-08-13T03:06:08Z",
+    "headSha": "f5359c80be03e2d4d5751beebd4b30c877212cd7",
+    "runId": 31662882285,
+    "source": "html-report"
+   }
+  ],
+  "path": [
+   {
+    "declaration": "PetDetailUiTest.circuit",
+    "how": "ref"
+   },
+   {
+    "declaration": "PetPhotoCarousel",
+    "how": "ref"
+   },
+   {
+    "declaration": "PhotoPager",
+    "how": "ref"
+   },
+   {
+    "declaration": "showFullScreenOverlay",
+    "how": "ref"
+   },
+   {
+    "declaration": "rememberConditionalSystemUiColors",
+    "how": "ref"
+   },
+   {
+    "declaration": "ConditionalSystemUiColors",
+    "how": "ref"
+   },
+   {
+    "declaration": "FullScreenOverlay.AnimatedContent",
+    "how": "ref"
+   },
+   {
+    "declaration": "CircuitContent",
+    "how": "ref"
+   },
+   {
+    "declaration": "presentWithLifecycle",
+    "how": "ref"
+   },
+   {
+    "declaration": "pausableState",
+    "how": "ref"
+   },
+   {
+    "declaration": "rememberRetainedStateHolderWithReturn",
+    "how": "ref"
+   },
+   {
+    "declaration": "rememberRetained",
+    "how": "ref"
+   },
+   {
+    "declaration": "rememberRetainedInternal",
+    "how": "seed"
+   }
+  ],
+  "pr": 2842,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "class",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-08-17T22:40:50Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "Recurring wasm browser flake: failed on main pushes (2026-08-25, 2026-10-29) and on 8 unrelated one-line dependency-bump PRs over 11 weeks.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-08-17T22:40:50Z",
+    "headSha": "897eb7b17625b28c704fa5b0b52c0fafbcd52768",
+    "runId": 32077082166,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2853,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": [
+    "pr:2888"
+   ]
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringResultHandlerSaverTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/AnsweringResultHandlerSaverTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.CircuitContentTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/CircuitContentTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.CircuitSaverAndroidTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/CircuitSaverAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.FirstPartyRetainRecordLifecycleTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/FirstPartyRetainRecordLifecycleTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitChangeRootScreenTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitChangeRootScreenTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitFirstPartyRetainAndroidTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitFirstPartyRetainPushPopTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitFirstPartyRetainPushPopTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitRetainedStateAndroidTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitRetainedStateAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitRetainedStateTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/NavigableCircuitRetainedStateTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitSaveableStateAndroidTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitSaveableStateAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitSaveableStateTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/NavigableCircuitSaveableStateTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigableCircuitViewModelStateAndroidTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigableCircuitViewModelStateAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigatorBackHandlerTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/NavigatorBackHandlerTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.NavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/NavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.PausableStateTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/PausableStateTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.ProvidedValuesLifetimeTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/ProvidedValuesLifetimeTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.RecordLifeCycleTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/RecordLifeCycleTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.RememberCircuitNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/RememberCircuitNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.RememberDefaultCircuitSaverTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/RememberDefaultCircuitSaverTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.navstack.RememberSaveableNavStackTest",
+  "files": [
+   "circuit-foundation/src/androidHostTest/kotlin/com/slack/circuit/foundation/navstack/RememberSaveableNavStackTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.serialization.SerializableCircuitSaverAndroidTest",
+  "files": [
+   "circuit-serialization/src/androidHostTest/kotlin/com/slack/circuit/serialization/SerializableCircuitSaverAndroidTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-serialization",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.effects.ImpressionEffectScrollTest",
+  "files": [
+   "circuitx/effects/src/androidHostTest/kotlin/com/slack/circuitx/effects/ImpressionEffectScrollTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:effects",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.effects.ImpressionEffectTest",
+  "files": [
+   "circuitx/effects/src/commonTest/kotlin/com/slack/circuitx/effects/ImpressionEffectTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:effects",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.effects.RememberImpressionNavigatorTest",
+  "files": [
+   "circuitx/effects/src/androidHostTest/kotlin/com/slack/circuitx/effects/RememberImpressionNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:effects",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.gesturenavigation.AndroidGestureNavigationStateTest",
+  "files": [
+   "circuitx/gesture-navigation/src/androidHostTest/kotlin/com/slack/circuitx/gesturenavigation/AndroidGestureNavigationStateTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:gesture-navigation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.gesturenavigation.BackNavigationTest",
+  "files": [
+   "circuitx/gesture-navigation/src/androidHostTest/kotlin/com/slack/circuitx/gesturenavigation/BackNavigationTest.kt",
+   "circuitx/gesture-navigation/src/iosTest/kotlin/com/slack/circuitx/gesturenavigation/BackNavigationTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:gesture-navigation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.gesturenavigation.GestureNavigationCrashTest",
+  "files": [
+   "circuitx/gesture-navigation/src/androidHostTest/kotlin/com/slack/circuitx/gesturenavigation/GestureNavigationCrashTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:gesture-navigation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuitx.gesturenavigation.GestureNavigationEventListenerTest",
+  "files": [
+   "circuitx/gesture-navigation/src/androidHostTest/kotlin/com/slack/circuitx/gesturenavigation/GestureNavigationEventListenerTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuitx:gesture-navigation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.sample.navigation.NavigationTest",
+  "files": [
+   "samples/bottom-navigation/src/androidHostTest/kotlin/com/slack/circuit/sample/navigation/NavigationTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:bottom-navigation",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.sample.interop.CircuitInteropTest",
+  "files": [
+   "samples/interop/src/test/kotlin/com/slack/circuit/sample/interop/CircuitInteropTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": false,
+  "module": ":samples:interop",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testReleaseUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.StarCircuitSaverTest",
+  "files": [
+   "samples/star/src/commonTest/kotlin/com/slack/circuit/star/StarCircuitSaverTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.home.HomePresenterTest",
+  "files": [
+   "samples/star/src/commonTest/kotlin/com/slack/circuit/star/home/HomePresenterTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.home.HomeUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/home/HomeUiTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petdetail.PetDetailPresenterTest",
+  "files": [
+   "samples/star/src/commonTest/kotlin/com/slack/circuit/star/petdetail/PetDetailPresenterTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petdetail.PetDetailUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petdetail/PetDetailUiTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": [
+    "branch:slackhq/circuit:renovate/kotlin-monorepo"
+   ]
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petlist.PetListPresenterTest",
+  "files": [
+   "samples/star/src/commonTest/kotlin/com/slack/circuit/star/petlist/PetListPresenterTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petlist.PetListSnapshotTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petlist/PetListSnapshotTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.star.petlist.PetListUiTest",
+  "files": [
+   "samples/star/src/androidHostTest/kotlin/com/slack/circuit/star/petlist/PetListUiTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:star",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.tacos.OrderTacosPresenterTest",
+  "files": [
+   "samples/tacos/src/test/kotlin/com/slack/circuit/tacos/OrderTacosPresenterTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:tacos",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testDebugUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.tacos.step.ConfirmationProducerDietTest",
+  "files": [],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:tacos",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testDebugUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.tacos.step.ConfirmationProducerTest",
+  "files": [
+   "samples/tacos/src/test/kotlin/com/slack/circuit/tacos/step/ConfirmationProducerTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:tacos",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testDebugUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.tacos.step.FillingsProducerImplTest",
+  "files": [
+   "samples/tacos/src/test/kotlin/com/slack/circuit/tacos/step/FillingsProducerImplTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:tacos",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testDebugUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "b-build",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.tacos.step.ToppingsProducerImplTest",
+  "files": [
+   "samples/tacos/src/test/kotlin/com/slack/circuit/tacos/step/ToppingsProducerImplTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:18:08Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":samples:tacos",
+  "nameHits": [],
+  "note": "The PR bumps Robolectric to 4.17 (version catalog); every Robolectric-backed class failed on its first two pushes and passed after the PR changed build-logic/circuit.base.gradle.kts. No other PR or main push failed these classes in the window.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:18:08Z",
+    "headSha": "828279bafd863a7055614fea3d798b3f0ff2b81b",
+    "runId": 34578505255,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-16T08:19:04Z",
+    "headSha": "8307cb0dccfd5d35b99827ba598946fc77e65c60",
+    "runId": 35073109884,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2889,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testDebugUnitTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-11T08:17:55Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": [
+    "pr:2889"
+   ]
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "Recurring wasm browser flake: failed on main pushes (2026-08-25, 2026-10-29) and on 8 unrelated one-line dependency-bump PRs over 11 weeks.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-11T08:17:55Z",
+    "headSha": "e470b6f7564332088cf5b6bb98f29eb7ce929b2c",
+    "runId": 34578487601,
+    "source": "html-report"
+   },
+   {
+    "attempt": null,
+    "createdAt": "2026-09-18T08:19:34Z",
+    "headSha": "7e77d15e4bc322e793b2582c53064f22fe8cb015",
+    "runId": 35323797456,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2888,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "auto-flake",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-19T08:18:46Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": [
+    "pr:2888",
+    "pr:2889"
+   ]
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-19T08:18:46Z",
+    "headSha": "75fa6b6952f8d355c8ae381d40f3fd2cd220485c",
+    "runId": 35431659421,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2899,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "task",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-09-30T02:46:19Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "Recurring wasm browser flake: failed on main pushes (2026-08-25, 2026-10-29) and on 8 unrelated one-line dependency-bump PRs over 11 weeks.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-09-30T02:46:19Z",
+    "headSha": "57ce928ad05cff4c71bdca9d03c4572b40d0ec29",
+    "runId": 36661365124,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2911,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "c",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-10-08T08:20:50Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "Recurring wasm browser flake: failed on main pushes (2026-08-25, 2026-10-29) and on 8 unrelated one-line dependency-bump PRs over 11 weeks.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-10-08T08:20:50Z",
+    "headSha": "b9e2f614734c7ea9ad25dc2585ba637785272fab",
+    "runId": 37749225898,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2919,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ },
+ {
+  "attribution": "a",
+  "by": "auto",
+  "changedDeclarations": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/RetainedContentPresenceIndicatorTest.kt: (whole file)",
+   "circuit-foundation/src/commonMain/kotlin/com/slack/circuit/foundation/PausableState.kt: RetainedContentPresenceIndicator",
+   "circuit-foundation/src/commonMain/kotlin/com/slack/circuit/foundation/PausableState.kt: RetainedContentPresenceIndicator.onRemembered"
+  ],
+  "class": "com.slack.circuit.foundation.RetainedContentPresenceIndicatorTest",
+  "files": [
+   "circuit-foundation/src/commonJvmTest/kotlin/com/slack/circuit/foundation/RetainedContentPresenceIndicatorTest.kt"
+  ],
+  "firstFailure": "2026-10-15T14:28:27Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-10-15T14:28:27Z",
+    "headSha": "037a6b0c5d11bd8d86d750c87492ee51d9d6c6ed",
+    "runId": 38751705996,
+    "source": "html-report"
+   }
+  ],
+  "path": [
+   {
+    "declaration": "RetainedContentPresenceIndicatorTest",
+    "how": "seed"
+   }
+  ],
+  "pr": 2914,
+  "resolved": true,
+  "selected": {
+   "kt-affected": "class",
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "testAndroidHostTest",
+  "testChanged": true
+ },
+ {
+  "attribution": "c",
+  "by": "hand",
+  "changedDeclarations": [],
+  "class": "com.slack.circuit.foundation.AnsweringNavigatorTest",
+  "files": [
+   "circuit-foundation/src/commonTest/kotlin/com/slack/circuit/foundation/AnsweringNavigatorTest.kt"
+  ],
+  "firstFailure": "2026-10-21T08:18:59Z",
+  "flake": {
+   "basePushes": [],
+   "otherPrs": []
+  },
+  "inInventory": true,
+  "module": ":circuit-foundation",
+  "nameHits": [],
+  "note": "Recurring wasm browser flake: failed on main pushes (2026-08-25, 2026-10-29) and on 8 unrelated one-line dependency-bump PRs over 11 weeks.",
+  "occurrences": [
+   {
+    "attempt": null,
+    "createdAt": "2026-10-21T08:18:59Z",
+    "headSha": "01575dc14e1685fca9123b29d7a9644bec1aa337",
+    "runId": 39568337693,
+    "source": "html-report"
+   }
+  ],
+  "path": null,
+  "pr": 2931,
+  "resolved": true,
+  "selected": {
+   "kt-affected": null,
+   "module-level": "task",
+   "run-everything": "task"
+  },
+  "sources": [
+   "html-report"
+  ],
+  "task": "wasmJsBrowserTest",
+  "testChanged": false
+ }
+]

@@ -19,6 +19,10 @@ selection results or the plan format.
   faster).
 - Discovery goldens and the CI benchmark cover five more pinned builds: kotlinconf-app, Confetti,
   circuit, element-x-android and ktor.
+- A public accuracy replay (`replay/`, [docs/replay.md](docs/replay.md)): every merged PR of
+  element-x-android and circuit over 90 days, scored against the test failures their CI really
+  saw. It found three gaps, recorded as `known_gap` corpus cases: source-scanning tests (Konsist),
+  a catalog bump of a library a module declares, and Android `testReleaseUnitTest`.
 
 ## [0.3.1]
 
