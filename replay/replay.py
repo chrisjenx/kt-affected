@@ -63,6 +63,7 @@ def main():
     ap.add_argument("--until", default=datetime.date.today().isoformat())
     ap.add_argument("--limit", type=int, default=1000, help="at most this many merged PRs")
     ap.add_argument("--flake-days", type=int, default=7)
+    ap.add_argument("--workers", type=int, default=1, help="PRs selected in parallel, one work tree each")
     ap.add_argument("--out-date", default=None, help="results directory date (default: --until)")
     args = ap.parse_args()
     if args.cmd == "docs":
@@ -110,11 +111,7 @@ def run(args, name, cfg, offline):
     log(f"[{name}] {len(events)} failure events ({gh.calls} API calls); selecting")
 
     empty = git.empty_commit(paths["repo"])
-    sel = {}
-    for i, pr in enumerate(prs):
-        if i % 20 == 0:
-            log(f"  select: PR {i + 1}/{len(prs)}")
-        sel[pr["number"]] = select.select_pr(cfg, paths, pr, empty)
+    sel = select.select_all(cfg, paths, prs, empty, args.workers, log)
 
     results = analyse(args, name, cfg, prs, runs, identity, events, reports, sel, paths)
     results["oracleStats"] = ostats

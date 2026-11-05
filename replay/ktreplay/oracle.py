@@ -40,6 +40,9 @@ def is_test_task(task):
         return False
     if name.startswith(("compile", "assemble", "ksp", "kapt", "generate", "process", "merge")):
         return False
+    # Lint over test sources (`ktlintTestSourceSetCheck`, `detektTest`, `lintDebugUnitTest`...).
+    if name.startswith(("ktlint", "detekt", "lint", "spotless")):
+        return False
     return name == "test" or "Test" in name or name.endswith("test")
 
 

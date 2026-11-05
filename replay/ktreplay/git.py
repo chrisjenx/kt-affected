@@ -52,3 +52,11 @@ def changed_files(repo_dir, base, head):
 
 def ls_tree(repo_dir, sha):
     return out(repo_dir, "ls-tree", "-r", "--name-only", sha).splitlines()
+
+
+def ensure_worktree(repo_dir, path, sha):
+    """A detached work tree of `repo_dir` at `path`, sharing its objects."""
+    if not os.path.exists(os.path.join(path, ".git")):
+        run(repo_dir, "worktree", "prune")
+        run(repo_dir, "worktree", "add", "-q", "-f", "--detach", path, sha)
+    return path

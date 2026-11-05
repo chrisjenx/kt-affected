@@ -1,0 +1,218 @@
+[
+ {
+  "pr": 7008,
+  "module": ":features:messages:impl",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.features.messages.impl.timeline.factories.TimelineItemsFactoryTest",
+  "attribution": "b-build",
+  "note": "The failing push was the bare androidx core 1.18 -> 1.19 catalog bump: toSpannable() NPEs in host tests under 1.19. The PR's next commit added safeToSpannable() to fix it. No other PR or base push failed this class."
+ },
+ {
+  "pr": 7394,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistLicenseTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Use the correct license header on the new account provider history files\"); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7458,
+  "module": ":tests:uitests",
+  "task": "testDebugUnitTest",
+  "class": "ui.PreviewA11yTest",
+  "attribution": "b",
+  "note": "Screenshot/accessibility test of a preview the PR changes; it failed on the PR's pushes and passed after the PR updated the view or its reference images. The other PR listed changed the same view."
+ },
+ {
+  "pr": 7450,
+  "module": ":tests:uitests",
+  "task": "testDebugUnitTest",
+  "class": "ui.PreviewA11yTest",
+  "attribution": "b",
+  "note": "Screenshot/accessibility test of a preview the PR changes; it failed on the PR's pushes and passed after the PR updated the view or its reference images. The other PR listed changed the same view."
+ },
+ {
+  "pr": 7626,
+  "module": ":enterprise:features:remoteconfig:impl",
+  "task": "testDebugUnitTest",
+  "class": "DefaultRemoteEnterpriseConfigRetrieverTest",
+  "attribution": "b",
+  "note": "The PR moves the enterprise submodule pointer (\"Fix fetched remote config being cached with the wrong key\"); the failing classes live in that submodule, which is private, so the replay's checkout has no sources for them. Diff-caused, but no tool without submodule access can see these tests."
+ },
+ {
+  "pr": 7626,
+  "module": ":enterprise:features:remoteconfig:impl",
+  "task": "testDebugUnitTest",
+  "class": "DefaultRemoteEnterpriseConfigStoreTest",
+  "attribution": "b",
+  "note": "The PR moves the enterprise submodule pointer (\"Fix fetched remote config being cached with the wrong key\"); the failing classes live in that submodule, which is private, so the replay's checkout has no sources for them. Diff-caused, but no tool without submodule access can see these tests."
+ },
+ {
+  "pr": 7626,
+  "module": ":enterprise:features:remoteconfig:impl",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.enterprise.features.remoteconfig.impl.DefaultRemoteEnterpriseConfigRetrieverTest",
+  "attribution": "b",
+  "note": "The PR moves the enterprise submodule pointer (\"Fix fetched remote config being cached with the wrong key\"); the failing classes live in that submodule, which is private, so the replay's checkout has no sources for them. Diff-caused, but no tool without submodule access can see these tests."
+ },
+ {
+  "pr": 7626,
+  "module": ":enterprise:features:remoteconfig:impl",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.enterprise.features.remoteconfig.impl.DefaultRemoteEnterpriseConfigStoreTest",
+  "attribution": "b",
+  "note": "The PR moves the enterprise submodule pointer (\"Fix fetched remote config being cached with the wrong key\"); the failing classes live in that submodule, which is private, so the replay's checkout has no sources for them. Diff-caused, but no tool without submodule access can see these tests."
+ },
+ {
+  "pr": 7815,
+  "module": ":app",
+  "task": "testGplayDebugUnitTest",
+  "class": "io.element.android.x.intent.DefaultIntentProviderTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":appnav",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.appnav.JoinedRoomLoadedFlowNodeTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":appnav",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.appnav.RootFlowNodeTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":appnav",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.appnav.intent.IntentResolverTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":libraries:androidutils",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.libraries.androidutils.media.VideoCompressorHelperTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":libraries:androidutils",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.libraries.androidutils.text.LinkifierHelperTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7815,
+  "module": ":libraries:compound",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.compound.theme.ThemeTest",
+  "attribution": "b-build",
+  "note": "The PR bumps Robolectric to 4.17 (version catalog, and test JVM args in build.gradle.kts); Robolectric-backed classes across modules failed with IllegalAccessException until the PR adjusted the JVM flags. No other PR or base push failed these classes."
+ },
+ {
+  "pr": 7865,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistPreviewTest",
+  "attribution": "b",
+  "note": "Konsist preview-naming rule failed on four pushes of the PR (and of #7864, which it was stacked on) and passed after; no push to the base branch failed it."
+ },
+ {
+  "pr": 7904,
+  "module": ":tests:uitests",
+  "task": "testDebugUnitTest",
+  "class": "ui.PreviewA11yTest",
+  "attribution": "b",
+  "note": "Screenshot/accessibility test of a preview the PR changes; it failed on the PR's pushes and passed after the PR updated the view or its reference images. The other PR listed changed the same view."
+ },
+ {
+  "pr": 7761,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistPreviewTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files; the preview-naming rule failed on the PR's new previews and passed on its later pushes. The other PR that failed it shares the branch's commits. A source-scanning test observes every source file."
+ },
+ {
+  "pr": 8105,
+  "module": ":tests:uitests",
+  "task": "testDebugUnitTest",
+  "class": "ui.PreviewShard3Test",
+  "attribution": "b",
+  "note": "Screenshot/accessibility test of a preview the PR changes; it failed on the PR's pushes and passed after the PR updated the view or its reference images. The other PR listed changed the same view."
+ },
+ {
+  "pr": 8105,
+  "module": ":tests:uitests",
+  "task": "testDebugUnitTest",
+  "class": "ui.PreviewShard4Test",
+  "attribution": "b",
+  "note": "Screenshot/accessibility test of a preview the PR changes; it failed on the PR's pushes and passed after the PR updated the view or its reference images. The other PR listed changed the same view."
+ },
+ {
+  "pr": 7692,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistPreviewTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Use PreviewParameterProvider\", on the PR's new previews); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7703,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistArchitectureTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Sealed interface must be immutable when uses in Composable function parameters\"); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7698,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistArchitectureTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Lint\", on the PR's new VoiceMessageComposerPlayer); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7698,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistTestTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Lint\", renaming the PR's new tests); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7750,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistPreviewTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Add missing ElementPreview wrapper\"); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7864,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistImmutableTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Use the Element Creations license header on the new selection files\"); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ },
+ {
+  "pr": 7864,
+  "module": ":tests:konsist",
+  "task": "testDebugUnitTest",
+  "class": "io.element.android.tests.konsist.KonsistLicenseTest",
+  "attribution": "b",
+  "note": "Konsist scans the project's source files. The rule failed on the PR's own new code and the PR's next commit fixed it (\"Use the Element Creations license header on the new selection files\"); no push to the base branch failed it. A source-scanning test observes every source file, so no declaration path reaches it."
+ }
+]

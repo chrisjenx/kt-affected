@@ -1,6 +1,6 @@
 # Replay: slackhq/circuit
 
-kt-affected 0.3.0 (94ce6780b6), generated 2026-11-05T20:07:04+00:00. Merged pull requests 2026-08-07 .. 2026-11-05; CI runs from 2026-07-24.
+kt-affected 0.3.1 (9d9f99e3c6), generated 2026-11-05T23:06:07+00:00. Merged pull requests 2026-08-07 .. 2026-11-05; CI runs from 2026-07-24.
 
 ## Summary
 

@@ -1,0 +1,105 @@
+{
+ "generated": "2026-11-05T23:05:57+00:00",
+ "ktAffected": "0.3.1 (9d9f99e3c6)",
+ "meanTotalClasses": 676.7145708582834,
+ "mergeKinds": {
+  "merge": 309,
+  "rebase": 21,
+  "squash": 71,
+  "squash-or-rebase-1": 100
+ },
+ "oracle": {
+  "artifactsExpired": 0,
+  "artifactsRead": 170,
+  "byAttribution": {
+   "a": 19,
+   "b": 25,
+   "b-build": 8,
+   "c": 161,
+   "task-only": 1
+  },
+  "byBestSource": {
+   "html-report": 29,
+   "log": 185
+  },
+  "classRows": 213,
+  "jobsFailed": 648,
+  "logsExpired": 84,
+  "logsRead": 564,
+  "pricedClasses": 783,
+  "rows": 214,
+  "runs": 4245,
+  "runsInspected": 1148,
+  "runsListed": 4245
+ },
+ "prsReplayed": 501,
+ "prsWithDiffCausedFailures": 30,
+ "prsWithErrors": 0,
+ "recall": {
+  "kt-affected": {
+   "hit": 39,
+   "of": 52,
+   "prsFullyRun": 22,
+   "prsWithFailures": 30,
+   "recall": 0.75
+  },
+  "kt-affected+assist": {
+   "hit": 39,
+   "of": 52,
+   "prsFullyRun": 22,
+   "prsWithFailures": 30,
+   "recall": 0.75
+  },
+  "module-level": {
+   "hit": 51,
+   "of": 52,
+   "prsFullyRun": 29,
+   "prsWithFailures": 30,
+   "recall": 0.9807692307692307
+  },
+  "run-everything": {
+   "hit": 52,
+   "of": 52,
+   "prsFullyRun": 30,
+   "prsWithFailures": 30,
+   "recall": 1.0
+  }
+ },
+ "repo": "element-hq/element-x-android",
+ "selection": {
+  "kt-affected": {
+   "meanClasses": 125.76646706586827,
+   "meanShare": 0.18524765405537846,
+   "meanTimeShare": 0.1774705692987046,
+   "medianShare": 0.14747191011235955,
+   "pooledShare": 0.18584861695287197
+  },
+  "kt-affected+assist": {
+   "meanClasses": 125.76646706586827,
+   "meanShare": 0.18524765405537846,
+   "meanTimeShare": 0.1774705692987046,
+   "medianShare": 0.14747191011235955,
+   "pooledShare": 0.18584861695287197
+  },
+  "module-level": {
+   "meanClasses": 428.5309381237525,
+   "meanShare": 0.6327833269126875,
+   "meanTimeShare": 0.6222497824995926,
+   "medianShare": 0.9900142653352354,
+   "pooledShare": 0.6332521222060324
+  },
+  "run-everything": {
+   "meanClasses": 676.7145708582834,
+   "meanShare": 1.0,
+   "meanTimeShare": 1.0,
+   "medianShare": 1.0,
+   "pooledShare": 1.0
+  }
+ },
+ "target": "element-x-android",
+ "window": {
+  "runsSince": "2026-07-24",
+  "since": "2026-08-07",
+  "until": "2026-11-05"
+ }
+}

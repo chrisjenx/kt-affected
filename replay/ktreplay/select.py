@@ -4,7 +4,9 @@ configures one), a module-level baseline, and the full inventory every share is 
 import gzip
 import json
 import os
+import queue
 import subprocess
+import threading
 
 from . import git
 
@@ -147,3 +149,36 @@ def select_pr(cfg, paths, pr, empty):
         json.dump(res, fh)
     os.replace(out_file + ".tmp", out_file)
     return res
+
+
+def select_all(cfg, paths, prs, empty, workers, log):
+    """`select_pr` for every PR, `workers` at a time. Worker 0 uses the clone itself; the others get
+    their own work tree and graph cache, so no two selections share a checkout."""
+    todo = queue.Queue()
+    for pr in prs:
+        todo.put(pr)
+    sel, lock, done = {}, threading.Lock(), [0]
+
+    def worker(w):
+        mine = dict(paths)
+        if w:
+            mine["repo"] = git.ensure_worktree(paths["repo"], f"{paths['repo']}.w{w}", prs[0]["head"])
+            mine["kta"] = os.path.join(paths["kta"], f"w{w}")
+        while True:
+            try:
+                pr = todo.get_nowait()
+            except queue.Empty:
+                return
+            res = select_pr(cfg, mine, pr, empty)
+            with lock:
+                sel[pr["number"]] = res
+                done[0] += 1
+                if done[0] % 20 == 0 or done[0] == len(prs):
+                    log(f"  select: {done[0]}/{len(prs)} PRs")
+
+    threads = [threading.Thread(target=worker, args=(w,)) for w in range(max(1, workers))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    return {pr["number"]: sel[pr["number"]] for pr in prs}

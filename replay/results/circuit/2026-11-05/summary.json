@@ -1,6 +1,6 @@
 {
- "generated": "2026-11-05T20:07:04+00:00",
- "ktAffected": "0.3.0 (94ce6780b6)",
+ "generated": "2026-11-05T23:06:07+00:00",
+ "ktAffected": "0.3.1 (9d9f99e3c6)",
  "meanTotalClasses": 145.26605504587155,
  "mergeKinds": {
   "squash": 18,

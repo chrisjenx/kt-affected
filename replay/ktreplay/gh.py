@@ -60,9 +60,9 @@ class GH:
 
     def get(self, path, ttl=None):
         """JSON for `path` (relative to the API root), or None for 404/410/403. Cached; `ttl` seconds
-        bounds how old a cached copy may be (None: forever)."""
+        bounds how old a cached copy may be (None: forever; offline, any copy is used)."""
         f = self._file(path, ".json")
-        if os.path.exists(f) and (ttl is None or time.time() - os.path.getmtime(f) < ttl):
+        if os.path.exists(f) and (ttl is None or self.offline or time.time() - os.path.getmtime(f) < ttl):
             with open(f) as fh:
                 c = json.load(fh)
             return c["body"]
@@ -124,7 +124,7 @@ class GH:
     def cached_json(self, name, ttl, produce):
         """Caches an arbitrary JSON value under `name` (used for `gh pr list`)."""
         f = self._file("named:" + name, ".json")
-        if os.path.exists(f) and (ttl is None or time.time() - os.path.getmtime(f) < ttl):
+        if os.path.exists(f) and (ttl is None or self.offline or time.time() - os.path.getmtime(f) < ttl):
             with open(f) as fh:
                 return json.load(fh)
         if self.offline:
