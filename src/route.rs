@@ -96,6 +96,8 @@ pub struct Ctx<'a> {
     pub read_base: &'a dyn Fn(&str) -> Option<String>,
     /// Every build script's and build-logic source's text.
     pub build_logic: &'a dyn Fn() -> &'a [String],
+    /// Inside an included build that supplies plugins (see `select::included_builds`).
+    pub in_plugin_build: &'a dyn Fn(&str) -> bool,
 }
 
 const BUILD_LOGIC_NAMES: &[&str] = &[
@@ -214,7 +216,7 @@ pub fn route(path: &str, mods: &Modules, cfg: &Config, ctx: &Ctx, out: &mut Rout
     let everything = mods.all();
     let name = name_of(path);
     let Some(module) = module else {
-        if is_build_logic(path) {
+        if is_build_logic(path) || (ctx.in_plugin_build)(path) {
             return build_logic(path, everything, out, "build logic");
         }
         out.mentions.push(Mention {

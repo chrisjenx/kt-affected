@@ -731,10 +731,21 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             paths.iter().filter_map(|p| repo.read(p)).collect()
         })
     };
+    // (included build dir with a trailing '/', supplies plugins) per included build.
+    let included: std::cell::OnceCell<Vec<(String, bool)>> = std::cell::OnceCell::new();
+    let included_build_of = |path: &str| -> Option<bool> {
+        included
+            .get_or_init(|| included_builds(&repo.root, build))
+            .iter()
+            .find(|(d, _)| path.starts_with(d.as_str()))
+            .map(|(_, plugin)| *plugin)
+    };
+    let in_plugin_build = |path: &str| included_build_of(path) == Some(true);
     let ctx = Ctx {
         read: &read,
         read_base: &read_base,
         build_logic: &build_logic,
+        in_plugin_build: &in_plugin_build,
     };
 
     let mut seed_files: BTreeSet<String> = BTreeSet::new();
@@ -1292,6 +1303,59 @@ fn group(
         result_dir: dirs
             .get(module)
             .map(|d| format!("{d}/build/test-results/{task}")),
+    }
+}
+
+/// Each included build's directory (with a trailing '/', longest first) and whether it supplies
+/// plugins: included under `pluginManagement`, or a build script in it applies `kotlin-dsl` /
+/// `java-gradle-plugin` or declares `gradlePlugin`. Any other is a library build.
+fn included_builds(root: &std::path::Path, build: &Build) -> Vec<(String, bool)> {
+    let settings = ["settings.gradle.kts", "settings.gradle"]
+        .iter()
+        .find_map(|f| std::fs::read_to_string(root.join(f)).ok())
+        .unwrap_or_default();
+    let managed = crate::discover::plugin_management_builds(&settings);
+    let mut out: Vec<(String, bool)> = build
+        .included_builds
+        .iter()
+        .filter(|d| !d.is_empty() && *d != ".")
+        .map(|d| {
+            let mut scripts = Vec::new();
+            walk_build_scripts(root, d, &mut scripts);
+            let plugin = managed.contains(d)
+                || scripts.iter().any(|t| {
+                    t.contains("kotlin-dsl")
+                        || t.contains("java-gradle-plugin")
+                        || t.contains("gradlePlugin")
+                });
+            (format!("{}/", d.trim_end_matches('/')), plugin)
+        })
+        .collect();
+    out.sort_by_key(|(d, _)| std::cmp::Reverse(d.len()));
+    out
+}
+
+/// The text of every build script under `rel`, outside source and output directories.
+fn walk_build_scripts(root: &std::path::Path, rel: &str, out: &mut Vec<String>) {
+    let Ok(rd) = std::fs::read_dir(root.join(rel)) else {
+        return;
+    };
+    for e in rd.flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let sub = format!("{}/{}", rel.trim_end_matches('/'), name);
+        match e.file_type() {
+            Ok(t) if t.is_dir() => {
+                if !matches!(name.as_str(), "src" | "build" | ".gradle" | ".git") {
+                    walk_build_scripts(root, &sub, out);
+                }
+            }
+            Ok(_) if matches!(name.as_str(), "build.gradle.kts" | "build.gradle") => {
+                if let Ok(t) = std::fs::read_to_string(e.path()) {
+                    out.push(t);
+                }
+            }
+            _ => {}
+        }
     }
 }
 

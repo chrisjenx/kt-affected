@@ -1,4 +1,3 @@
 why = "A convention plugin in a pluginManagement includeBuild is build logic for every module applying it: each test task runs a smoke class, with a reason."
 tasks = [":core:test", ":other:test"]
 reasons = ["build-logic/convention/src/main/kotlin/JvmLibraryConventionPlugin.kt"]
-known_gap = "a binary convention plugin (.kt) in an included build is routed as a file outside every module that nothing names, so nothing is selected and no build-logic reason is given"

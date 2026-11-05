@@ -354,6 +354,31 @@ fn strip_dir_prefix(s: &str) -> String {
     s.trim_start_matches("./").trim_end_matches('/').to_string()
 }
 
+/// Builds a settings script includes inside `pluginManagement { .. }`: plugin builds.
+pub(crate) fn plugin_management_builds(settings: &str) -> BTreeSet<String> {
+    let toks = tokenize(settings);
+    let mut out = BTreeSet::new();
+    for i in 0..toks.len() {
+        if ident(&toks[i]) != Some("pluginManagement") || !is_p(toks.get(i + 1), '{') {
+            continue;
+        }
+        let end = close_of(&toks, i + 1);
+        for j in i + 2..end {
+            if ident(&toks[j]) == Some("includeBuild") {
+                let k = if is_p(toks.get(j + 1), '(') {
+                    j + 2
+                } else {
+                    j + 1
+                };
+                if let Some(Tok::Str(v, _)) = toks.get(k) {
+                    out.insert(strip_dir_prefix(v));
+                }
+            }
+        }
+    }
+    out
+}
+
 fn norm_path(p: &str) -> String {
     if p.starts_with(':') {
         p.to_string()
@@ -1679,6 +1704,13 @@ mod tests {
             ui.source_sets["jvmTest"].depends_on,
             BTreeSet::from(["commonTest".to_string()])
         );
+    }
+
+    #[test]
+    fn plugin_management_include_builds_are_plugin_builds() {
+        let s = "pluginManagement {\n  includeBuild(\"build-logic\")\n  repositories { gradlePluginPortal() }\n}\nincludeBuild(\"./shared-lib\")\n";
+        let got: Vec<String> = plugin_management_builds(s).into_iter().collect();
+        assert_eq!(vec!["build-logic".to_string()], got);
     }
 
     #[test]
