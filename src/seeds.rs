@@ -508,6 +508,8 @@ pub struct DiGraphs {
     of_test: std::cell::OnceCell<FxHashMap<u32, FxHashSet<u32>>>,
     /// implementation root -> test roots that name it outside a graph (lazily)
     direct: std::cell::RefCell<FxHashMap<u32, FxHashSet<u32>>>,
+    /// implementation root -> roots that can hold it, at any depth (lazily)
+    holders: std::cell::RefCell<FxHashMap<u32, FxHashSet<u32>>>,
 }
 
 /// Root-level hops a test is searched for from a graph or an implementation.
@@ -647,6 +649,43 @@ impl DiGraphs {
                 .or_insert_with(|| DiGraphs::referrers(v, i, &self.graphs));
             !named.contains(&t)
         })
+    }
+
+    /// Can test `t` never run edited implementation `i`? Only when every graph it reaches excludes
+    /// `i` and nothing it reaches, at any depth, names `i` or a graph that binds it. The depth
+    /// matters here: the test reaches `i` through its interface either way, so only its graphs
+    /// and the code that names `i` decide.
+    pub fn never_holds(&self, v: &View, t: u32, i: u32) -> bool {
+        if !self.excludable(i) || !self.blocked(v, t, &[i].into_iter().collect()) {
+            return false;
+        }
+        let mut holders = self.holders.borrow_mut();
+        let can = holders.entry(i).or_insert_with(|| {
+            let excluding: FxHashSet<u32> = self
+                .excludes
+                .iter()
+                .filter(|(_, e)| e.contains(&i))
+                .map(|(&g, _)| g)
+                .collect();
+            let mut seen: FxHashSet<u32> = [i].into_iter().collect();
+            seen.extend(self.graphs.iter().filter(|g| !excluding.contains(g)));
+            let mut stack: Vec<u32> = seen.iter().copied().collect();
+            while let Some(r) = stack.pop() {
+                for m in r..v.n as u32 {
+                    if m != r && v.root[m as usize] != r {
+                        break;
+                    }
+                    for &x in v.refby(m) {
+                        let xr = v.root[x as usize];
+                        if !excluding.contains(&xr) && seen.insert(xr) {
+                            stack.push(xr);
+                        }
+                    }
+                }
+            }
+            seen
+        });
+        !can.contains(&t)
     }
 }
 

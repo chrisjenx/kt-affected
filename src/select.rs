@@ -1114,6 +1114,17 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         if let Some(wide) = &wide_roots {
             roots.retain(|r| wide.contains(r));
         }
+        // A test whose graphs all leave out every edited implementation can only hold a fake of
+        // it: none of the edit runs there (`DiGraphs::never_holds`).
+        let edited_roots: FxHashSet<u32> = node_seeds.iter().map(|&n| v.root[n as usize]).collect();
+        if routes.follow_dispatch && edited_roots.iter().all(|&i| routes.di_graphs.excludable(i)) {
+            roots.retain(|&r| {
+                !v.test_class.contains_key(&r)
+                    || !edited_roots
+                        .iter()
+                        .all(|&i| routes.di_graphs.never_holds(&v, r, i))
+            });
+        }
         if !routes.classpath_ok.is_empty() {
             roots.retain(|&r| {
                 !v.test_class.contains_key(&r) || routes.classpath_ok[v.file[r as usize] as usize]

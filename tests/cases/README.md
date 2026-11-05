@@ -65,7 +65,8 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `metro-accessor-on-graph` | An accessor declared directly on the @DependencyGraph interface (`val pricing: Pricing`) hands out the bound impl like one inherited from an accessor interface. |
 | `metro-contributes-binding` | A @ContributesBinding impl edit reaches tests calling that interface member through a graph accessor, not tests calling another member. |
 | `metro-create-graph-type-argument` | A graph created as `createGraph<AppGraph>()`, its type only in the type argument, reaches the bound impl like an explicitly typed one. |
-| `metro-graph-excludes-edited-impl` | A test graph that `excludes` the edited impl and binds a fake can never run the edit: its test is not selected, the production graph's is. *Known gap: see its `expect.toml`.* |
+| `metro-graph-excludes-edited-impl` | A test graph that `excludes` the edited impl and binds a fake can never run the edit: its test is not selected, the production graph's is. |
+| `metro-graph-excludes-edited-impl-still-named` | A test whose graph excludes the edited impl but that still constructs it, seven helper hops away, runs the edit: it stays selected. |
 | `metro-graph-excludes-impl-dependency` | A test graph that `excludes` an impl and binds a fake never runs that impl's dependencies: editing a dependency selects the production graph's test, not the fake graph's. |
 | `plain-resource-stem` | A plain resource seeds code writing its file name; its bare stem as an identifier (`index`) is not a read of the file. |
 | `reflection-class-literal` | A test reflecting over `Repo::class` sees a member added to Repo, though it calls no member. |
