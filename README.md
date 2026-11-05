@@ -49,7 +49,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.2.1
+- uses: chrisjenx/kt-affected@v0.3.0
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}
@@ -71,6 +71,31 @@ kt-affected verify                         # incremental graph == cold rebuild?
 
 `--base` defaults to the merge-base with `origin/HEAD`. Without `--head`, the plan covers the work
 tree, uncommitted changes included.
+
+## Use as a library
+
+The same selector is a Rust library, for tools that want the plan without spawning the binary:
+
+```toml
+[dependencies]
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.0", default-features = false }
+```
+
+```rust
+use kt_affected::{select, SelectOptions};
+
+fn main() {
+    let opts = SelectOptions::new().base("origin/main");
+    match select(std::path::Path::new("."), &opts) {
+        Ok(plan) if plan.groups.is_empty() => println!("no tests to run"),
+        Ok(plan) => println!("./gradlew {}", plan.to_gradle_args().join(" ")),
+        Err(e) => eprintln!("cannot tell, run everything: {e}"),
+    }
+}
+```
+
+`explain` returns the same plan with each verdict and test path as data. A call keeps nothing in
+memory once it returns. API, errors and memory model: [docs/library.md](docs/library.md).
 
 ## Benchmarks
 
@@ -124,6 +149,7 @@ Public, reproducible numbers on open-source projects run in CI on every change:
 - [How it works](docs/how-it-works.md): discovery, the graph, incremental updates, selection, the cosmetic classifier
 - [Configuration](docs/configuration.md): `kt-affected.toml`
 - [CI and pre-push](docs/ci.md)
+- [Library](docs/library.md): the Rust API
 - [Accuracy](docs/accuracy.md): how it was validated, and what is not yet measured
 - [Benchmarks](docs/benchmarks.md)
 

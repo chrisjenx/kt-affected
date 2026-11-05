@@ -6,6 +6,31 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.3.0]
+
+kt-affected is now a library (`kt_affected`) with the CLI as a thin binary over it. Selection
+results and the CLI's output are unchanged: `select` (json, gradle, classes), `explain`, `discover`,
+`dump-edges`, `verify` and `init-script` print byte-identical output to 0.2.1 on okio and
+sqldelight.
+
+- Library API: `select`, `explain` and `default_base`, with `SelectOptions`, `Selection` (the
+  `select --format json` shape, serde both ways, `to_gradle_args()`, `to_classes()`), `Explanation`
+  (verdicts and test paths as data, `render()` for the `explain` text) and an `Error` enum. A
+  selection that cannot be made is always an `Err`, never an empty plan. Public types are
+  `#[non_exhaustive]`. See [docs/library.md](docs/library.md).
+- Depend on it with `kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag =
+  "v0.3.0", default-features = false }`. The binary needs the default `cli` feature.
+- A call keeps nothing resident: `explain`'s path capture moved out of process-wide statics into
+  the call, and a graph rebuild no longer leaks the linker's scratch memory (`mem::forget`) to save
+  freeing it.
+- Memory of a library call (`examples/rss.rs`, fresh process, median of 5): okio 41.3 MB cold,
+  12.0 MB warm; sqldelight 45.6 MB cold, 11.8 MB warm. 100 warm calls in one process: RSS
+  11.1 → 14.6 MB at call 20 → 16.9 MB at call 100 on okio (sqldelight 10.8 → 12.6 → 13.8 MB),
+  live heap holding at about 2 MB.
+- `select --root` on a directory below the build root now resolves to the build, as without
+  `--root`; a directory in no Gradle build exits 3 with `error` set instead of printing an empty
+  plan. The `select:` timing line on stderr now covers the whole call, graph update included.
+
 ## [0.2.1]
 
 - `[tasks] only` no longer fails a module open when it removes every task of one of its test
@@ -59,7 +84,8 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/chrisjenx/kt-affected/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/chrisjenx/kt-affected/releases/tag/v0.1.0
