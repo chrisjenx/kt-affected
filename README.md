@@ -11,12 +11,15 @@ your Gradle build to do so, keeps the graph incremental, and answers in well und
 - **Precise:** declaration-level, not module-level. A body edit to one class selects the tests that
   reach that class, through calls, supertypes, DI bindings (Metro, Dagger, Hilt, Koin) and resources.
   Formatting, comments and local renames select nothing.
-- **Safe:** on 50 real pull requests it selected 7 of the 7 tests that actually failed in CI, and no
-  test it skipped was a plausible miss ([accuracy](docs/accuracy.md)). When it cannot know, it fails
-  open and says why.
+- **Safe:** replayed over 586 real pull requests of a production app, it would have run 99 of the
+  103 test failures those diffs caused in CI. The selector it replaced would have run 58. It costs
+  15% of the full test time, against 12% ([accuracy](docs/accuracy.md)). When it cannot know, it
+  fails open and says why.
 - **Project-agnostic:** settings includes, `projectDir` overrides, `project(":x")` and typesafe
   `projects.x` deps, version catalogs, convention plugins, the KMP source-set hierarchy and test
   tasks. No config needed; [`kt-affected.toml`](docs/configuration.md) tunes it.
+
+[![kt-affected vs the previous selector over 586 pull requests](docs/img/accuracy-vs-python.svg)](docs/accuracy.md)
 
 > Status: early (0.x). Validated in depth on one large production KMP app and checked on okio and
 > sqldelight. Feedback from other builds is very welcome.
