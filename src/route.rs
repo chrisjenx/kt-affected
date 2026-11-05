@@ -1,0 +1,696 @@
+//! What a changed path the declaration graph cannot index reaches: build logic, resources, SQL,
+//! SQLDelight, deleted Kotlin, and files outside every module.
+//!
+//! Cheapest answer first: a file read by name seeds the declarations on lines that write the name
+//! (a mention); a migration seeds Kotlin naming its tables; build logic costs one smoke class per
+//! test task in reach; code wiring no name reaches fails its module open.
+
+use crate::config::Config;
+use crate::git::Hunk;
+use regex::Regex;
+use std::collections::{BTreeMap, BTreeSet};
+use std::sync::LazyLock;
+
+#[derive(Clone, Debug)]
+pub struct Module {
+    pub id: String,
+    /// `dir/` (never empty: the root project is not a module here).
+    pub prefix: String,
+}
+
+pub struct Modules {
+    /// Longest prefix first, so a nested module wins.
+    pub list: Vec<Module>,
+    pub deps: BTreeMap<String, BTreeSet<String>>,
+    pub db: BTreeSet<String>,
+}
+
+impl Modules {
+    pub fn module_of(&self, path: &str) -> Option<&Module> {
+        self.list.iter().find(|m| path.starts_with(&m.prefix))
+    }
+
+    /// (module, source set) for `<module>/src/<set>/...`.
+    pub fn source_set_of<'p>(&self, path: &'p str) -> Option<(&Module, &'p str)> {
+        let m = self.module_of(path)?;
+        let rest = &path[m.prefix.len()..];
+        let mut parts = rest.splitn(3, '/');
+        let (a, b, c) = (parts.next()?, parts.next()?, parts.next());
+        (a == "src" && c.is_some()).then_some((m, b))
+    }
+
+    pub fn reverse_closure(&self, targets: &BTreeSet<String>) -> BTreeSet<String> {
+        let mut out = targets.clone();
+        loop {
+            let before = out.len();
+            for (m, refs) in &self.deps {
+                if !out.contains(m) && refs.iter().any(|r| out.contains(r)) {
+                    out.insert(m.clone());
+                }
+            }
+            if out.len() == before {
+                return out;
+            }
+        }
+    }
+
+    pub fn closure(&self, targets: &BTreeSet<String>) -> BTreeSet<String> {
+        let mut out = targets.clone();
+        let mut stack: Vec<String> = targets.iter().cloned().collect();
+        while let Some(m) = stack.pop() {
+            for d in self.deps.get(&m).into_iter().flatten() {
+                if out.insert(d.clone()) {
+                    stack.push(d.clone());
+                }
+            }
+        }
+        out
+    }
+
+    pub fn all(&self) -> BTreeSet<String> {
+        self.list.iter().map(|m| m.id.clone()).collect()
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Mention {
+    pub tokens: Vec<String>,
+    pub modules: BTreeSet<String>,
+    pub string_only: bool,
+    /// A deleted file's names count only where its package is visible.
+    pub package: Option<String>,
+    /// A file must contain one of these to count (empty: every file).
+    pub file_markers: Vec<String>,
+}
+
+#[derive(Default)]
+pub struct Routing {
+    pub smoke_modules: BTreeSet<String>,
+    pub db_smoke_modules: BTreeSet<String>,
+    pub mentions: Vec<Mention>,
+    pub reasons: Vec<String>,
+}
+
+pub struct Ctx<'a> {
+    pub read: &'a dyn Fn(&str) -> Option<String>,
+    pub read_base: &'a dyn Fn(&str) -> Option<String>,
+    /// Every build script's and build-logic source's text.
+    pub build_logic: &'a dyn Fn() -> &'a [String],
+}
+
+const BUILD_LOGIC_NAMES: &[&str] = &[
+    "settings.gradle.kts",
+    "settings.gradle",
+    "gradle.properties",
+    "local.properties",
+];
+const BUILD_LOGIC_PREFIXES: &[&str] = &["gradle/", "buildSrc/"];
+const BUILD_CONVENTION_DIRS: &[&str] = &["karma.config.d/", "webpack.config.d/"];
+const BUILD_CONVENTION_NAMES: &[&str] = &[
+    "AndroidManifest.xml",
+    "proguard-rules.pro",
+    "consumer-rules.pro",
+];
+const RESOURCE_ROOTS: &[&str] = &["resources", "composeResources", "res"];
+/// Reached through a generated accessor (`Res.drawable.x`, `R.drawable.x`): the type directory
+/// names every resource of the type, not this one.
+const ACCESSOR_RESOURCE_ROOTS: &[&str] = &["composeResources", "res"];
+
+static RUNTIME_CONFIG_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(^|/)(logback[^/]*\.xml|log4j2?[^/]*|junit-platform\.properties|[^/]*\.properties)$",
+    )
+    .unwrap()
+});
+static WIRING_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(^|/)(META-INF/|values[^/]*/)|\.conf$").unwrap());
+static SQL_TARGET_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)\b(?:TABLE|INTO|UPDATE|FROM|JOIN|ON|VIEW|TYPE|TRUNCATE|SEQUENCE)\s+(?:ONLY\s+|IF\s+(?:NOT\s+)?EXISTS\s+)*(?:"?\w+"?\.)?"?([A-Za-z_]\w*)"?"#).unwrap()
+});
+static SQL_COMMENT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?s)--[^\n]*|/\*.*?\*/").unwrap());
+static SQ_TABLE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\bCREATE\s+(?:TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_]\w*)").unwrap()
+});
+static SQ_LABEL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?m)^([A-Za-z_]\w*)\s*:").unwrap());
+const SQL_WORDS: &[&str] = &[
+    "select",
+    "set",
+    "where",
+    "only",
+    "exists",
+    "not",
+    "null",
+    "table",
+    "values",
+    "default",
+    "conflict",
+    "delete",
+    "insert",
+    "update",
+    "nothing",
+    "do",
+    "cascade",
+    "restrict",
+    "each",
+    "row",
+    "statement",
+    "execute",
+    "function",
+    "procedure",
+    "lateral",
+    "public",
+];
+
+fn name_of(path: &str) -> &str {
+    path.rsplit('/').next().unwrap_or(path)
+}
+
+fn stem(name: &str) -> &str {
+    name.split('.').next().unwrap_or(name)
+}
+
+pub fn is_build_logic(path: &str) -> bool {
+    path.ends_with(".gradle.kts")
+        || path.ends_with(".gradle")
+        || BUILD_LOGIC_NAMES.contains(&name_of(path))
+        || BUILD_LOGIC_PREFIXES.iter().any(|p| path.starts_with(p))
+}
+
+fn names_build_logic(name: &str, ctx: &Ctx) -> bool {
+    (ctx.build_logic)().iter().any(|t| t.contains(name))
+}
+
+fn resource_tokens(rel: &str, root: &str) -> Vec<String> {
+    let parts: Vec<&str> = rel.split('/').collect();
+    let name = parts[parts.len() - 1];
+    let mut out: BTreeSet<String> = [name.to_string(), rel.to_string()].into_iter().collect();
+    if stem(name).len() >= 3 {
+        out.insert(stem(name).to_string());
+    }
+    if !ACCESSOR_RESOURCE_ROOTS.contains(&root) {
+        out.extend(
+            parts[..parts.len() - 1]
+                .iter()
+                .filter(|p| p.len() >= 3)
+                .map(|p| p.to_string()),
+        );
+    }
+    out.into_iter().collect()
+}
+
+fn build_logic(path: &str, scope: BTreeSet<String>, out: &mut Routing, why: &str) -> bool {
+    out.smoke_modules.extend(scope);
+    out.reasons.push(format!(
+        "{path}: {why} — one smoke class per test task in reach; CI runs every suite"
+    ));
+    true
+}
+
+/// Route one changed non-graph path into `out`; false leaves it to the caller's fail-open.
+pub fn route(path: &str, mods: &Modules, cfg: &Config, ctx: &Ctx, out: &mut Routing) -> bool {
+    let module = mods.module_of(path);
+    let everything = mods.all();
+    let name = name_of(path);
+    let Some(module) = module else {
+        if is_build_logic(path) {
+            return build_logic(path, everything, out, "build logic");
+        }
+        out.mentions.push(Mention {
+            tokens: vec![name.into(), path.into()],
+            modules: everything.clone(),
+            ..Default::default()
+        });
+        if names_build_logic(name, ctx) {
+            return build_logic(path, everything, out, "a build input");
+        }
+        out.reasons.push(format!(
+            "{path}: outside every module — seeding what names it"
+        ));
+        return true;
+    };
+    let reach = mods.reverse_closure(&[module.id.clone()].into_iter().collect());
+    if path.ends_with(".gradle.kts") || path.ends_with(".gradle") {
+        return build_logic(path, reach, out, "build logic");
+    }
+    if path.ends_with(".sql")
+        && cfg
+            .database
+            .migration_dirs
+            .iter()
+            .any(|d| path.starts_with(d.as_str()))
+    {
+        let mut db: BTreeSet<String> = mods.db.clone();
+        db.insert(module.id.clone());
+        return migration(path, db, mods, cfg, ctx, out);
+    }
+    if cfg
+        .database
+        .synced_inputs
+        .iter()
+        .any(|s| path.starts_with(s.as_str()))
+    {
+        let scope: BTreeSet<String> = reach.union(&mods.db).cloned().collect();
+        return build_logic(path, scope, out, "test-runtime config");
+    }
+    if path.ends_with(".sq") {
+        return sqldelight(path, reach, ctx, out);
+    }
+    if path.ends_with(".sqm") {
+        out.mentions.push(Mention {
+            tokens: vec!["Schema.migrate".into()],
+            modules: reach,
+            ..Default::default()
+        });
+        out.smoke_modules.insert(module.id.clone());
+        out.reasons.push(format!(
+            "{path}: SQLDelight migration — its migration tests plus one smoke class"
+        ));
+        return true;
+    }
+    if path.ends_with(".kt") {
+        return deleted_kotlin(path, reach, ctx, out);
+    }
+    let Some((_, source_set)) = mods.source_set_of(path) else {
+        let rel = &path[module.prefix.len()..];
+        out.mentions.push(Mention {
+            tokens: vec![name.into(), rel.into()],
+            modules: reach.clone(),
+            ..Default::default()
+        });
+        if BUILD_CONVENTION_DIRS.iter().any(|d| rel.starts_with(d))
+            || BUILD_CONVENTION_NAMES.contains(&name)
+            || names_build_logic(name, ctx)
+        {
+            return build_logic(path, reach, out, "a build input");
+        }
+        out.reasons.push(format!(
+            "{path}: outside the module's sources — seeding what names it"
+        ));
+        return true;
+    };
+    if BUILD_CONVENTION_NAMES.contains(&name) {
+        return build_logic(path, reach, out, "a build input");
+    }
+    let parts: Vec<&str> = path[module.prefix.len()..].split('/').collect(); // src/<set>/<root>/<rel...>
+    if parts.len() < 4 || !RESOURCE_ROOTS.contains(&parts[2]) {
+        return false;
+    }
+    let rel = parts[3..].join("/");
+    if WIRING_RE.is_match(&rel) {
+        return false;
+    }
+    let visible = if source_set.ends_with("Test") || source_set.ends_with("test") {
+        [module.id.clone()].into_iter().collect()
+    } else {
+        reach
+    };
+    if RUNTIME_CONFIG_RE.is_match(&rel) {
+        return build_logic(path, visible, out, "test-runtime config");
+    }
+    let mut tokens = resource_tokens(&rel, parts[2]);
+    if parts[2] == "resources" {
+        // A plain resource is loaded by a string naming it; its bare stem in code (`index`,
+        // `config`) is an ordinary identifier, not a read of this file.
+        let st = stem(name_of(&rel)).to_string();
+        tokens.retain(|t| *t != st);
+        if st.len() >= 3 {
+            out.mentions.push(Mention {
+                tokens: vec![st],
+                modules: visible.clone(),
+                string_only: true,
+                ..Default::default()
+            });
+        }
+    }
+    out.mentions.push(Mention {
+        tokens,
+        modules: visible,
+        ..Default::default()
+    });
+    out.reasons
+        .push(format!("{path}: resource — seeding what names it"));
+    true
+}
+
+/// An ignored or doc path a test may still read by name: seed what names it, in strings only.
+/// Nothing naming it selects nothing — the same answer as ignoring it.
+pub fn named_only(path: &str, mods: &Modules, out: &mut Routing) {
+    let name = name_of(path);
+    let mut tokens = vec![path.to_string()];
+    if name.len() >= 6 {
+        tokens.push(name.to_string());
+    }
+    out.mentions.push(Mention {
+        tokens,
+        modules: mods.all(),
+        string_only: true,
+        ..Default::default()
+    });
+}
+
+pub fn migration_tables(sql: &str) -> BTreeSet<String> {
+    let body = SQL_COMMENT_RE.replace_all(sql, " ");
+    SQL_TARGET_RE
+        .captures_iter(&body)
+        .map(|c| c[1].to_string())
+        .filter(|t| !SQL_WORDS.contains(&t.to_lowercase().as_str()) && t.len() >= 3)
+        .collect()
+}
+
+fn migration(
+    path: &str,
+    db: BTreeSet<String>,
+    mods: &Modules,
+    cfg: &Config,
+    ctx: &Ctx,
+    out: &mut Routing,
+) -> bool {
+    let sql = (ctx.read)(path)
+        .or_else(|| (ctx.read_base)(path))
+        .unwrap_or_default();
+    let tables = migration_tables(&sql);
+    if tables.is_empty() {
+        return false;
+    }
+    let tokens: Vec<String> = tables.iter().cloned().collect();
+    out.mentions.push(Mention {
+        tokens: tokens.clone(),
+        modules: db.clone(),
+        string_only: true,
+        ..Default::default()
+    });
+    let upstream: BTreeSet<String> = mods.closure(&db).difference(&db).cloned().collect();
+    out.mentions.push(Mention {
+        tokens,
+        modules: upstream,
+        string_only: true,
+        file_markers: cfg.database.sql_file_markers.clone(),
+        ..Default::default()
+    });
+    out.db_smoke_modules.extend(db);
+    out.reasons.push(format!(
+        "{path}: migration — seeding Kotlin that names {}, plus one database-backed class per module",
+        tables.iter().cloned().collect::<Vec<_>>().join(", ")
+    ));
+    true
+}
+
+fn sqldelight(path: &str, reach: BTreeSet<String>, ctx: &Ctx, out: &mut Routing) -> bool {
+    let text = format!(
+        "{}\n{}",
+        (ctx.read)(path).unwrap_or_default(),
+        (ctx.read_base)(path).unwrap_or_default()
+    );
+    let base = stem(name_of(path));
+    let lower = format!(
+        "{}{}",
+        base.get(..1).unwrap_or("").to_lowercase(),
+        base.get(1..).unwrap_or("")
+    );
+    let mut tokens: BTreeSet<String> = [format!("{base}Queries"), format!("{lower}Queries")]
+        .into_iter()
+        .collect();
+    let cap = |t: &str| {
+        format!(
+            "{}{}",
+            t.get(..1).unwrap_or("").to_uppercase(),
+            t.get(1..).unwrap_or("")
+        )
+    };
+    tokens.extend(SQ_TABLE_RE.captures_iter(&text).map(|c| cap(&c[1])));
+    tokens.extend(SQ_LABEL_RE.captures_iter(&text).map(|c| cap(&c[1])));
+    out.mentions.push(Mention {
+        tokens: tokens.into_iter().collect(),
+        modules: reach,
+        ..Default::default()
+    });
+    out.reasons.push(format!(
+        "{path}: SQLDelight — seeding what names its generated API"
+    ));
+    true
+}
+
+fn deleted_kotlin(path: &str, reach: BTreeSet<String>, ctx: &Ctx, out: &mut Routing) -> bool {
+    if (ctx.read)(path).is_some() {
+        return false; // present but unindexed: nothing to reason from
+    }
+    let Some(text) = (ctx.read_base)(path) else {
+        return false;
+    };
+    let raw = crate::parse::parse_file(&text, false);
+    let names: BTreeSet<String> = raw
+        .decls
+        .iter()
+        .filter(|d| d.parent < 0 && !d.name.is_empty())
+        .map(|d| d.name.clone())
+        .collect();
+    if names.is_empty() {
+        out.reasons
+            .push(format!("{path}: deleted, declared nothing"));
+        return true;
+    }
+    out.mentions.push(Mention {
+        tokens: names.into_iter().collect(),
+        modules: reach,
+        package: Some(raw.package.clone()),
+        ..Default::default()
+    });
+    out.reasons.push(format!(
+        "{path}: deleted — seeding what still writes its names"
+    ));
+    true
+}
+
+fn is_word(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b == b'_'
+}
+
+/// Byte ranges of string-literal content in `text` (kt-syntax tokens); None when it won't parse.
+fn string_spans(text: &str) -> Option<Vec<(usize, usize)>> {
+    use kt_syntax::SyntaxKind as K;
+    let file = kt_syntax::parse(text).ok()?;
+    let mut out = Vec::new();
+    for t in file.root().tokens() {
+        let k = t.kind();
+        if matches!(
+            k,
+            K::REGULAR_STRING_PART | K::CLOSING_QUOTE | K::OPEN_QUOTE | K::ESCAPE_SEQUENCE
+        ) {
+            let r = t.range();
+            out.push((r.start, r.end));
+        }
+    }
+    out.sort();
+    Some(out)
+}
+
+fn sees_package(text: &str, file_pkg: &str, pkg: &str) -> bool {
+    if file_pkg == pkg {
+        return true;
+    }
+    let prefix = format!("{pkg}.");
+    text.lines()
+        .filter_map(|l| l.trim_start().strip_prefix("import "))
+        .any(|imp| {
+            let imp = imp.trim().replace('`', "");
+            let star = imp.ends_with(".*");
+            let fqn = imp
+                .trim_end_matches(".*")
+                .split(" as ")
+                .next()
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            fqn.starts_with(&prefix) || (star && fqn == pkg)
+        })
+}
+
+/// path -> one-line hunks on every line that writes a mentioned token.
+pub fn mention_hunks(
+    mentions: &[Mention],
+    files: &[(&str, Option<&str>)],
+    read: &(dyn Fn(&str) -> Option<String> + Sync),
+) -> BTreeMap<String, Vec<Hunk>> {
+    use rayon::prelude::*;
+    if mentions.is_empty() {
+        return BTreeMap::new();
+    }
+    let found: Vec<(String, Vec<Hunk>)> = files
+        .par_iter()
+        .filter_map(|(path, module)| {
+            let live: Vec<&Mention> = mentions
+                .iter()
+                .filter(|m| module.map(|id| m.modules.contains(id)).unwrap_or(false))
+                .collect();
+            if live.is_empty() {
+                return None;
+            }
+            let text = read(path)?;
+            if !live
+                .iter()
+                .any(|m| m.tokens.iter().any(|t| text.contains(t.as_str())))
+            {
+                return None;
+            }
+            let bytes = text.as_bytes();
+            let (file_pkg, header) = package_line(&text);
+            let starts: Vec<usize> = std::iter::once(0)
+                .chain(text.match_indices('\n').map(|(i, _)| i + 1))
+                .collect();
+            let mut spans: Option<Option<Vec<(usize, usize)>>> = None;
+            let mut lines: BTreeSet<usize> = BTreeSet::new();
+            for m in &live {
+                if let Some(pkg) = &m.package
+                    && !sees_package(&text, &file_pkg, pkg)
+                {
+                    continue;
+                }
+                if !m.file_markers.is_empty()
+                    && !m.file_markers.iter().any(|mk| text.contains(mk.as_str()))
+                {
+                    continue;
+                }
+                for tok in &m.tokens {
+                    for (at, _) in text.match_indices(tok.as_str()) {
+                        let end = at + tok.len();
+                        if (at > 0 && is_word(bytes[at - 1]))
+                            || (end < bytes.len() && is_word(bytes[end]))
+                        {
+                            continue;
+                        }
+                        if header.0 <= at && at < header.1 {
+                            continue;
+                        }
+                        if m.string_only {
+                            let s = spans.get_or_insert_with(|| string_spans(&text));
+                            // Unparseable: every hit counts (sound).
+                            if let Some(s) = s
+                                && !s.iter().any(|&(a, b)| a <= at && end <= b)
+                            {
+                                continue;
+                            }
+                        }
+                        lines.insert(starts.partition_point(|&s| s <= at));
+                    }
+                }
+            }
+            if lines.is_empty() {
+                return None;
+            }
+            let tl: Vec<&str> = text.split('\n').collect();
+            let hunks = lines
+                .into_iter()
+                .map(|n| Hunk {
+                    start: n as u32,
+                    count: 1,
+                    old_start: 0,
+                    removed: vec![],
+                    added: vec![tl[n - 1].to_string()],
+                })
+                .collect();
+            Some((path.to_string(), hunks))
+        })
+        .collect();
+    found.into_iter().collect()
+}
+
+fn package_line(text: &str) -> (String, (usize, usize)) {
+    let mut at = 0;
+    for line in text.split_inclusive('\n') {
+        let t = line.trim_start();
+        if let Some(rest) = t.strip_prefix("package ") {
+            let pkg = rest.trim().trim_end_matches(';').replace('`', "");
+            return (pkg, (at, at + line.len()));
+        }
+        if !(t.is_empty()
+            || t.starts_with("//")
+            || t.starts_with("/*")
+            || t.starts_with('*')
+            || t.starts_with('@'))
+        {
+            break;
+        }
+        at += line.len();
+    }
+    (String::new(), (0, 0))
+}
+
+/// The cheapest-looking class: fewest lines, preferring one whose file names a marker.
+pub fn smoke_class<'a>(
+    classes: &'a BTreeSet<String>,
+    class_path: &BTreeMap<&str, (&str, u32)>,
+    read: &dyn Fn(&str) -> Option<String>,
+    markers: &[String],
+) -> Option<&'a String> {
+    let mut ranked: Vec<&String> = classes.iter().collect();
+    ranked.sort_by_key(|c| {
+        (
+            class_path.get(c.as_str()).map(|x| x.1).unwrap_or(1 << 30),
+            (*c).clone(),
+        )
+    });
+    if !markers.is_empty() {
+        for c in &ranked {
+            let text = class_path
+                .get(c.as_str())
+                .and_then(|(p, _)| read(p))
+                .unwrap_or_default();
+            if markers.iter().any(|m| text.contains(m.as_str())) {
+                return Some(c);
+            }
+        }
+    }
+    ranked.first().copied()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn migration_names_its_tables_not_sql_words() {
+        let t = migration_tables(
+            "-- users only in this comment\nALTER TABLE task_links ADD COLUMN note text;\nINSERT INTO public.audit_log VALUES (1);",
+        );
+        assert_eq!(
+            t,
+            ["audit_log", "task_links"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect()
+        );
+    }
+
+    #[test]
+    fn accessor_resources_drop_their_type_directory() {
+        assert_eq!(
+            resource_tokens("drawable/fa_circle.xml", "composeResources"),
+            vec!["drawable/fa_circle.xml", "fa_circle", "fa_circle.xml"]
+        );
+        assert!(
+            resource_tokens("accounting-export/legacy.csv", "resources")
+                .contains(&"accounting-export".to_string())
+        );
+    }
+
+    #[test]
+    fn string_only_mentions_skip_code_identifiers() {
+        let m = vec![Mention {
+            tokens: vec!["index".into()],
+            modules: ["m".to_string()].into_iter().collect(),
+            string_only: true,
+            ..Default::default()
+        }];
+        let read = |p: &str| -> Option<String> {
+            Some(match p {
+                "a/A.kt" => "package x\nval index = 1\n".to_string(),
+                _ => "package x\nval f = load(\"index\")\n".to_string(),
+            })
+        };
+        let got = mention_hunks(&m, &[("a/A.kt", Some("m")), ("a/B.kt", Some("m"))], &read);
+        assert_eq!(got.keys().collect::<Vec<_>>(), vec!["a/B.kt"]);
+        assert_eq!(got["a/B.kt"][0].start, 2);
+    }
+}

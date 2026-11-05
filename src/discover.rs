@@ -1,0 +1,1729 @@
+//! Gradle / KMP build discovery without running Gradle.
+//!
+//! Reads `settings.gradle(.kts)` and every project's build script with a small
+//! tokenizer shared by the Kotlin and Groovy DSLs, so a call's configuration
+//! (`implementation(project(":x"))`) and its KMP source set
+//! (`commonMain.dependencies { ... }`) come from the surrounding structure.
+//! Anything computed at configuration time (convention plugins, loops over
+//! directories) is invisible statically; `--gradle-export` asks Gradle itself.
+
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Project {
+    /// Gradle path, `:` for the root.
+    pub path: String,
+    /// Directory relative to the build root, `""` for the root.
+    pub dir: String,
+    pub build_file: Option<String>,
+    /// (configuration, target project path)
+    pub deps: BTreeSet<(String, String)>,
+    pub source_sets: BTreeMap<String, SourceSet>,
+    pub targets: BTreeSet<String>,
+    /// Test source set -> Gradle test tasks that run it.
+    pub test_tasks: BTreeMap<String, BTreeSet<String>>,
+    /// Created by Gradle as a parent of an included path, not included itself.
+    pub implicit: bool,
+    /// "cfg target" -> how a dependency found through a convention plugin, loop or helper was read
+    /// (static-exact, static-template, assumed). Literal build-script deps are absent (exact).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub dep_confidence: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SourceSet {
+    pub test: bool,
+    pub depends_on: BTreeSet<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Build {
+    pub root_name: String,
+    pub projects: Vec<Project>,
+    pub included_builds: Vec<String>,
+    /// Inputs whose change invalidates discovery (settings, build scripts).
+    pub inputs: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
+impl Build {
+    pub fn project(&self, path: &str) -> Option<&Project> {
+        self.projects.iter().find(|p| p.path == path)
+    }
+
+    /// Projects whose sources live in their own directory, longest directory first,
+    /// so a file maps to its innermost project.
+    pub fn source_modules(&self) -> Vec<&Project> {
+        let mut v: Vec<&Project> = self
+            .projects
+            .iter()
+            .filter(|p| !p.implicit || p.build_file.is_some())
+            .collect();
+        v.sort_by(|a, b| b.dir.len().cmp(&a.dir.len()).then(a.path.cmp(&b.path)));
+        v
+    }
+
+    /// Project path -> projects it may reference (itself + transitive deps).
+    pub fn visibility(&self) -> BTreeMap<String, BTreeSet<String>> {
+        let deps: BTreeMap<&str, Vec<&str>> = self
+            .projects
+            .iter()
+            .map(|p| {
+                (
+                    p.path.as_str(),
+                    p.deps
+                        .iter()
+                        .filter(|(c, _)| puts_code_on_classpath(c))
+                        .map(|(_, t)| t.as_str())
+                        .collect(),
+                )
+            })
+            .collect();
+        let mut out = BTreeMap::new();
+        for p in &self.projects {
+            let mut seen: BTreeSet<String> = BTreeSet::from([p.path.clone()]);
+            let mut q = vec![p.path.as_str()];
+            while let Some(cur) = q.pop() {
+                for &d in deps.get(cur).into_iter().flatten() {
+                    if seen.insert(d.to_string()) {
+                        q.push(d);
+                    }
+                }
+            }
+            out.insert(p.path.clone(), seen);
+        }
+        out
+    }
+}
+
+/// Tool configurations (static analysis, coverage, lint) never put a project's classes in reach of sources.
+pub fn puts_code_on_classpath(config: &str) -> bool {
+    let c = config.to_ascii_lowercase();
+    !(c.contains("detekt") || c.starts_with("kover") || c.starts_with("lint"))
+}
+
+/// Replaces static deps with the export's exact ones and drops predicted test tasks Gradle lacks.
+pub fn merge_export(stat: &mut Build, exp: &Build) {
+    for p in stat.projects.iter_mut() {
+        let Some(e) = exp.project(&p.path) else {
+            continue;
+        };
+        p.deps = e
+            .deps
+            .iter()
+            .filter(|(_, t)| *t != p.path)
+            .cloned()
+            .collect();
+        for (name, ss) in &e.source_sets {
+            if let Some(mine) = p.source_sets.get_mut(name)
+                && !ss.depends_on.is_empty()
+            {
+                mine.depends_on = ss.depends_on.clone();
+            }
+        }
+        if let Some(actual) = e.test_tasks.get("*") {
+            let kmp = e.source_sets.contains_key("commonMain")
+                || p.source_sets.contains_key("commonMain")
+                || p.source_sets.contains_key("commonTest");
+            if kmp {
+                // Leaf test source set per real task, then every test source set it (transitively) depends on.
+                let leaves: Vec<(&str, &String)> = actual
+                    .iter()
+                    .filter_map(|t| leaf_of_task(t).map(|l| (l, t)))
+                    .collect();
+                let names: Vec<String> = p
+                    .source_sets
+                    .iter()
+                    .filter(|(_, ss)| ss.test)
+                    .map(|(n, _)| n.clone())
+                    .collect();
+                // The export's hierarchy covers source sets without a directory (`iosSimulatorArm64Test`).
+                let mut hier = e.source_sets.clone();
+                for (n, ss) in &p.source_sets {
+                    hier.entry(n.clone()).or_insert_with(|| ss.clone());
+                }
+                for name in names {
+                    let tasks: BTreeSet<String> = leaves
+                        .iter()
+                        .filter(|(leaf, _)| {
+                            *leaf == name || depends_transitively(leaf, &name, &hier)
+                        })
+                        .map(|(_, t)| (*t).clone())
+                        .collect();
+                    p.test_tasks.insert(name, tasks);
+                }
+            } else {
+                for tasks in p.test_tasks.values_mut() {
+                    tasks.retain(|t| actual.contains(t));
+                }
+            }
+        }
+    }
+    stat.warnings
+        .push("project deps and test tasks from the Gradle export".into());
+}
+
+/// Leaf KMP test source set a test task runs: `jvmTest` -> jvmTest, `wasmJsBrowserTest` -> wasmJsTest,
+/// `testAndroidHostTest` -> androidHostTest, `testDebugUnitTest` -> androidUnitTest.
+fn leaf_of_task(task: &str) -> Option<&'static str> {
+    Some(match task {
+        "jvmTest" => "jvmTest",
+        "testAndroidHostTest" => "androidHostTest",
+        "testDebugUnitTest" => "androidUnitTest",
+        "jsBrowserTest" | "jsNodeTest" => "jsTest",
+        "wasmJsBrowserTest" | "wasmJsNodeTest" | "wasmJsD8Test" => "wasmJsTest",
+        "wasmWasiNodeTest" => "wasmWasiTest",
+        "iosSimulatorArm64Test" => "iosSimulatorArm64Test",
+        "iosX64Test" => "iosX64Test",
+        "macosArm64Test" => "macosArm64Test",
+        "macosX64Test" => "macosX64Test",
+        "linuxX64Test" => "linuxX64Test",
+        "mingwX64Test" => "mingwX64Test",
+        "tvosSimulatorArm64Test" => "tvosSimulatorArm64Test",
+        "watchosSimulatorArm64Test" => "watchosSimulatorArm64Test",
+        _ => return None,
+    })
+}
+
+/// The export under `<root>/build/kt-affected/export`, if every file is newer than every discovery input.
+pub fn fresh_export(root: &Path, inputs: &[String]) -> Option<(Build, Vec<String>)> {
+    let dir = root.join("build/kt-affected/export");
+    let mtime = |p: &Path| std::fs::metadata(p).and_then(|m| m.modified()).ok();
+    let newest_input = inputs.iter().filter_map(|i| mtime(&root.join(i))).max()?;
+    let mut files = Vec::new();
+    for e in std::fs::read_dir(&dir).ok()?.flatten() {
+        if mtime(&e.path())? < newest_input {
+            return None;
+        }
+        files.push(format!(
+            "build/kt-affected/export/{}",
+            e.file_name().to_string_lossy()
+        ));
+    }
+    if files.is_empty() {
+        return None;
+    }
+    files.sort();
+    Some((read_export(root, &dir).ok()?, files))
+}
+
+pub fn is_test_source_set(name: &str) -> bool {
+    name == "test" || name.ends_with("Test") || name.ends_with("test")
+}
+
+// ------------------------------------------------------------------ tokenizer
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum Tok {
+    Ident(String),
+    /// String literal body; `true` when it interpolates.
+    Str(String, bool),
+    Punct(char),
+    Newline,
+}
+
+pub(crate) fn tokenize(src: &str) -> Vec<Tok> {
+    let b = src.as_bytes();
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < b.len() {
+        let c = b[i];
+        if c == b'\n' {
+            out.push(Tok::Newline);
+            i += 1;
+        } else if c.is_ascii_whitespace() {
+            i += 1;
+        } else if c == b'/' && b.get(i + 1) == Some(&b'/') {
+            while i < b.len() && b[i] != b'\n' {
+                i += 1;
+            }
+        } else if c == b'/' && b.get(i + 1) == Some(&b'*') {
+            i += 2;
+            while i + 1 < b.len() && !(b[i] == b'*' && b[i + 1] == b'/') {
+                i += 1;
+            }
+            i += 2;
+        } else if c == b'"' || c == b'\'' {
+            let triple = b.get(i + 1) == Some(&c) && b.get(i + 2) == Some(&c);
+            let q = c;
+            i += if triple { 3 } else { 1 };
+            let start = i;
+            let mut interp = false;
+            while i < b.len() {
+                if triple {
+                    if b[i] == q && b.get(i + 1) == Some(&q) && b.get(i + 2) == Some(&q) {
+                        break;
+                    }
+                } else if b[i] == b'\\' {
+                    i += 2;
+                    continue;
+                } else if b[i] == q || b[i] == b'\n' {
+                    break;
+                }
+                if b[i] == b'$' && q == b'"' {
+                    interp = true;
+                }
+                i += 1;
+            }
+            let end = i.min(b.len());
+            out.push(Tok::Str(src[start..end].to_string(), interp));
+            i = end + if triple { 3 } else { 1 };
+        } else if c == b'`' {
+            let start = i + 1;
+            i += 1;
+            while i < b.len() && b[i] != b'`' && b[i] != b'\n' {
+                i += 1;
+            }
+            out.push(Tok::Ident(src[start..i.min(b.len())].to_string()));
+            i += 1;
+        } else if c.is_ascii_alphabetic() || c == b'_' || c == b'$' {
+            let start = i;
+            while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_' || b[i] == b'$') {
+                i += 1;
+            }
+            out.push(Tok::Ident(src[start..i].to_string()));
+        } else if c.is_ascii_digit() {
+            while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'.' || b[i] == b'_') {
+                i += 1;
+            }
+        } else {
+            out.push(Tok::Punct(c as char));
+            i += 1;
+        }
+    }
+    out
+}
+
+pub(crate) fn ident(t: &Tok) -> Option<&str> {
+    if let Tok::Ident(s) = t { Some(s) } else { None }
+}
+
+pub(crate) fn is_p(t: Option<&Tok>, c: char) -> bool {
+    matches!(t, Some(Tok::Punct(p)) if *p == c)
+}
+
+/// Index of the token closing the bracket opened at `open`.
+pub(crate) fn close_of(toks: &[Tok], open: usize) -> usize {
+    let (o, c) = match toks[open] {
+        Tok::Punct('(') => ('(', ')'),
+        Tok::Punct('{') => ('{', '}'),
+        Tok::Punct('[') => ('[', ']'),
+        _ => return open,
+    };
+    let mut depth = 0i32;
+    for (i, t) in toks.iter().enumerate().skip(open) {
+        if let Tok::Punct(p) = t {
+            if *p == o {
+                depth += 1;
+            } else if *p == c {
+                depth -= 1;
+                if depth == 0 {
+                    return i;
+                }
+            }
+        }
+    }
+    toks.len()
+}
+
+// ------------------------------------------------------------------ settings
+
+struct Settings {
+    root_name: Option<String>,
+    includes: Vec<(String, bool)>, // (path, flat)
+    project_dirs: BTreeMap<String, String>,
+    included_builds: Vec<String>,
+    warnings: Vec<String>,
+}
+
+fn strip_dir_prefix(s: &str) -> String {
+    let mut s = s.to_string();
+    for p in [
+        "${rootDir}/",
+        "$rootDir/",
+        "${settingsDir}/",
+        "$settingsDir/",
+        "${rootProject.projectDir}/",
+    ] {
+        if let Some(r) = s.strip_prefix(p) {
+            s = r.to_string();
+        }
+    }
+    s.trim_start_matches("./").trim_end_matches('/').to_string()
+}
+
+fn norm_path(p: &str) -> String {
+    if p.starts_with(':') {
+        p.to_string()
+    } else {
+        format!(":{p}")
+    }
+}
+
+fn parse_settings(text: &str) -> Settings {
+    let toks = tokenize(text);
+    let mut s = Settings {
+        root_name: None,
+        includes: Vec::new(),
+        project_dirs: BTreeMap::new(),
+        included_builds: Vec::new(),
+        warnings: Vec::new(),
+    };
+    let mut i = 0;
+    while i < toks.len() {
+        match ident(&toks[i]) {
+            Some(kw @ ("include" | "includeFlat")) => {
+                let flat = kw == "includeFlat";
+                let (start, end) = if is_p(toks.get(i + 1), '(') {
+                    (i + 2, close_of(&toks, i + 1))
+                } else {
+                    // Groovy command form: strings separated by commas, a trailing comma continues the line.
+                    let mut j = i + 1;
+                    while j < toks.len() {
+                        if toks[j] == Tok::Newline && !is_p(toks.get(j.wrapping_sub(1)), ',') {
+                            break;
+                        }
+                        j += 1;
+                    }
+                    (i + 1, j)
+                };
+                let mut dynamic = false;
+                for t in &toks[start..end.min(toks.len())] {
+                    match t {
+                        Tok::Str(v, false) => s.includes.push((norm_path(v), flat)),
+                        Tok::Str(_, true) | Tok::Ident(_) => dynamic = true,
+                        _ => {}
+                    }
+                }
+                if dynamic {
+                    s.warnings.push(format!(
+                        "{kw}: non-literal argument; projects it adds need --gradle-export"
+                    ));
+                }
+                i = end;
+            }
+            Some("includeBuild") => {
+                let j = if is_p(toks.get(i + 1), '(') {
+                    i + 2
+                } else {
+                    i + 1
+                };
+                if let Some(Tok::Str(v, _)) = toks.get(j) {
+                    s.included_builds.push(strip_dir_prefix(v));
+                }
+                i = j;
+            }
+            Some("rootProject")
+                if is_p(toks.get(i + 1), '.')
+                    && ident_at(&toks, i + 2) == Some("name")
+                    && is_p(toks.get(i + 3), '=') =>
+            {
+                if let Some(Tok::Str(v, _)) = toks.get(i + 4) {
+                    s.root_name = Some(v.clone());
+                }
+                i += 5;
+            }
+            Some("project") if is_p(toks.get(i + 1), '(') => {
+                // project(":x").projectDir = file("p") | File(rootDir, "p") | new File(settingsDir, "p")
+                let close = close_of(&toks, i + 1);
+                let path = match toks.get(i + 2) {
+                    Some(Tok::Str(v, _)) => Some(norm_path(v)),
+                    _ => None,
+                };
+                if let Some(path) = path
+                    && is_p(toks.get(close + 1), '.')
+                    && ident_at(&toks, close + 2) == Some("projectDir")
+                    && is_p(toks.get(close + 3), '=')
+                {
+                    let rhs = &toks[close + 4..(close + 12).min(toks.len())];
+                    if let Some(dir) = rhs.iter().find_map(|t| {
+                        if let Tok::Str(v, _) = t {
+                            Some(v.clone())
+                        } else {
+                            None
+                        }
+                    }) {
+                        s.project_dirs.insert(path, strip_dir_prefix(&dir));
+                    }
+                }
+                i = close + 1;
+            }
+            Some("buildFileName") => {
+                s.warnings
+                    .push("buildFileName is customised; build scripts may be missed".into());
+                i += 1;
+            }
+            _ => i += 1,
+        }
+    }
+    s
+}
+
+pub(crate) fn ident_at(toks: &[Tok], i: usize) -> Option<&str> {
+    toks.get(i).and_then(ident)
+}
+
+// ------------------------------------------------------------------ build scripts
+
+/// `foo-bar_baz` -> `fooBarBaz` (Gradle's typesafe project accessor naming).
+pub fn accessor_name(segment: &str) -> String {
+    let mut out = String::new();
+    let mut up = false;
+    for (i, c) in segment.chars().enumerate() {
+        if c == '-' || c == '_' || c == '.' || c == ' ' {
+            up = true;
+        } else if up && i > 0 {
+            out.extend(c.to_uppercase());
+            up = false;
+        } else {
+            out.push(c);
+            up = false;
+        }
+    }
+    out
+}
+
+pub(crate) const KMP_TARGETS: &[&str] = &[
+    "jvm",
+    "androidTarget",
+    "androidLibrary",
+    "js",
+    "wasmJs",
+    "wasmWasi",
+    "iosArm64",
+    "iosX64",
+    "iosSimulatorArm64",
+    "macosArm64",
+    "macosX64",
+    "tvosArm64",
+    "tvosX64",
+    "tvosSimulatorArm64",
+    "watchosArm32",
+    "watchosArm64",
+    "watchosX64",
+    "watchosSimulatorArm64",
+    "watchosDeviceArm64",
+    "linuxX64",
+    "linuxArm64",
+    "mingwX64",
+    "androidNativeArm32",
+    "androidNativeArm64",
+    "androidNativeX86",
+    "androidNativeX64",
+];
+
+struct ScriptFacts {
+    deps: BTreeSet<(String, String)>,
+    targets: BTreeSet<String>,
+    depends_on: BTreeMap<String, BTreeSet<String>>,
+    plugins: BTreeSet<String>,
+    js_envs: BTreeMap<String, BTreeSet<String>>, // target -> {browser, nodejs, d8}
+}
+
+fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+        None => String::new(),
+    }
+}
+
+/// Source set a `{` block names: `commonMain.dependencies {`, and under `sourceSets`:
+/// `val x by getting {`, `getByName("x") {`, `x.configure {`, `x {`.
+pub(crate) fn block_source_set(
+    label: &[Tok],
+    parent_is_ss: bool,
+    inside_ss: bool,
+) -> Option<String> {
+    let ids: Vec<&str> = label.iter().filter_map(ident).collect();
+    if let [.., ss, "dependencies"] = ids.as_slice()
+        && label.len() >= 3
+        && is_p(label.get(label.len() - 2), '.')
+        && !matches!(*ss, "kotlin" | "project" | "buildscript")
+    {
+        return Some(ss.to_string());
+    }
+    let ss_context = inside_ss || ids.contains(&"sourceSets");
+    if !ss_context {
+        return None;
+    }
+    if let ["val", ss, "by", "getting" | "creating" | "registering"] = ids.as_slice() {
+        return Some(ss.to_string());
+    }
+    if matches!(
+        ids.last(),
+        Some(&("getByName" | "named" | "maybeCreate" | "create" | "register"))
+    ) && let Some(Tok::Str(v, false)) = label.iter().find(|t| matches!(t, Tok::Str(..)))
+    {
+        return Some(v.clone());
+    }
+    if parent_is_ss
+        && let [ss, "configure"] | [ss] = ids.as_slice()
+        && label.len() <= 3
+        && !matches!(*ss, "all" | "configureEach" | "matching")
+    {
+        return Some(ss.to_string());
+    }
+    None
+}
+
+fn parse_script(text: &str, accessors: &BTreeMap<Vec<String>, String>, here: &str) -> ScriptFacts {
+    let toks = tokenize(text);
+    let mut f = ScriptFacts {
+        deps: BTreeSet::new(),
+        targets: BTreeSet::new(),
+        depends_on: BTreeMap::new(),
+        plugins: BTreeSet::new(),
+        js_envs: BTreeMap::new(),
+    };
+    // Block stack: (source set it names, is `sourceSets`, kmp target it configures, is `plugins`)
+    let mut blocks: Vec<(Option<String>, bool, Option<String>, bool)> = Vec::new();
+    let mut kotlin_depth: Vec<bool> = Vec::new();
+    // Call stack of enclosing `name(` callees.
+    let mut calls: Vec<Option<String>> = Vec::new();
+    let mut stmt_start = 0usize;
+    let mut i = 0;
+    let resolve = |p: &str| -> String {
+        if p.starts_with(':') {
+            p.to_string()
+        } else if here == ":" {
+            format!(":{p}")
+        } else {
+            format!("{here}:{p}")
+        }
+    };
+    let current_ss = |blocks: &Vec<(Option<String>, bool, Option<String>, bool)>| {
+        blocks.iter().rev().find_map(|b| b.0.clone())
+    };
+    let config_for = |callee: Option<&str>, ss: Option<String>| -> String {
+        let c = callee.unwrap_or("?").to_string();
+        match ss {
+            Some(ss) if !c.starts_with(&ss) => format!("{ss}{}", capitalize(&c)),
+            _ => c,
+        }
+    };
+    while i < toks.len() {
+        match &toks[i] {
+            Tok::Newline | Tok::Punct(';') => stmt_start = i + 1,
+            Tok::Punct('{') => {
+                let label = &toks[stmt_start..i];
+                let inside_ss = blocks.iter().any(|b| b.1);
+                let parent_is_ss = blocks.last().map(|b| b.1).unwrap_or(false);
+                let ss = block_source_set(label, parent_is_ss, inside_ss);
+                let ids: Vec<&str> = label.iter().filter_map(ident).collect();
+                let is_ss = ids.last() == Some(&"sourceSets");
+                let in_kotlin = kotlin_depth.iter().any(|k| *k);
+                let mut target = ids
+                    .iter()
+                    .rev()
+                    .find(|i| KMP_TARGETS.contains(i))
+                    .map(|s| s.to_string());
+                if in_kotlin && ids.as_slice() == ["android"] {
+                    target = Some("androidLibrary".into());
+                }
+                kotlin_depth.push(ids.last() == Some(&"kotlin"));
+                let in_plugins = ids.last() == Some(&"plugins");
+                if let Some(t) = &target {
+                    f.targets.insert(t.clone());
+                }
+                if let Some(env) = ids
+                    .last()
+                    .filter(|i| matches!(**i, "browser" | "nodejs" | "d8"))
+                    && let Some(t) = blocks.iter().rev().find_map(|b| b.2.clone())
+                {
+                    f.js_envs.entry(t).or_default().insert(env.to_string());
+                }
+                blocks.push((ss, is_ss, target, in_plugins));
+                stmt_start = i + 1;
+            }
+            Tok::Punct('}') => {
+                blocks.pop();
+                kotlin_depth.pop();
+                stmt_start = i + 1;
+            }
+            Tok::Punct('(') => {
+                let callee = if i > 0 {
+                    ident(&toks[i - 1]).map(|s| s.to_string())
+                } else {
+                    None
+                };
+                if let Some(c) = &callee {
+                    if KMP_TARGETS.contains(&c.as_str()) && !is_p(toks.get(i.wrapping_sub(2)), '.')
+                    {
+                        f.targets.insert(c.clone());
+                    }
+                    if matches!(c.as_str(), "browser" | "nodejs" | "d8")
+                        && let Some(t) = blocks.iter().rev().find_map(|b| b.2.clone())
+                    {
+                        f.js_envs.entry(t).or_default().insert(c.clone());
+                    }
+                }
+                calls.push(callee);
+            }
+            Tok::Punct(')') => {
+                calls.pop();
+            }
+            Tok::Ident(id) => {
+                let id = id.as_str();
+                let in_plugins = blocks.last().map(|b| b.3).unwrap_or(false);
+                if in_plugins
+                    && matches!(id, "id" | "kotlin" | "alias")
+                    && is_p(toks.get(i + 1), '(')
+                {
+                    let close = close_of(&toks, i + 1);
+                    let inner: Vec<String> = toks[i + 2..close.min(toks.len())]
+                        .iter()
+                        .map(|t| match t {
+                            Tok::Ident(s) | Tok::Str(s, _) => s.clone(),
+                            Tok::Punct(c) => c.to_string(),
+                            Tok::Newline => String::new(),
+                        })
+                        .collect();
+                    let v = inner.concat();
+                    f.plugins.insert(if id == "kotlin" {
+                        format!("org.jetbrains.kotlin.{v}")
+                    } else {
+                        v
+                    });
+                } else if in_plugins
+                    && matches!(id, "java" | "application" | "java-library")
+                    && !is_p(toks.get(i + 1), '.')
+                {
+                    f.plugins.insert(id.to_string());
+                }
+                if id == "project" && !is_p(toks.get(i.wrapping_sub(1)), '.') {
+                    // project(":x") / project(path = ":x") / Groovy `project(':x')`, `project path: ':x'`
+                    let command_form = matches!(toks.get(i + 1), Some(Tok::Str(..)))
+                        || (ident_at(&toks, i + 1) == Some("path") && is_p(toks.get(i + 2), ':'));
+                    let args = if is_p(toks.get(i + 1), '(') {
+                        (i + 2, close_of(&toks, i + 1))
+                    } else if command_form {
+                        (i + 1, (i + 4).min(toks.len()))
+                    } else {
+                        (i + 1, i + 1)
+                    };
+                    let mut path = None;
+                    let mut k = args.0;
+                    while k < args.1.min(toks.len()) {
+                        if let Tok::Str(v, false) = &toks[k] {
+                            let named =
+                                k >= 2 && matches!(&toks[k - 2], Tok::Ident(n) if n != "path");
+                            let after_eq =
+                                k >= 1 && matches!(toks[k - 1], Tok::Punct('=') | Tok::Punct(':'));
+                            if !(named && after_eq) {
+                                path = Some(v.clone());
+                                break;
+                            }
+                        }
+                        k += 1;
+                    }
+                    if let Some(p) = path {
+                        let callee = enclosing_config(&calls, &toks, stmt_start, i);
+                        f.deps.insert((
+                            config_for(callee.as_deref(), current_ss(&blocks)),
+                            resolve(&p),
+                        ));
+                    }
+                } else if id == "projects"
+                    && is_p(toks.get(i + 1), '.')
+                    && !is_p(toks.get(i.wrapping_sub(1)), '.')
+                {
+                    let mut chain = Vec::new();
+                    let mut k = i + 1;
+                    while is_p(toks.get(k), '.') {
+                        if let Some(n) = ident_at(&toks, k + 1) {
+                            chain.push(n.to_string());
+                            k += 2;
+                        } else {
+                            break;
+                        }
+                    }
+                    for len in (1..=chain.len()).rev() {
+                        if let Some(target) = accessors.get(&chain[..len]) {
+                            let callee = enclosing_config(&calls, &toks, stmt_start, i);
+                            f.deps.insert((
+                                config_for(callee.as_deref(), current_ss(&blocks)),
+                                target.clone(),
+                            ));
+                            break;
+                        }
+                    }
+                    i = k;
+                    continue;
+                } else if id == "dependsOn" && blocks.iter().any(|b| b.1) {
+                    // x.dependsOn(y) or dependsOn(y) inside a source set block
+                    let src = if is_p(toks.get(i.wrapping_sub(1)), '.') {
+                        ident_at(&toks, i.wrapping_sub(2)).map(|s| s.to_string())
+                    } else {
+                        current_ss(&blocks)
+                    };
+                    if let (Some(src), true) = (src, is_p(toks.get(i + 1), '(')) {
+                        let close = close_of(&toks, i + 1);
+                        let arg = toks[i + 2..close.min(toks.len())]
+                            .iter()
+                            .find_map(|t| match t {
+                                Tok::Str(v, false) => Some(v.clone()),
+                                Tok::Ident(v)
+                                    if !matches!(
+                                        v.as_str(),
+                                        "getByName" | "named" | "sourceSets" | "get" | "kotlin"
+                                    ) =>
+                                {
+                                    Some(v.clone())
+                                }
+                                _ => None,
+                            });
+                        if let Some(a) = arg {
+                            f.depends_on.entry(src).or_default().insert(a);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    f
+}
+
+/// The configuration a dependency notation sits in: the nearest enclosing call that is not a
+/// notation helper, or (Groovy command syntax) the identifier opening the statement.
+fn enclosing_config(
+    calls: &[Option<String>],
+    toks: &[Tok],
+    stmt_start: usize,
+    at: usize,
+) -> Option<String> {
+    const HELPERS: &[&str] = &[
+        "project",
+        "platform",
+        "enforcedPlatform",
+        "testFixtures",
+        "add",
+        "files",
+        "listOf",
+        "setOf",
+    ];
+    for c in calls.iter().rev().flatten() {
+        if !HELPERS.contains(&c.as_str()) {
+            return Some(c.clone());
+        }
+    }
+    // `add("implementation", project(":x"))`
+    if calls.iter().rev().flatten().any(|c| c == "add")
+        && let Some(Tok::Str(v, _)) = toks[stmt_start..at]
+            .iter()
+            .find(|t| matches!(t, Tok::Str(..)))
+    {
+        return Some(v.clone());
+    }
+    toks[stmt_start..at]
+        .iter()
+        .find_map(ident)
+        .map(|s| s.to_string())
+}
+
+// ------------------------------------------------------------------ KMP hierarchy + test tasks
+
+/// Default hierarchy template parent of a source-set *stem* (name without Main/Test).
+/// `applyDefaultHierarchyTemplate { group("nonWeb") { withJvm(); withIos() } }` -> ("nonWeb", [jvm, ios]).
+fn template_groups(toks: &[Tok]) -> Vec<(String, Vec<String>)> {
+    let mut out = Vec::new();
+    let Some(t) =
+        (0..toks.len()).find(|&k| ident(&toks[k]) == Some("applyDefaultHierarchyTemplate"))
+    else {
+        return out;
+    };
+    let Some(open) = (t..toks.len()).find(|&k| is_p(toks.get(k), '{')) else {
+        return out;
+    };
+    let close = close_of(toks, open);
+    let mut k = open;
+    while k < close {
+        if ident(&toks[k]) == Some("group")
+            && is_p(toks.get(k + 1), '(')
+            && let (Some(Tok::Str(g, false)), Some(b)) = (
+                toks.get(k + 2),
+                (k..close).find(|&j| is_p(toks.get(j), '{')),
+            )
+        {
+            let end = close_of(toks, b);
+            let members = toks[b..end]
+                .iter()
+                .filter_map(ident)
+                .filter_map(|i| i.strip_prefix("with"))
+                .filter(|m| !m.is_empty())
+                .map(|m| {
+                    let m = m[..1].to_lowercase() + &m[1..];
+                    if m == "androidTarget" || m == "androidLibrary" {
+                        "android".to_string()
+                    } else {
+                        m
+                    }
+                })
+                .collect();
+            out.push((g.clone(), members));
+        }
+        k += 1;
+    }
+    out
+}
+
+fn template_parent(stem: &str) -> Option<&'static str> {
+    Some(match stem {
+        "jvm" | "android" | "androidHost" | "androidUnit" | "native" | "web" | "wasmWasi" => {
+            "common"
+        }
+        "js" | "wasmJs" => "web",
+        "apple" | "linux" | "mingw" | "androidNative" => "native",
+        "ios" | "macos" | "tvos" | "watchos" => "apple",
+        s if s.starts_with("ios") => "ios",
+        s if s.starts_with("macos") => "macos",
+        s if s.starts_with("tvos") => "tvos",
+        s if s.starts_with("watchos") => "watchos",
+        s if s.starts_with("linux") => "linux",
+        s if s.starts_with("mingw") => "mingw",
+        s if s.starts_with("androidNative") => "androidNative",
+        _ => return None,
+    })
+}
+
+fn split_stem(name: &str) -> Option<(&str, &str)> {
+    for suf in ["Main", "Test"] {
+        if let Some(stem) = name.strip_suffix(suf)
+            && !stem.is_empty()
+        {
+            return Some((stem, suf));
+        }
+    }
+    None
+}
+
+/// Leaf KMP target that a source-set stem belongs to, if it is one.
+fn target_of_stem(stem: &str) -> Option<&str> {
+    match stem {
+        "jvm" | "js" | "wasmJs" | "wasmWasi" => Some(stem),
+        "android" | "androidUnit" | "androidHost" => Some("android"),
+        s if KMP_TARGETS.contains(&s) => Some(s),
+        _ => None,
+    }
+}
+
+fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
+    match target {
+        "jvm" => vec!["jvmTest".into()],
+        "android" | "androidTarget" | "androidLibrary" => {
+            // Only what the build or the layout states: a guessed task name fails the Gradle invocation.
+            if project.android_target_call {
+                vec!["testDebugUnitTest".into()]
+            } else if project.android_host_tests
+                && (project.kmp_android_library || !project.android_unit_dir)
+            {
+                vec!["testAndroidHostTest".into()]
+            } else if project.android_unit_dir {
+                vec!["testDebugUnitTest".into()]
+            } else {
+                vec![]
+            }
+        }
+        "js" | "wasmJs" => {
+            let envs = project.js_envs.get(target).cloned().unwrap_or_default();
+            let mut v: Vec<String> = Vec::new();
+            if envs.is_empty() || envs.contains("browser") {
+                v.push(format!("{target}BrowserTest"));
+            }
+            if envs.contains("nodejs") {
+                v.push(format!("{target}NodeTest"));
+            }
+            if envs.contains("d8") {
+                v.push(format!("{target}D8Test"));
+            }
+            v
+        }
+        "wasmWasi" => vec!["wasmWasiNodeTest".into()],
+        // Device-only native targets have no test task.
+        "iosArm64" | "tvosArm64" | "watchosArm32" | "watchosArm64" | "watchosDeviceArm64"
+        | "androidNativeArm32" | "androidNativeArm64" | "androidNativeX86" | "androidNativeX64"
+        | "linuxArm64" => vec![],
+        t => vec![format!("{t}Test")],
+    }
+}
+
+struct ProjectShape {
+    kmp: bool,
+    android: bool,
+    kmp_android_library: bool,
+    android_host_tests: bool,
+    android_target_call: bool,
+    android_unit_dir: bool,
+    js_envs: BTreeMap<String, BTreeSet<String>>,
+}
+
+fn test_tasks_for(
+    name: &str,
+    sets: &BTreeMap<String, SourceSet>,
+    targets: &BTreeSet<String>,
+    shape: &ProjectShape,
+) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    if !shape.kmp {
+        if name == "test" {
+            out.insert(if shape.android {
+                "testDebugUnitTest".into()
+            } else {
+                "test".into()
+            });
+        } else if name == "androidTest" {
+            out.insert("connectedDebugAndroidTest".into());
+        } else {
+            // A custom JVM test suite (`integrationTest`) gets a task of the same name.
+            out.insert(name.to_string());
+        }
+        return out;
+    }
+    match name {
+        "androidUnitTest" | "androidHostTest" => {
+            out.extend(leaf_test_tasks("android", shape));
+            return out;
+        }
+        // Device tests run under managed-device or connected tasks whose names only Gradle knows.
+        "androidInstrumentedTest" | "androidDeviceTest" => return out,
+        _ => {}
+    }
+    // Every leaf test source set that (transitively) depends on `name` runs it.
+    let mut leaves = BTreeSet::new();
+    for t in targets {
+        let stem = if matches!(t.as_str(), "androidTarget" | "androidLibrary") {
+            "android"
+        } else {
+            t.as_str()
+        };
+        let leaf = format!("{stem}Test");
+        if depends_transitively(&leaf, name, sets) || leaf == name {
+            leaves.insert(t.clone());
+        }
+    }
+    for t in leaves {
+        out.extend(leaf_test_tasks(&t, shape));
+    }
+    out
+}
+
+fn depends_transitively(from: &str, to: &str, sets: &BTreeMap<String, SourceSet>) -> bool {
+    let mut seen = BTreeSet::new();
+    let mut q = vec![from.to_string()];
+    while let Some(cur) = q.pop() {
+        if cur == to {
+            return true;
+        }
+        if !seen.insert(cur.clone()) {
+            continue;
+        }
+        if let Some(ss) = sets.get(&cur) {
+            q.extend(ss.depends_on.iter().cloned());
+        } else if let Some((stem, suf)) = split_stem(&cur)
+            && let Some(p) = template_parent(stem)
+        {
+            q.push(format!("{p}{suf}"));
+        }
+    }
+    false
+}
+
+// ------------------------------------------------------------------ discover
+
+fn read(root: &Path, rel: &str) -> Option<String> {
+    std::fs::read_to_string(root.join(rel)).ok()
+}
+
+fn script_in(root: &Path, dir: &str, stem: &str) -> Option<String> {
+    for ext in [".gradle.kts", ".gradle"] {
+        let rel = if dir.is_empty() {
+            format!("{stem}{ext}")
+        } else {
+            format!("{dir}/{stem}{ext}")
+        };
+        if root.join(&rel).is_file() {
+            return Some(rel);
+        }
+    }
+    None
+}
+
+/// Static discovery, refined by a current Gradle export when one exists.
+pub fn discover_best(root: &Path) -> Build {
+    let mut b = discover(root);
+    if let Some((exp, files)) = fresh_export(root, &b.inputs) {
+        merge_export(&mut b, &exp);
+        b.inputs.extend(files);
+    } else if !b.included_builds.is_empty() {
+        b.warnings.push(
+            "included builds may contribute convention plugins that add dependencies static discovery cannot see; \
+             run `kt-affected discover --gradle-export` for exact ones"
+                .into(),
+        );
+    }
+    b
+}
+
+pub fn discover(root: &Path) -> Build {
+    let mut warnings = Vec::new();
+    let settings_file = script_in(root, "", "settings");
+    let settings = settings_file
+        .as_deref()
+        .and_then(|f| read(root, f))
+        .map(|t| parse_settings(&t));
+    let settings = settings.unwrap_or_else(|| {
+        warnings.push("no settings.gradle(.kts): single-project build".into());
+        Settings {
+            root_name: None,
+            includes: vec![],
+            project_dirs: BTreeMap::new(),
+            included_builds: vec![],
+            warnings: vec![],
+        }
+    });
+    warnings.extend(settings.warnings.iter().cloned());
+    let root_name = settings.root_name.clone().unwrap_or_else(|| {
+        root.file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    });
+
+    // path -> (dir, implicit)
+    let mut paths: BTreeMap<String, (String, bool)> = BTreeMap::new();
+    paths.insert(":".into(), (String::new(), false));
+    for (p, flat) in &settings.includes {
+        let segs: Vec<&str> = p
+            .trim_start_matches(':')
+            .split(':')
+            .filter(|s| !s.is_empty())
+            .collect();
+        for k in 1..segs.len() {
+            let parent = format!(":{}", segs[..k].join(":"));
+            paths
+                .entry(parent)
+                .or_insert_with(|| (segs[..k].join("/"), true));
+        }
+        let dir = if *flat {
+            format!("../{}", segs.join("/"))
+        } else {
+            segs.join("/")
+        };
+        paths.insert(p.clone(), (dir, false));
+    }
+    // projectDir overrides; a child without its own override sits under its parent's dir.
+    let keys: Vec<String> = paths.keys().cloned().collect();
+    for k in &keys {
+        if let Some(d) = settings.project_dirs.get(k) {
+            paths.get_mut(k).unwrap().0 = d.clone();
+        } else if k != ":" {
+            let segs: Vec<&str> = k.trim_start_matches(':').split(':').collect();
+            for n in (1..segs.len()).rev() {
+                let anc = format!(":{}", segs[..n].join(":"));
+                if let Some(d) = settings.project_dirs.get(&anc) {
+                    paths.get_mut(k).unwrap().0 = format!("{d}/{}", segs[n..].join("/"));
+                    break;
+                }
+            }
+        }
+    }
+
+    let mut accessors: BTreeMap<Vec<String>, String> = BTreeMap::new();
+    for p in paths.keys() {
+        if p == ":" {
+            accessors.insert(vec![accessor_name(&root_name)], ":".into());
+            continue;
+        }
+        accessors.insert(
+            p.trim_start_matches(':')
+                .split(':')
+                .map(accessor_name)
+                .collect(),
+            p.clone(),
+        );
+    }
+
+    let mut inputs: Vec<String> = settings_file.into_iter().collect();
+    let conv = crate::conventions::Conventions::load(root, &settings.included_builds);
+    inputs.extend(conv.inputs.iter().cloned());
+    warnings.extend(conv.warnings.iter().cloned());
+    let mut projects = Vec::new();
+    // Warning from a shared plugin -> the projects it applies to.
+    let mut conv_warnings: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (path, (dir, implicit)) in &paths {
+        if !dir.is_empty() && !root.join(dir).is_dir() {
+            warnings.push(format!("{path}: directory {dir} missing"));
+            continue;
+        }
+        let build_file = script_in(root, dir, "build");
+        let text = build_file
+            .as_deref()
+            .and_then(|f| read(root, f))
+            .unwrap_or_default();
+        if let Some(b) = &build_file {
+            inputs.push(b.clone());
+        }
+        let mut facts = parse_script(&text, &accessors, path);
+        let mut dep_confidence = BTreeMap::new();
+        let host_tests_by_plugin;
+        let if_config_exists;
+        let custom_tests;
+        {
+            let fx = conv.effects(
+                path,
+                &facts.plugins,
+                &tokenize(&text),
+                build_file.as_deref().unwrap_or(""),
+            );
+            for ((c, t), conf) in fx.deps {
+                if c == "?" {
+                    warnings.push(format!(
+                        "{path}: dependency on {t} through an unresolved configuration"
+                    ));
+                    continue;
+                }
+                if facts.deps.insert((c.clone(), t.clone())) {
+                    dep_confidence.insert(format!("{c} {t}"), conf.label().to_string());
+                }
+            }
+            facts.plugins.extend(fx.plugins);
+            facts.targets.extend(fx.targets);
+            for (t, e) in fx.js_envs {
+                facts.js_envs.entry(t).or_default().extend(e);
+            }
+            host_tests_by_plugin = fx.android_host_tests;
+            if_config_exists = fx.if_config_exists;
+            custom_tests = fx.custom_tests;
+            for w in fx.warnings {
+                conv_warnings.entry(w).or_default().push(path.clone());
+            }
+        }
+        let mut source_sets: BTreeMap<String, SourceSet> = BTreeMap::new();
+        let src = if dir.is_empty() {
+            root.join("src")
+        } else {
+            root.join(dir).join("src")
+        };
+        if let Ok(rd) = std::fs::read_dir(&src) {
+            for e in rd.flatten() {
+                if e.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                    let n = e.file_name().to_string_lossy().into_owned();
+                    source_sets.insert(
+                        n.clone(),
+                        SourceSet {
+                            test: is_test_source_set(&n),
+                            depends_on: BTreeSet::new(),
+                        },
+                    );
+                }
+            }
+        }
+        let plugin_text = facts
+            .plugins
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .to_lowercase();
+        let kmp = plugin_text.contains("multiplatform")
+            || plugin_text.contains("kmp")
+            || source_sets.contains_key("commonMain")
+            || source_sets.contains_key("commonTest")
+            || source_sets
+                .keys()
+                .any(|k| k.starts_with("jvm") || k.starts_with("wasmJs"));
+        let android = plugin_text.contains("android")
+            || text.contains("android {")
+            || text.contains("androidTarget");
+        let kmp_android_library = facts.targets.contains("androidLibrary")
+            || plugin_text.contains("kotlin.multiplatform.library");
+        let android_host_tests = host_tests_by_plugin
+            || text.contains("withHostTest")
+            || source_sets.contains_key("androidHostTest");
+        let mut targets = facts.targets.clone();
+        for name in source_sets.keys() {
+            if let Some((stem, _)) = split_stem(name)
+                && let Some(t) = target_of_stem(stem)
+            {
+                targets.insert(t.to_string());
+            }
+        }
+        if kmp {
+            for (name, ss) in source_sets.iter_mut() {
+                if let Some(explicit) = facts.depends_on.get(name) {
+                    ss.depends_on.extend(explicit.iter().cloned());
+                }
+                if ss.depends_on.is_empty()
+                    && let Some((stem, suf)) = split_stem(name)
+                {
+                    if let Some(p) = template_parent(stem) {
+                        ss.depends_on.insert(format!("{p}{suf}"));
+                    } else if stem.starts_with("android") {
+                        ss.depends_on.insert(format!("common{suf}"));
+                    }
+                }
+                // Explicit dependsOn edges whose source set has no directory still shape the hierarchy.
+            }
+            for (name, deps) in &facts.depends_on {
+                source_sets
+                    .entry(name.clone())
+                    .or_insert_with(|| SourceSet {
+                        test: is_test_source_set(name),
+                        depends_on: deps.clone(),
+                    });
+            }
+        }
+        let shape = ProjectShape {
+            kmp,
+            android,
+            kmp_android_library,
+            android_host_tests,
+            android_target_call: facts.targets.contains("androidTarget"),
+            android_unit_dir: source_sets.contains_key("androidUnitTest"),
+            js_envs: facts.js_envs.clone(),
+        };
+        // Custom hierarchy-template groups: members gain the group as a parent; members without a
+        // directory still route through it, so a virtual hierarchy carries them.
+        let mut hier = source_sets.clone();
+        if kmp {
+            for (group, members) in template_groups(&tokenize(&text)) {
+                for suf in ["Main", "Test"] {
+                    for m in &members {
+                        let child = format!("{m}{suf}");
+                        let parent = template_parent(m).map(|p| format!("{p}{suf}"));
+                        for sets in [&mut source_sets, &mut hier] {
+                            if let Some(ss) = sets.get_mut(&child) {
+                                ss.depends_on.insert(format!("{group}{suf}"));
+                            }
+                        }
+                        let e = hier.entry(child.clone()).or_insert_with(|| SourceSet {
+                            test: false,
+                            depends_on: parent.into_iter().collect(),
+                        });
+                        e.depends_on.insert(format!("{group}{suf}"));
+                    }
+                }
+            }
+        }
+        let mut test_tasks = BTreeMap::new();
+        for (name, ss) in &source_sets {
+            if ss.test {
+                test_tasks.insert(name.clone(), test_tasks_for(name, &hier, &targets, &shape));
+            }
+        }
+        // A hand-registered test task runs wherever that source set's own tasks run.
+        for (ss, task) in &custom_tests {
+            let ss = ss
+                .clone()
+                .unwrap_or_else(|| if kmp { "jvmTest".into() } else { "test".into() });
+            let own = test_tasks_for(&ss, &hier, &targets, &shape);
+            for (name, tasks) in test_tasks.iter_mut() {
+                if *name == ss || tasks.iter().any(|t| own.contains(t)) {
+                    tasks.insert(task.clone());
+                }
+            }
+        }
+        let known: BTreeSet<&String> = paths.keys().collect();
+        let mut deps = BTreeSet::new();
+        // A KMP project's configurations are prefixed by a target or `common`; a JVM project's are not.
+        let config_exists = |c: &str| {
+            let prefixed = KMP_TARGETS
+                .iter()
+                .chain(&["common", "android"])
+                .any(|t| c.starts_with(t) && c[t.len()..].starts_with(char::is_uppercase));
+            let target_ok = KMP_TARGETS
+                .iter()
+                .chain(&["common"])
+                .any(|t| c.starts_with(t) && (*t == "common" || targets.contains(*t)));
+            if kmp {
+                prefixed && target_ok
+            } else {
+                !prefixed
+            }
+        };
+        for (c, t) in facts.deps {
+            if if_config_exists.contains(&(c.clone(), t.clone())) && !config_exists(&c) {
+                continue;
+            }
+            if known.contains(&t) {
+                deps.insert((c, t));
+            } else {
+                warnings.push(format!("{path}: dependency on unknown project {t}"));
+            }
+        }
+        dep_confidence.retain(|k: &String, _| deps.iter().any(|(c, t)| *k == format!("{c} {t}")));
+        projects.push(Project {
+            path: path.clone(),
+            dir: dir.clone(),
+            build_file,
+            deps,
+            source_sets,
+            targets,
+            test_tasks,
+            implicit: *implicit,
+            dep_confidence,
+        });
+    }
+    for (w, ps) in conv_warnings {
+        warnings.push(match ps.as_slice() {
+            [p] => format!("{w} (project {p})"),
+            _ => format!("{w} ({} projects, e.g. {})", ps.len(), ps[0]),
+        });
+    }
+    Build {
+        root_name,
+        projects,
+        included_builds: settings.included_builds,
+        inputs,
+        warnings,
+    }
+}
+
+// ------------------------------------------------------------------ Gradle export
+
+pub const INIT_SCRIPT: &str = include_str!("../gradle/kt-affected-export.init.gradle");
+
+#[derive(Debug, Deserialize)]
+struct ExportProject {
+    path: String,
+    dir: String,
+    #[serde(rename = "buildFile")]
+    build_file: Option<String>,
+    deps: Vec<(String, String)>,
+    #[serde(rename = "sourceSets")]
+    source_sets: BTreeMap<String, Vec<String>>,
+    #[serde(rename = "testTasks")]
+    test_tasks: Vec<String>,
+}
+
+/// Reads the per-project JSON the init script wrote under `<root>/build/kt-affected/export/`.
+pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
+    let mut projects = Vec::new();
+    for e in std::fs::read_dir(dir)?.flatten() {
+        let text = std::fs::read_to_string(e.path())?;
+        let p: ExportProject = serde_json::from_str(&text)
+            .map_err(|err| std::io::Error::other(format!("{}: {err}", e.path().display())))?;
+        let source_sets = p
+            .source_sets
+            .into_iter()
+            .map(|(n, d)| {
+                (
+                    n.clone(),
+                    SourceSet {
+                        test: is_test_source_set(&n),
+                        depends_on: d.into_iter().collect(),
+                    },
+                )
+            })
+            .collect();
+        let mut tasks = BTreeMap::new();
+        tasks.insert("*".to_string(), p.test_tasks.into_iter().collect());
+        projects.push(Project {
+            path: p.path,
+            dir: p.dir,
+            build_file: p.build_file,
+            deps: p.deps.into_iter().collect(),
+            source_sets,
+            targets: BTreeSet::new(),
+            test_tasks: tasks,
+            implicit: false,
+            dep_confidence: BTreeMap::new(),
+        });
+    }
+    projects.sort_by(|a, b| a.path.cmp(&b.path));
+    let _ = root;
+    Ok(Build {
+        root_name: String::new(),
+        projects,
+        included_builds: vec![],
+        inputs: vec![],
+        warnings: vec![],
+    })
+}
+
+pub fn write_init_script(to: &Path) -> std::io::Result<()> {
+    std::fs::write(to, INIT_SCRIPT)
+}
+
+/// Runs `./gradlew ktAffectedExport` with the shipped init script (the project's own build).
+pub fn gradle_export(root: &Path) -> std::io::Result<Build> {
+    let dir = root.join("build/kt-affected");
+    std::fs::create_dir_all(&dir)?;
+    let script = dir.join("kt-affected-export.init.gradle");
+    write_init_script(&script)?;
+    let out = root.join("build/kt-affected/export");
+    let _ = std::fs::remove_dir_all(&out);
+    let wrapper: PathBuf = if cfg!(windows) {
+        root.join("gradlew.bat")
+    } else {
+        root.join("gradlew")
+    };
+    let status = std::process::Command::new(wrapper)
+        .current_dir(root)
+        .args(["-q", "--init-script"])
+        .arg(&script)
+        .arg("ktAffectedExport")
+        .status()?;
+    if !status.success() {
+        return Err(std::io::Error::other(format!(
+            "gradle export failed: {status}"
+        )));
+    }
+    read_export(root, &out)
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct Comparison {
+    pub projects_static: usize,
+    pub projects_other: usize,
+    pub projects_matched: usize,
+    pub only_static: Vec<String>,
+    pub only_other: Vec<String>,
+    pub dep_edges_static: usize,
+    pub dep_edges_other: usize,
+    pub dep_edges_matched: usize,
+    pub missing_deps: Vec<String>,
+    pub extra_deps: Vec<String>,
+    pub source_set_dirs_undeclared: Vec<String>,
+    pub test_task_mismatches: Vec<String>,
+}
+
+/// Static discovery vs a reference (export or another engine), at project and project-dep level.
+pub fn compare(stat: &Build, other: &Build, compare_tasks: bool) -> Comparison {
+    let sp: BTreeSet<&str> = stat
+        .projects
+        .iter()
+        .filter(|p| !p.implicit || p.build_file.is_some())
+        .map(|p| p.path.as_str())
+        .collect();
+    let op: BTreeSet<&str> = other.projects.iter().map(|p| p.path.as_str()).collect();
+    let mut c = Comparison {
+        projects_static: sp.len(),
+        projects_other: op.len(),
+        projects_matched: sp.intersection(&op).count(),
+        only_static: sp.difference(&op).map(|s| s.to_string()).collect(),
+        only_other: op.difference(&sp).map(|s| s.to_string()).collect(),
+        ..Default::default()
+    };
+    let edges = |b: &Build| -> BTreeSet<(String, String)> {
+        b.projects
+            .iter()
+            .flat_map(|p| {
+                p.deps
+                    .iter()
+                    .filter(|(_, t)| *t != p.path)
+                    .map(move |(_, t)| (p.path.clone(), t.clone()))
+            })
+            .collect()
+    };
+    let se = edges(stat);
+    let oe = edges(other);
+    c.dep_edges_static = se.len();
+    c.dep_edges_other = oe.len();
+    c.dep_edges_matched = se.intersection(&oe).count();
+    c.missing_deps = oe
+        .difference(&se)
+        .map(|(a, b)| format!("{a} -> {b}"))
+        .collect();
+    c.extra_deps = se
+        .difference(&oe)
+        .map(|(a, b)| format!("{a} -> {b}"))
+        .collect();
+    for p in &stat.projects {
+        if let Some(o) = other.project(&p.path) {
+            if o.source_sets.is_empty() {
+                continue;
+            }
+            for name in p.source_sets.keys() {
+                if !o.source_sets.contains_key(name) && !matches!(name.as_str(), "main" | "test") {
+                    c.source_set_dirs_undeclared
+                        .push(format!("{}:{name}", p.path));
+                }
+            }
+            if compare_tasks {
+                let predicted: BTreeSet<&String> = p.test_tasks.values().flatten().collect();
+                let actual: BTreeSet<&String> = o.test_tasks.values().flatten().collect();
+                for t in predicted.difference(&actual) {
+                    c.test_task_mismatches
+                        .push(format!("{}: predicted {t} not a test task", p.path));
+                }
+            }
+        }
+    }
+    c
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tmp(name: &str) -> PathBuf {
+        let d =
+            std::env::temp_dir().join(format!("kt-affected-test-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    fn write(root: &Path, rel: &str, text: &str) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(p, text).unwrap();
+    }
+
+    fn deps_of(b: &Build, p: &str) -> BTreeSet<(String, String)> {
+        b.project(p).unwrap().deps.clone()
+    }
+
+    #[test]
+    fn multi_module_jvm_kotlin_dsl() {
+        let r = tmp("jvm");
+        write(
+            &r,
+            "settings.gradle.kts",
+            "rootProject.name = \"demo\"\ninclude(\":core\", \":app\")\n// include(\":ghost\")\n",
+        );
+        write(&r, "core/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n");
+        write(
+            &r,
+            "app/build.gradle.kts",
+            "plugins { kotlin(\"jvm\") }\ndependencies {\n  implementation(project(\":core\"))\n  testImplementation(project(path = \":core\"))\n}\n",
+        );
+        write(&r, "core/src/main/kotlin/A.kt", "");
+        write(&r, "app/src/test/kotlin/T.kt", "");
+        let b = discover(&r);
+        assert_eq!(b.root_name, "demo");
+        assert!(b.project(":ghost").is_none());
+        assert_eq!(
+            deps_of(&b, ":app"),
+            BTreeSet::from([
+                ("implementation".into(), ":core".into()),
+                ("testImplementation".into(), ":core".into())
+            ])
+        );
+        assert_eq!(
+            b.project(":app").unwrap().test_tasks["test"],
+            BTreeSet::from(["test".to_string()])
+        );
+    }
+
+    #[test]
+    fn groovy_settings_and_command_syntax() {
+        let r = tmp("groovy");
+        write(
+            &r,
+            "settings.gradle",
+            "include ':lib',\n  ':tool'\nproject(':tool').projectDir = new File(settingsDir, 'tools/tool')\n",
+        );
+        write(&r, "lib/build.gradle", "apply plugin: 'java'\n");
+        write(
+            &r,
+            "tools/tool/build.gradle",
+            "dependencies {\n  implementation project(':lib')\n}\n",
+        );
+        let b = discover(&r);
+        assert_eq!(b.project(":tool").unwrap().dir, "tools/tool");
+        assert_eq!(
+            deps_of(&b, ":tool"),
+            BTreeSet::from([("implementation".into(), ":lib".into())])
+        );
+    }
+
+    #[test]
+    fn kmp_typesafe_accessors_and_source_sets() {
+        let r = tmp("kmp");
+        write(
+            &r,
+            "settings.gradle.kts",
+            "enableFeaturePreview(\"TYPESAFE_PROJECT_ACCESSORS\")\ninclude(\":shared:core-api\", \":shared:ui\")\n",
+        );
+        write(
+            &r,
+            "shared/core-api/build.gradle.kts",
+            "plugins { kotlin(\"multiplatform\") }\nkotlin { jvm() }\n",
+        );
+        write(
+            &r,
+            "shared/ui/build.gradle.kts",
+            "plugins { kotlin(\"multiplatform\") }\nkotlin {\n  jvm()\n  wasmJs { browser() }\n  iosSimulatorArm64()\n  sourceSets {\n    commonMain.dependencies { implementation(projects.shared.coreApi) }\n    val jvmTest by getting { dependencies { implementation(project(\":shared:core-api\")) } }\n  }\n}\n",
+        );
+        for d in ["commonMain", "commonTest", "jvmTest", "wasmJsTest"] {
+            write(&r, &format!("shared/ui/src/{d}/kotlin/X.kt"), "");
+        }
+        let b = discover(&r);
+        let ui = b.project(":shared:ui").unwrap();
+        assert_eq!(
+            ui.deps,
+            BTreeSet::from([
+                ("commonMainImplementation".into(), ":shared:core-api".into()),
+                ("jvmTestImplementation".into(), ":shared:core-api".into())
+            ])
+        );
+        assert!(b.project(":shared").unwrap().implicit);
+        assert_eq!(
+            ui.test_tasks["commonTest"],
+            BTreeSet::from([
+                "jvmTest".to_string(),
+                "wasmJsBrowserTest".to_string(),
+                "iosSimulatorArm64Test".to_string()
+            ])
+        );
+        assert_eq!(
+            ui.test_tasks["wasmJsTest"],
+            BTreeSet::from(["wasmJsBrowserTest".to_string()])
+        );
+        assert_eq!(
+            ui.source_sets["jvmTest"].depends_on,
+            BTreeSet::from(["commonTest".to_string()])
+        );
+    }
+
+    #[test]
+    fn project_dir_override_moves_children_and_include_build_is_separate() {
+        let r = tmp("dirs");
+        write(
+            &r,
+            "settings.gradle.kts",
+            "pluginManagement { includeBuild(\"build-logic\") }\ninclude(\":feature:a\")\nproject(\":feature\").projectDir = file(\"$rootDir/modules/feature\")\n",
+        );
+        write(&r, "modules/feature/a/build.gradle.kts", "");
+        write(&r, "build-logic/settings.gradle.kts", "");
+        let b = discover(&r);
+        assert_eq!(b.project(":feature:a").unwrap().dir, "modules/feature/a");
+        assert_eq!(b.included_builds, vec!["build-logic".to_string()]);
+    }
+
+    #[test]
+    fn accessor_names_follow_gradle_camel_case() {
+        assert_eq!(accessor_name("core-api"), "coreApi");
+        assert_eq!(accessor_name("my_lib"), "myLib");
+        assert_eq!(accessor_name("plain"), "plain");
+    }
+
+    #[test]
+    fn explicit_depends_on_overrides_template() {
+        let r = tmp("dependson");
+        write(&r, "settings.gradle.kts", "include(\":m\")\n");
+        write(
+            &r,
+            "m/build.gradle.kts",
+            "plugins { kotlin(\"multiplatform\") }\nkotlin {\n  jvm()\n  wasmJs()\n  sourceSets {\n    val nonWebTest by creating { dependsOn(commonTest.get()) }\n    jvmTest { dependsOn(nonWebTest) }\n  }\n}\n",
+        );
+        for d in ["commonTest", "jvmTest", "nonWebTest", "wasmJsTest"] {
+            write(&r, &format!("m/src/{d}/kotlin/X.kt"), "");
+        }
+        let b = discover(&r);
+        let m = b.project(":m").unwrap();
+        assert_eq!(
+            m.source_sets["jvmTest"].depends_on,
+            BTreeSet::from(["nonWebTest".to_string()])
+        );
+        assert_eq!(
+            m.test_tasks["nonWebTest"],
+            BTreeSet::from(["jvmTest".to_string()])
+        );
+    }
+}

@@ -1,0 +1,1788 @@
+{
+  "root_name": "sqldelight",
+  "projects": [
+    {
+      "path": ":",
+      "dir": "",
+      "build_file": "build.gradle",
+      "deps": [],
+      "source_sets": {},
+      "targets": [
+        "js"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":adapters",
+      "dir": "adapters",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":adapters:primitive-adapters",
+      "dir": "adapters/primitive-adapters",
+      "build_file": "adapters/primitive-adapters/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidNativeArm32",
+        "androidNativeArm64",
+        "androidNativeX64",
+        "androidNativeX86",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "iosX64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "linuxX64Test",
+          "macosArm64Test",
+          "macosX64Test",
+          "mingwX64Test",
+          "tvosSimulatorArm64Test",
+          "tvosX64Test",
+          "wasmJsBrowserTest",
+          "watchosSimulatorArm64Test",
+          "watchosX64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects",
+      "dir": "dialects",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":dialects:hsql",
+      "dir": "dialects/hsql",
+      "build_file": "dialects/hsql/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:mysql",
+      "dir": "dialects/mysql",
+      "build_file": "dialects/mysql/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:postgresql",
+      "dir": "dialects/postgresql",
+      "build_file": "dialects/postgresql/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite",
+      "dir": "dialects/sqlite",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":dialects:sqlite-3-18",
+      "dir": "dialects/sqlite-3-18",
+      "build_file": "dialects/sqlite-3-18/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-24",
+      "dir": "dialects/sqlite-3-24",
+      "build_file": "dialects/sqlite-3-24/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-18"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-18"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-25",
+      "dir": "dialects/sqlite-3-25",
+      "build_file": "dialects/sqlite-3-25/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-24"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-24"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-30",
+      "dir": "dialects/sqlite-3-30",
+      "build_file": "dialects/sqlite-3-30/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-25"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-25"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-33",
+      "dir": "dialects/sqlite-3-33",
+      "build_file": "dialects/sqlite-3-33/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-30"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-30"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-35",
+      "dir": "dialects/sqlite-3-35",
+      "build_file": "dialects/sqlite-3-35/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-33"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-33"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-37",
+      "dir": "dialects/sqlite-3-37",
+      "build_file": "dialects/sqlite-3-37/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-35"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-35"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-38",
+      "dir": "dialects/sqlite-3-38",
+      "build_file": "dialects/sqlite-3-38/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-37"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-37"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-39",
+      "dir": "dialects/sqlite-3-39",
+      "build_file": "dialects/sqlite-3-39/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-38"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-38"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite-3-44",
+      "dir": "dialects/sqlite-3-44",
+      "build_file": "dialects/sqlite-3-44/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-39"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-39"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":dialects:sqlite:json-module",
+      "dir": "dialects/sqlite/json-module",
+      "build_file": "dialects/sqlite/json-module/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testFixturesApi",
+          ":dialects:sqlite-3-18"
+        ],
+        [
+          "testFixturesApi",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        },
+        "testFixtures": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers",
+      "dir": "drivers",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":drivers:android-driver",
+      "dir": "drivers/android-driver",
+      "build_file": "drivers/android-driver/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":runtime"
+        ],
+        [
+          "testImplementation",
+          ":drivers:driver-test"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "testDebugUnitTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers:driver-test",
+      "dir": "drivers/driver-test",
+      "build_file": "drivers/driver-test/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidNativeArm32",
+        "androidNativeArm64",
+        "androidNativeX64",
+        "androidNativeX86",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":drivers:jdbc-driver",
+      "dir": "drivers/jdbc-driver",
+      "build_file": "drivers/jdbc-driver/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":runtime"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":drivers:native-driver",
+      "dir": "drivers/native-driver",
+      "build_file": "drivers/native-driver/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ],
+        [
+          "commonTestImplementation",
+          ":drivers:driver-test"
+        ]
+      ],
+      "source_sets": {
+        "appleMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "linuxMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "mingwMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "nativeLinuxLikeMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nativeTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {
+        "nativeTest": [
+          "iosSimulatorArm64Test",
+          "iosX64Test",
+          "linuxX64Test",
+          "macosArm64Test",
+          "macosX64Test",
+          "mingwX64Test",
+          "tvosSimulatorArm64Test",
+          "tvosX64Test",
+          "watchosSimulatorArm64Test",
+          "watchosX64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers:r2dbc-driver",
+      "dir": "drivers/r2dbc-driver",
+      "build_file": "drivers/r2dbc-driver/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":runtime"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers:sqlite-driver",
+      "dir": "drivers/sqlite-driver",
+      "build_file": "drivers/sqlite-driver/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":drivers:jdbc-driver"
+        ],
+        [
+          "testImplementation",
+          ":drivers:driver-test"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers:web-worker-driver",
+      "dir": "drivers/web-worker-driver",
+      "build_file": "drivers/web-worker-driver/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ],
+        [
+          "commonTestImplementation",
+          ":extensions:async-extensions"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "jsTest": {
+          "test": true,
+          "depends_on": [
+            "webTest"
+          ]
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "wasmJsTest": {
+          "test": true,
+          "depends_on": [
+            "webTest"
+          ]
+        }
+      },
+      "targets": [
+        "js",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "jsBrowserTest",
+          "wasmJsBrowserTest"
+        ],
+        "jsTest": [
+          "jsBrowserTest"
+        ],
+        "wasmJsTest": [
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":drivers:web-worker-driver:sqljs",
+      "dir": "drivers/web-worker-driver/sqljs",
+      "build_file": "drivers/web-worker-driver/sqljs/build.gradle",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":extensions",
+      "dir": "extensions",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":extensions:androidx-paging3",
+      "dir": "extensions/androidx-paging3",
+      "build_file": "extensions/androidx-paging3/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ],
+        [
+          "jvmTestImplementation",
+          ":drivers:sqlite-driver"
+        ],
+        [
+          "nativeTestImplementation",
+          ":drivers:native-driver"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "nativeTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "webTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "linuxX64Test",
+          "macosArm64Test",
+          "mingwX64Test",
+          "tvosSimulatorArm64Test",
+          "wasmJsBrowserTest",
+          "watchosSimulatorArm64Test"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "nativeTest": [
+          "iosSimulatorArm64Test",
+          "linuxX64Test",
+          "macosArm64Test",
+          "mingwX64Test",
+          "tvosSimulatorArm64Test",
+          "watchosSimulatorArm64Test"
+        ],
+        "webTest": [
+          "jsBrowserTest",
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":extensions:async-extensions",
+      "dir": "extensions/async-extensions",
+      "build_file": "extensions/async-extensions/build.gradle",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":runtime"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "concurrentMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidNativeArm32",
+        "androidNativeArm64",
+        "androidNativeX64",
+        "androidNativeX86",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":extensions:coroutines-extensions",
+      "dir": "extensions/coroutines-extensions",
+      "build_file": "extensions/coroutines-extensions/build.gradle",
+      "deps": [
+        [
+          "commonMainApi",
+          ":runtime"
+        ],
+        [
+          "commonMainImplementation",
+          ":extensions:async-extensions"
+        ],
+        [
+          "jvmTestImplementation",
+          ":drivers:sqlite-driver"
+        ],
+        [
+          "testableNativeTestImplementation",
+          ":drivers:native-driver"
+        ],
+        [
+          "testableWebTestImplementation",
+          ":drivers:web-worker-driver"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest",
+            "testableTest"
+          ]
+        },
+        "testableNativeTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "testableTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "testableWebTest": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidNativeArm32",
+        "androidNativeArm64",
+        "androidNativeX64",
+        "androidNativeX86",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "testableNativeTest": [],
+        "testableTest": [
+          "jsBrowserTest",
+          "jvmTest",
+          "wasmJsBrowserTest"
+        ],
+        "testableWebTest": [
+          "jsBrowserTest",
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":extensions:rxjava2-extensions",
+      "dir": "extensions/rxjava2-extensions",
+      "build_file": "extensions/rxjava2-extensions/build.gradle",
+      "deps": [
+        [
+          "implementation",
+          ":runtime"
+        ],
+        [
+          "testImplementation",
+          ":drivers:sqlite-driver"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":extensions:rxjava3-extensions",
+      "dir": "extensions/rxjava3-extensions",
+      "build_file": "extensions/rxjava3-extensions/build.gradle",
+      "deps": [
+        [
+          "implementation",
+          ":runtime"
+        ],
+        [
+          "testImplementation",
+          ":drivers:sqlite-driver"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":runtime",
+      "dir": "runtime",
+      "build_file": "runtime/build.gradle",
+      "deps": [],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "nonJvmMain"
+          ]
+        },
+        "nonJvmMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "androidNativeArm32",
+        "androidNativeArm64",
+        "androidNativeX64",
+        "androidNativeX86",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "macosX64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "tvosX64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosDeviceArm64",
+        "watchosSimulatorArm64",
+        "watchosX64"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "iosX64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "linuxX64Test",
+          "macosArm64Test",
+          "macosX64Test",
+          "mingwX64Test",
+          "tvosSimulatorArm64Test",
+          "tvosX64Test",
+          "wasmJsBrowserTest",
+          "watchosSimulatorArm64Test",
+          "watchosX64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-compiler",
+      "dir": "sqldelight-compiler",
+      "build_file": "sqldelight-compiler/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler:dialect"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testImplementation",
+          ":dialects:hsql"
+        ],
+        [
+          "testImplementation",
+          ":dialects:mysql"
+        ],
+        [
+          "testImplementation",
+          ":dialects:postgresql"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-18"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-24"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-25"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-30"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-33"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-35"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-38"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-39"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-44"
+        ],
+        [
+          "testImplementation",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "testImplementation",
+          ":sqldelight-gradle-plugin"
+        ],
+        [
+          "testImplementation",
+          ":test-util"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-compiler:dialect",
+      "dir": "sqldelight-compiler/dialect",
+      "build_file": "sqldelight-compiler/dialect/build.gradle",
+      "deps": [
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-compiler:environment",
+      "dir": "sqldelight-compiler/environment",
+      "build_file": "sqldelight-compiler/environment/build.gradle",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-compiler:integration-tests",
+      "dir": "sqldelight-compiler/integration-tests",
+      "build_file": "sqldelight-compiler/integration-tests/build.gradle",
+      "deps": [
+        [
+          "testImplementation",
+          ":drivers:sqlite-driver"
+        ],
+        [
+          "testImplementation",
+          ":runtime"
+        ],
+        [
+          "testImplementation",
+          ":test-util"
+        ]
+      ],
+      "source_sets": {
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-gradle-plugin",
+      "dir": "sqldelight-gradle-plugin",
+      "build_file": "sqldelight-gradle-plugin/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":sqldelight-compiler"
+        ],
+        [
+          "compileOnly",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "compileOnly",
+          ":sqlite-migrations:environment"
+        ],
+        [
+          "implementation",
+          ":sqlite-migrations"
+        ]
+      ],
+      "source_sets": {
+        "dockerTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "grammarkitTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "instrumentationTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "dockerTest": [
+          "dockerTest"
+        ],
+        "grammarkitTest": [
+          "grammarkitTest"
+        ],
+        "instrumentationTest": [
+          "instrumentationTest"
+        ],
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":sqldelight-idea-plugin",
+      "dir": "sqldelight-idea-plugin",
+      "build_file": "sqldelight-idea-plugin/build.gradle",
+      "deps": [
+        [
+          "implementation",
+          ":sqldelight-compiler"
+        ],
+        [
+          "testImplementation",
+          ":dialects:sqlite-3-18"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":sqlite-migrations",
+      "dir": "sqlite-migrations",
+      "build_file": "sqlite-migrations/build.gradle",
+      "deps": [
+        [
+          "compileOnly",
+          ":sqlite-migrations:environment"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":sqlite-migrations:environment",
+      "dir": "sqlite-migrations/environment",
+      "build_file": "sqlite-migrations/environment/build.gradle",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":test-util",
+      "dir": "test-util",
+      "build_file": "test-util/build.gradle",
+      "deps": [
+        [
+          "api",
+          ":dialects:sqlite-3-18"
+        ],
+        [
+          "api",
+          ":sqldelight-compiler"
+        ],
+        [
+          "implementation",
+          ":sqldelight-compiler:environment"
+        ],
+        [
+          "implementation",
+          ":sqldelight-gradle-plugin"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    }
+  ],
+  "included_builds": [
+    "buildLogic"
+  ],
+  "inputs": [
+    "settings.gradle",
+    "buildLogic/build.gradle",
+    "buildLogic/multiplatform-convention/build.gradle",
+    "buildLogic/multiplatform-convention/src/main/kotlin/app/cash/sqldelight/multiplatform/MultiplatformConventions.kt",
+    "buildLogic/toolchain-convention/build.gradle",
+    "buildLogic/toolchain-convention/src/main/kotlin/app/cash/sqldelight/toolchain/PluginVersion.kt",
+    "buildLogic/toolchain-convention/src/main/kotlin/app/cash/sqldelight/toolchain/ToolchainConventions.kt",
+    "build.gradle",
+    "adapters/primitive-adapters/build.gradle",
+    "dialects/hsql/build.gradle",
+    "dialects/mysql/build.gradle",
+    "dialects/postgresql/build.gradle",
+    "dialects/sqlite-3-18/build.gradle",
+    "dialects/sqlite-3-24/build.gradle",
+    "dialects/sqlite-3-25/build.gradle",
+    "dialects/sqlite-3-30/build.gradle",
+    "dialects/sqlite-3-33/build.gradle",
+    "dialects/sqlite-3-35/build.gradle",
+    "dialects/sqlite-3-37/build.gradle",
+    "dialects/sqlite-3-38/build.gradle",
+    "dialects/sqlite-3-39/build.gradle",
+    "dialects/sqlite-3-44/build.gradle",
+    "dialects/sqlite/json-module/build.gradle",
+    "drivers/android-driver/build.gradle",
+    "drivers/driver-test/build.gradle",
+    "drivers/jdbc-driver/build.gradle",
+    "drivers/native-driver/build.gradle",
+    "drivers/r2dbc-driver/build.gradle",
+    "drivers/sqlite-driver/build.gradle",
+    "drivers/web-worker-driver/build.gradle",
+    "drivers/web-worker-driver/sqljs/build.gradle",
+    "extensions/androidx-paging3/build.gradle",
+    "extensions/async-extensions/build.gradle",
+    "extensions/coroutines-extensions/build.gradle",
+    "extensions/rxjava2-extensions/build.gradle",
+    "extensions/rxjava3-extensions/build.gradle",
+    "runtime/build.gradle",
+    "sqldelight-compiler/build.gradle",
+    "sqldelight-compiler/dialect/build.gradle",
+    "sqldelight-compiler/environment/build.gradle",
+    "sqldelight-compiler/integration-tests/build.gradle",
+    "sqldelight-gradle-plugin/build.gradle",
+    "sqldelight-idea-plugin/build.gradle",
+    "sqlite-migrations/build.gradle",
+    "sqlite-migrations/environment/build.gradle",
+    "test-util/build.gradle"
+  ],
+  "warnings": []
+}

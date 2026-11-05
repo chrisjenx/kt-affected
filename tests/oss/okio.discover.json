@@ -1,0 +1,616 @@
+{
+  "root_name": "okio-parent",
+  "projects": [
+    {
+      "path": ":",
+      "dir": "",
+      "build_file": "build.gradle.kts",
+      "deps": [
+        [
+          "dokka",
+          ":okio"
+        ],
+        [
+          "dokka",
+          ":okio-assetfilesystem"
+        ],
+        [
+          "dokka",
+          ":okio-fakefilesystem"
+        ],
+        [
+          "dokka",
+          ":okio-nodefilesystem"
+        ],
+        [
+          "dokka",
+          ":okio-wasifilesystem"
+        ]
+      ],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false,
+      "dep_confidence": {
+        "dokka :okio": "assumed",
+        "dokka :okio-assetfilesystem": "assumed",
+        "dokka :okio-fakefilesystem": "assumed",
+        "dokka :okio-nodefilesystem": "assumed",
+        "dokka :okio-wasifilesystem": "assumed"
+      }
+    },
+    {
+      "path": ":android-test",
+      "dir": "android-test",
+      "build_file": "android-test/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":okio",
+      "dir": "okio",
+      "build_file": "okio/build.gradle.kts",
+      "deps": [
+        [
+          "commonTestImplementation",
+          ":okio-testing-support"
+        ],
+        [
+          "nonWasmTestImplementation",
+          ":okio-fakefilesystem"
+        ]
+      ],
+      "source_sets": {
+        "appleMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "appleNonMacosX64Main": {
+          "test": false,
+          "depends_on": []
+        },
+        "appleTest": {
+          "test": true,
+          "depends_on": [
+            "nativeTest"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "hashFunctions": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "nonAppleMain",
+            "nonJvmMain"
+          ]
+        },
+        "jsTest": {
+          "test": true,
+          "depends_on": [
+            "nonJvmTest",
+            "nonWasmTest"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "nonJsMain",
+            "systemFileSystemMain",
+            "zlibMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "nonWasmTest",
+            "zlibTest"
+          ]
+        },
+        "linuxMain": {
+          "test": false,
+          "depends_on": [
+            "nonAppleMain"
+          ]
+        },
+        "macosX64Main": {
+          "test": false,
+          "depends_on": [
+            "macosMain"
+          ]
+        },
+        "mingwMain": {
+          "test": false,
+          "depends_on": [
+            "nonAppleMain",
+            "nonJsMain"
+          ]
+        },
+        "mingwX64Main": {
+          "test": false,
+          "depends_on": [
+            "mingwMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "systemFileSystemMain",
+            "zlibMain"
+          ]
+        },
+        "nativeTest": {
+          "test": true,
+          "depends_on": [
+            "nonJvmTest",
+            "nonWasmTest",
+            "zlibTest"
+          ]
+        },
+        "nonAppleMain": {
+          "test": false,
+          "depends_on": [
+            "hashFunctions"
+          ]
+        },
+        "nonJsMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nonJvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "hashFunctions"
+          ]
+        },
+        "nonJvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "nonWasmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "systemFileSystemMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "unixMain": {
+          "test": false,
+          "depends_on": [
+            "nonJsMain"
+          ]
+        },
+        "wasmMain": {
+          "test": false,
+          "depends_on": [
+            "nonAppleMain",
+            "nonJsMain",
+            "nonJvmMain"
+          ]
+        },
+        "wasmTest": {
+          "test": true,
+          "depends_on": [
+            "nonJvmTest"
+          ]
+        },
+        "zlibMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "zlibTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "js",
+        "jvm",
+        "macosX64",
+        "mingwX64"
+      ],
+      "test_tasks": {
+        "appleTest": [
+          "macosX64Test"
+        ],
+        "commonTest": [
+          "jsBrowserTest",
+          "jvmTest",
+          "macosX64Test",
+          "mingwX64Test"
+        ],
+        "jsTest": [
+          "jsBrowserTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "nativeTest": [
+          "macosX64Test",
+          "mingwX64Test"
+        ],
+        "nonJvmTest": [
+          "jsBrowserTest",
+          "macosX64Test",
+          "mingwX64Test"
+        ],
+        "nonWasmTest": [
+          "jsBrowserTest",
+          "jvmTest",
+          "macosX64Test",
+          "mingwX64Test"
+        ],
+        "wasmTest": [],
+        "zlibTest": [
+          "jvmTest",
+          "macosX64Test",
+          "mingwX64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":okio-assetfilesystem",
+      "dir": "okio-assetfilesystem",
+      "build_file": "okio-assetfilesystem/build.gradle.kts",
+      "deps": [
+        [
+          "api",
+          ":okio"
+        ]
+      ],
+      "source_sets": {
+        "androidTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android"
+      ],
+      "test_tasks": {
+        "androidTest": [
+          "connectedDebugAndroidTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":okio-bom",
+      "dir": "okio-bom",
+      "build_file": "okio-bom/build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":okio-fakefilesystem",
+      "dir": "okio-fakefilesystem",
+      "build_file": "okio-fakefilesystem/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":okio"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nonJvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "js",
+        "jvm"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":okio-nodefilesystem",
+      "dir": "okio-nodefilesystem",
+      "build_file": "okio-nodefilesystem/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":okio"
+        ],
+        [
+          "commonTestImplementation",
+          ":okio-fakefilesystem"
+        ],
+        [
+          "commonTestImplementation",
+          ":okio-testing-support"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "js"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "jsNodeTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":okio-testing-support",
+      "dir": "okio-testing-support",
+      "build_file": "okio-testing-support/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":okio"
+        ],
+        [
+          "nonWasmMainImplementation",
+          ":okio-fakefilesystem"
+        ],
+        [
+          "wasmWasiMainImplementation",
+          ":okio-wasifilesystem"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "nonWasmMain"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "nonWasmMain",
+            "zlibMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "nonWasmMain",
+            "zlibMain"
+          ]
+        },
+        "nonWasmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "wasmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmWasiMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "zlibMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "js",
+        "jvm",
+        "wasmJs",
+        "wasmWasi"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":okio-wasifilesystem",
+      "dir": "okio-wasifilesystem",
+      "build_file": "okio-wasifilesystem/build.gradle.kts",
+      "deps": [
+        [
+          "wasmWasiMainImplementation",
+          ":okio"
+        ],
+        [
+          "wasmWasiTestImplementation",
+          ":okio-testing-support"
+        ]
+      ],
+      "source_sets": {
+        "wasmWasiMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmWasiTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "wasmWasi"
+      ],
+      "test_tasks": {
+        "wasmWasiTest": [
+          "wasmWasiNodeTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":okio:jvm",
+      "dir": "okio/jvm",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":okio:jvm:jmh",
+      "dir": "okio/jvm/jmh",
+      "build_file": "okio/jvm/jmh/build.gradle.kts",
+      "deps": [
+        [
+          "api",
+          ":okio"
+        ]
+      ],
+      "source_sets": {
+        "jmh": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples",
+      "dir": "samples",
+      "build_file": "samples/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":okio"
+        ],
+        [
+          "jvmTestImplementation",
+          ":okio-testing-support"
+        ]
+      ],
+      "source_sets": {
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "jvm"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    }
+  ],
+  "included_builds": [
+    "build-support"
+  ],
+  "inputs": [
+    "settings.gradle.kts",
+    "build-support/build.gradle.kts",
+    "build-support/src/main/kotlin/BuildSupport.kt",
+    "build-support/src/main/kotlin/binaryCompatibilityValidator.kt",
+    "build-support/src/main/kotlin/bom.kt",
+    "build-support/src/main/kotlin/dokka.kt",
+    "build-support/src/main/kotlin/jvm.kt",
+    "build-support/src/main/kotlin/kmp.kt",
+    "build-support/src/main/kotlin/platforms.kt",
+    "build.gradle.kts",
+    "android-test/build.gradle.kts",
+    "okio/build.gradle.kts",
+    "okio-assetfilesystem/build.gradle.kts",
+    "okio-bom/build.gradle.kts",
+    "okio-fakefilesystem/build.gradle.kts",
+    "okio-nodefilesystem/build.gradle.kts",
+    "okio-testing-support/build.gradle.kts",
+    "okio-wasifilesystem/build.gradle.kts",
+    "okio/jvm/jmh/build.gradle.kts",
+    "samples/build.gradle.kts"
+  ],
+  "warnings": []
+}

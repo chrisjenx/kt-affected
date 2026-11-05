@@ -1,0 +1,24 @@
+name: Wrong or missing selection, or a crash
+description: kt-affected selected too little, too much, misread a build, or failed.
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: A public repo and commit range if you can; otherwise the change and the build layout. `kt-affected explain` output helps a lot.
+  - type: input
+    id: version
+    attributes:
+      label: kt-affected --version
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: Gradle / Kotlin versions, KMP targets

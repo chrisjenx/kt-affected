@@ -1,0 +1,56 @@
+name: Benchmark
+
+# Times the graph (cold, warm, after a body edit, after a new declaration) on pinned open-source KMP
+# builds. On a pull request the base and head binaries run interleaved on the same runner, so the
+# change column compares like for like; shared runners are noisy, so it reports and never fails.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build head
+        run: cargo build --locked --release && cp target/release/kt-affected "$RUNNER_TEMP/kt-affected-head"
+      - name: Build base
+        if: github.event_name == 'pull_request'
+        run: |
+          git worktree add "$RUNNER_TEMP/base" "${{ github.event.pull_request.base.sha }}"
+          # A base without the crate (the repository's first commits) benchmarks head alone.
+          [ -f "$RUNNER_TEMP/base/Cargo.toml" ] || exit 0
+          cargo build --locked --release --manifest-path "$RUNNER_TEMP/base/Cargo.toml" --target-dir target/base
+          cp target/base/release/kt-affected "$RUNNER_TEMP/kt-affected-base"
+      - run: scripts/oss-checkout.sh .oss
+      - name: Benchmark
+        run: |
+          base=()
+          [ -x "$RUNNER_TEMP/kt-affected-base" ] && base=(--bin-base "$RUNNER_TEMP/kt-affected-base")
+          {
+            echo "## kt-affected benchmark"
+            echo
+            for p in okio sqldelight; do
+              python3 bench/oss_bench.py --root ".oss/$p" --label "$p" --runs 7 \
+                --bin "$RUNNER_TEMP/kt-affected-head" "${base[@]}" --json bench-results.jsonl
+              echo
+            done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-results.jsonl

@@ -1,0 +1,66 @@
+// kt-affected exact discovery: `./gradlew -q --init-script kt-affected-export.init.gradle ktAffectedExport`
+// writes one JSON per project to <root>/build/kt-affected/export/. Data is captured into plain task fields
+// when the task is configured (convention plugins and AGP variants included), so the task is
+// configuration-cache safe and never reads Project at execution time.
+
+import groovy.json.JsonOutput
+
+class KtAffectedExport extends DefaultTask {
+    @Input String json = ""
+    @OutputFile File out
+
+    @TaskAction
+    void write() {
+        out.parentFile.mkdirs()
+        out.text = json
+    }
+}
+
+def capture = { Project p ->
+    def deps = []
+    p.configurations.each { c ->
+        c.dependencies.withType(ProjectDependency).each { d ->
+            def target = d.metaClass.respondsTo(d, "getPath") ? d.path : d.dependencyProject.path
+            deps << [c.name, target]
+        }
+    }
+    def sourceSets = [:]
+    def kotlin = p.extensions.findByName("kotlin")
+    if (kotlin != null && kotlin.hasProperty("sourceSets")) {
+        kotlin.sourceSets.each { ss ->
+            def parents = ss.hasProperty("dependsOn") ? ss.dependsOn.collect { it.name } : []
+            sourceSets[ss.name] = parents
+        }
+    }
+    def javaSets = p.extensions.findByName("sourceSets")
+    if (javaSets != null) {
+        javaSets.each { ss -> if (!sourceSets.containsKey(ss.name)) sourceSets[ss.name] = [] }
+    }
+    def android = p.extensions.findByName("android")
+    if (android != null && android.hasProperty("sourceSets")) {
+        android.sourceSets.each { ss -> if (!sourceSets.containsKey(ss.name)) sourceSets[ss.name] = [] }
+    }
+    def testTasks = p.tasks.withType(AbstractTestTask).names.toList().sort()
+    def root = p.rootDir.toPath()
+    def dir = root.relativize(p.projectDir.toPath()).toString().replace(File.separator, "/")
+    def buildFile = p.buildFile.exists() ? root.relativize(p.buildFile.toPath()).toString().replace(File.separator, "/") : null
+    JsonOutput.toJson([
+        path      : p.path,
+        dir       : dir,
+        buildFile : buildFile,
+        deps      : deps.unique(),
+        sourceSets: sourceSets,
+        testTasks : testTasks,
+    ])
+}
+
+// The configure action runs when the task graph is built, after every plugin's afterEvaluate
+// (AGP registers its variant test tasks there), so deps and tasks are complete.
+gradle.lifecycle.beforeProject { Project p ->
+    def name = p.path == ":" ? "_root" : p.path.substring(1).replace(":", "__")
+    def outFile = new File(p.rootDir, "build/kt-affected/export/${name}.json")
+    p.tasks.register("ktAffectedExport", KtAffectedExport) { t ->
+        t.json = capture(p)
+        t.out = outFile
+    }
+}

@@ -1,0 +1,60 @@
+name: kt-affected
+description: Select the Gradle test tasks and classes a pull request can affect in a Kotlin/KMP build.
+branding:
+  icon: filter
+  color: purple
+
+inputs:
+  version:
+    description: Release tag to install (e.g. v0.1.0), or "latest".
+    default: latest
+  base:
+    description: Git ref to compare against. Default is the pull request's base commit, else the merge-base with origin's default branch.
+    default: ""
+  root:
+    description: Directory of the Gradle build (the one holding settings.gradle.kts).
+    default: "."
+  args:
+    description: Extra arguments for kt-affected select (e.g. --config ci/kt-affected.toml).
+    default: ""
+
+outputs:
+  gradle-args:
+    description: Space-separated Gradle tasks with --tests filters, ready for ./gradlew. Empty when nothing needs to run.
+    value: ${{ steps.select.outputs.gradle-args }}
+  plan-file:
+    description: Path to the full JSON plan (groups, classes, reasons).
+    value: ${{ steps.select.outputs.plan-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install kt-affected
+      shell: bash
+      env:
+        KT_AFFECTED_VERSION: ${{ inputs.version }}
+        KT_AFFECTED_INSTALL_DIR: ${{ runner.temp }}/kt-affected-bin
+      run: |
+        sh "$GITHUB_ACTION_PATH/scripts/install.sh"
+        echo "$KT_AFFECTED_INSTALL_DIR" >> "$GITHUB_PATH"
+    - name: Select tests
+      id: select
+      shell: bash
+      working-directory: ${{ inputs.root }}
+      env:
+        BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+        EXTRA: ${{ inputs.args }}
+      run: |
+        base=()
+        [ -n "$BASE" ] && base=(--base "$BASE")
+        plan="$RUNNER_TEMP/kt-affected-plan.json"
+        # shellcheck disable=SC2086
+        kt-affected select "${base[@]}" $EXTRA --format json > "$plan"
+        # shellcheck disable=SC2086
+        args=$(kt-affected select "${base[@]}" $EXTRA --format gradle)
+        echo "plan-file=$plan" >> "$GITHUB_OUTPUT"
+        echo "gradle-args=$args" >> "$GITHUB_OUTPUT"
+        {
+          echo "### kt-affected"
+          python3 -c 'import json,sys; p=json.load(open(sys.argv[1])); print(f"{sum(len(g[\"classes\"]) for g in p[\"groups\"])} test classes in {len(p[\"groups\"])} tasks, from {len(p[\"changedFiles\"])} changed files")' "$plan"
+        } >> "$GITHUB_STEP_SUMMARY"

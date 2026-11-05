@@ -1,0 +1,42 @@
+[package]
+name = "kt-affected"
+version = "0.1.0"
+edition = "2024"
+description = "Which tests can a change to a Kotlin/Gradle project affect? A declaration-level test differ built on kt-syntax."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/chrisjenx/kt-affected"
+homepage = "https://github.com/chrisjenx/kt-affected"
+readme = "README.md"
+keywords = ["kotlin", "gradle", "testing", "kmp", "test-selection"]
+categories = ["command-line-utilities", "development-tools::testing"]
+rust-version = "1.90"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "kt-affected"
+path = "src/main.rs"
+
+[dependencies]
+kt-syntax = { git = "https://github.com/Hexay/ktrs", rev = "8ea527ef4fb6ba13af7fbae63b5e9caa19c97f2b" }
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+memmap2 = "0.9"
+bytemuck = "1"
+rustc-hash = "2"
+regex = "1"
+toml = "0.8"
+
+[profile.release]
+debug = false
+lto = "thin"
+codegen-units = 4
+
+[lints.clippy]
+chunks_exact_to_as_chunks = "allow"
+type_complexity = "allow"
+map_entry = "allow"
+needless_range_loop = "allow"
