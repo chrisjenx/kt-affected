@@ -733,6 +733,8 @@ pub fn discovery_stamp(root: &Path, inputs: &[String]) -> u64 {
 pub struct Modules {
     /// (dir prefix with trailing '/', module index) longest first; the root project matches only `src/`.
     prefixes: Vec<(String, u32)>,
+    /// Per module index, its `source_dirs`.
+    source_dirs: Vec<std::collections::BTreeMap<String, String>>,
     pub vis: Visibility,
 }
 
@@ -776,6 +778,7 @@ impl Modules {
             .collect();
         Modules {
             prefixes,
+            source_dirs: projects.iter().map(|p| p.source_dirs.clone()).collect(),
             vis: Visibility { bits },
         }
     }
@@ -785,8 +788,8 @@ impl Modules {
         for (pre, m) in &self.prefixes {
             if let Some(rest) = path.strip_prefix(pre.as_str()) {
                 let rest = if pre == "src/" { path } else { rest };
-                let parts: Vec<&str> = rest.splitn(3, '/').collect();
-                let test = parts.len() >= 3 && parts[0] == "src" && is_test_source_set(parts[1]);
+                let test = crate::discover::source_set_at(&self.source_dirs[*m as usize], rest)
+                    .is_some_and(is_test_source_set);
                 return (*m, test);
             }
         }

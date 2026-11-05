@@ -34,6 +34,26 @@ pub struct Project {
     /// class it excludes never runs there. Absent when the task has none, or one not read statically.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub test_filters: BTreeMap<String, TestFilter>,
+    /// Source directory (relative to `dir`) -> source set, for a layout other than `src/<set>/`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub source_dirs: BTreeMap<String, String>,
+}
+
+/// The source set a path relative to its project directory lies in: `src/<set>/..`, or under a
+/// directory of the project's `source_dirs`.
+pub(crate) fn source_set_at<'p>(
+    source_dirs: &'p BTreeMap<String, String>,
+    rest: &'p str,
+) -> Option<&'p str> {
+    for (d, set) in source_dirs {
+        if rest.len() > d.len() && rest.starts_with(d.as_str()) && rest.as_bytes()[d.len()] == b'/'
+        {
+            return Some(set);
+        }
+    }
+    let mut parts = rest.splitn(3, '/');
+    let (a, b, c) = (parts.next()?, parts.next()?, parts.next());
+    (a == "src" && c.is_some()).then_some(b)
 }
 
 /// A Test task's `filter { }` patterns, as Gradle's `includeTestsMatching` / `excludeTestsMatching`
@@ -1342,6 +1362,29 @@ fn depends_transitively(from: &str, to: &str, sets: &BTreeMap<String, SourceSet>
 
 // ------------------------------------------------------------------ discover
 
+/// `<stem>/src` -> `<stem>Main` and `<stem>/test` -> `<stem>Test` for each child directory of a
+/// project named like a source-set stem (`common`, `jvm`, `nonJvm`).
+fn flat_source_dirs(project_dir: &Path) -> BTreeMap<String, String> {
+    let mut out = BTreeMap::new();
+    let Ok(rd) = std::fs::read_dir(project_dir) else {
+        return out;
+    };
+    for e in rd.flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let stem_like = name.starts_with(|c: char| c.is_ascii_lowercase())
+            && name.chars().all(|c| c.is_ascii_alphanumeric());
+        if !stem_like || name == "src" || name == "build" || !e.path().is_dir() {
+            continue;
+        }
+        for (sub, suf) in [("src", "Main"), ("test", "Test")] {
+            if e.path().join(sub).is_dir() {
+                out.insert(format!("{name}/{sub}"), format!("{name}{suf}"));
+            }
+        }
+    }
+    out
+}
+
 fn read(root: &Path, rel: &str) -> Option<String> {
     std::fs::read_to_string(root.join(rel)).ok()
 }
@@ -1564,6 +1607,21 @@ pub fn discover(root: &Path) -> Build {
             .collect::<Vec<_>>()
             .join(" ")
             .to_lowercase();
+        // A build whose logic re-points source directories (`kotlin.setSrcDirs(..)`) from a
+        // template, with no `src/` here: the flattened `<set stem>/src`, `<set stem>/test` layout.
+        let mut source_dirs = BTreeMap::new();
+        if source_sets.is_empty() && (text.contains("setSrcDirs") || conv.mentions("setSrcDirs")) {
+            source_dirs = flat_source_dirs(&root.join(dir));
+            for set in source_dirs.values() {
+                source_sets.insert(
+                    set.clone(),
+                    SourceSet {
+                        test: is_test_source_set(set),
+                        depends_on: BTreeSet::new(),
+                    },
+                );
+            }
+        }
         let kmp = plugin_text.contains("multiplatform")
             || plugin_text.contains("kmp")
             || source_sets.contains_key("commonMain")
@@ -1733,6 +1791,7 @@ pub fn discover(root: &Path) -> Build {
             implicit: *implicit,
             dep_confidence,
             test_filters,
+            source_dirs,
         });
     }
     for (w, ps) in conv_warnings {
@@ -1801,6 +1860,7 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
             implicit: false,
             dep_confidence: BTreeMap::new(),
             test_filters: Default::default(),
+            source_dirs: BTreeMap::new(),
         });
     }
     projects.sort_by(|a, b| a.path.cmp(&b.path));

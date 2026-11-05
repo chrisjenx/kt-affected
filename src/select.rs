@@ -77,6 +77,7 @@ pub fn modules_of(
         .map(|p| Module {
             id: p.path.clone(),
             prefix: format!("{}/", p.dir.trim_end_matches('/')),
+            source_dirs: p.source_dirs.clone(),
         })
         .collect();
     list.sort_by(|a, b| {
@@ -1577,6 +1578,7 @@ mod tests {
             implicit: false,
             dep_confidence: Default::default(),
             test_filters: Default::default(),
+            source_dirs: Default::default(),
         };
         let build = Build {
             root_name: "r".into(),

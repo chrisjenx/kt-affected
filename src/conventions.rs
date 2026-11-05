@@ -641,6 +641,13 @@ impl Conventions {
 
     /// What applying `declared` plugins to `project` and running its build script's loops and helper
     /// calls contribute. Build-script literal `project(..)` calls are left to the script parser.
+    /// Does any build-logic file name `id` as an identifier?
+    pub fn mentions(&self, id: &str) -> bool {
+        self.files
+            .iter()
+            .any(|(_, toks)| toks.iter().any(|t| ident(t) == Some(id)))
+    }
+
     pub fn effects(
         &self,
         project: &str,

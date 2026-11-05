@@ -118,6 +118,7 @@ pub fn main() {
                             implicit: false,
                             dep_confidence: Default::default(),
                             test_filters: Default::default(),
+                            source_dirs: Default::default(),
                         })
                         .collect(),
                     included_builds: vec![],

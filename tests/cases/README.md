@@ -59,6 +59,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `expect-actual-actual-edit` | Editing the jvmMain actual reaches a commonTest caller only under jvmTest: the iOS and wasm binaries link their own actuals. |
 | `expect-actual-expect-edit` | Editing the expect declaration (and its actuals) reaches commonTest callers under every target's task. |
 | `file-move` | A file moved to a new path (content unchanged) still selects the tests of the declarations it held. |
+| `flat-source-layout` | Build logic that re-points every source set with kotlin.setSrcDirs to the flattened `<stem>/src`, `<stem>/test` layout: common/test is commonTest and runs under jvmTest when common/src changes; jvm/test, which never reaches the edit, does not. |
 | `flyway-migration` | A Flyway migration seeds Kotlin naming its tables in a string (Table("books")), not code on other tables. |
 | `fully-qualified-call` | A call written with its fully qualified name and no import (`demo.model.Money(100).format()`) reaches the edited member like an imported one. |
 | `functional-edits-select` | A literal change, a public parameter rename (named arguments see it) and an inferred-to-explicit return type are functional. |
