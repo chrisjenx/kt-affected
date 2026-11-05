@@ -62,7 +62,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `koin-single-bind` | Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings. |
 | `koin-singleof-bind` | Koin `singleOf(::Impl) { bind<Iface>() }`: an impl member edit reaches tests holding the interface by inject(). |
 | `meta-inf-services` | A META-INF/services change wires code no name reaches: its module and every dependent run whole, with a reason; unrelated modules don't. |
-| `metro-accessor-on-graph` | An accessor declared directly on the @DependencyGraph interface (`val pricing: Pricing`) hands out the bound impl like one inherited from an accessor interface. *Known gap: see its `expect.toml`.* |
+| `metro-accessor-on-graph` | An accessor declared directly on the @DependencyGraph interface (`val pricing: Pricing`) hands out the bound impl like one inherited from an accessor interface. |
 | `metro-contributes-binding` | A @ContributesBinding impl edit reaches tests calling that interface member through a graph accessor, not tests calling another member. |
 | `metro-create-graph-type-argument` | A graph created as `createGraph<AppGraph>()`, its type only in the type argument, reaches the bound impl like an explicitly typed one. |
 | `metro-graph-excludes-edited-impl` | A test graph that `excludes` the edited impl and binds a fake can never run the edit: its test is not selected, the production graph's is. *Known gap: see its `expect.toml`.* |

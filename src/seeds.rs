@@ -1523,8 +1523,25 @@ fn receiver_round(
                 keep.insert(n);
             }
         }
-        // A holder references a container directly (`val a: ServiceA = ServiceA()`).
+        // A holder references a container directly (`val a: ServiceA = ServiceA()`), or a supertype
+        // declaring a changed name, which can hand the container out (`val a: Service`, a DI
+        // graph's own accessor): `a.m()` on it can dispatch to the change.
+        let mut held: Vec<u32> = containers.iter().copied().collect();
         for &c in &containers {
+            for t in v.supertypes(root[c as usize]) {
+                let p = v.parent[t as usize];
+                if p >= 0
+                    && root[p as usize] != root[c as usize]
+                    && flags[t as usize] & N_PRIVATE == 0
+                    && words.contains(&name[t as usize])
+                {
+                    held.push(p as u32);
+                }
+            }
+        }
+        held.sort_unstable();
+        held.dedup();
+        for &c in &held {
             for &n in v.refby(c) {
                 if is_holder(v, n)
                     && !words.contains(&name[n as usize])
