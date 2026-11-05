@@ -8,6 +8,6 @@ import org.koin.dsl.module
 val appModule = module {
     single { Db() }
     single { UserRepoImpl(get()) } bind UserRepo::class
-    singleOf(::HorseRepoImpl) { bind<HorseRepo>() }
+    singleOf(::BookRepoImpl) { bind<BookRepo>() }
     factory<Clock> { FixedClock() }
 }

@@ -14,12 +14,12 @@ class UserRepoImpl(private val db: Db) : UserRepo {
     override fun userCount(): Int = 1
 }
 
-interface HorseRepo {
-    fun horse(id: Int): String
+interface BookRepo {
+    fun book(id: Int): String
 }
 
-class HorseRepoImpl(private val db: Db) : HorseRepo {
-    override fun horse(id: Int): String = db.read(id).uppercase()
+class BookRepoImpl(private val db: Db) : BookRepo {
+    override fun book(id: Int): String = db.read(id).uppercase()
 }
 
 interface Clock {

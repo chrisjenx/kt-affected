@@ -1,3 +1,3 @@
 why = "Koin `factory<Iface> { Impl() }`: an impl edit reaches tests resolving the interface."
 must = ["demo.ClockTest@:app:test"]
-never = ["demo.UserTest", "demo.UserCountTest", "demo.HorseTest", "demo.PlainTest"]
+never = ["demo.UserTest", "demo.UserCountTest", "demo.BookTest", "demo.PlainTest"]

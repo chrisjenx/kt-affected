@@ -2,20 +2,20 @@ package demo
 
 import org.jetbrains.exposed.sql.Table
 
-object Horses : Table("horses") {
+object Books : Table("books") {
     val id = integer("id")
     val name = text("name")
 }
 
-object Riders : Table("riders") {
+object Authors : Table("authors") {
     val id = integer("id")
     val name = text("name")
 }
 
-class HorseDao {
-    fun count(): Long = Horses.selectAll().count()
+class BookDao {
+    fun count(): Long = Books.selectAll().count()
 }
 
-class RiderDao {
-    fun count(): Long = Riders.selectAll().count()
+class AuthorDao {
+    fun count(): Long = Authors.selectAll().count()
 }

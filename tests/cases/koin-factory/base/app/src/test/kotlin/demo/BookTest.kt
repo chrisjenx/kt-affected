@@ -7,8 +7,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class HorseTest : KoinTest {
-    private val horses: HorseRepo by inject()
+class BookTest : KoinTest {
+    private val books: BookRepo by inject()
 
     @BeforeTest
     fun start() {
@@ -16,7 +16,7 @@ class HorseTest : KoinTest {
     }
 
     @Test
-    fun loadsAHorse() {
-        assertEquals("row2", horses.horse(2))
+    fun loadsABook() {
+        assertEquals("row2", books.book(2))
     }
 }

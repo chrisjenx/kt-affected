@@ -1,12 +1,12 @@
 package demo
 
-import demo.db.HorseQueries
-import demo.db.RiderQueries
+import demo.db.BookQueries
+import demo.db.AuthorQueries
 
-class HorseStore(private val horses: HorseQueries) {
-    fun names(): List<String> = horses.selectAll().executeAsList().map { it.name }
+class BookStore(private val books: BookQueries) {
+    fun names(): List<String> = books.selectAll().executeAsList().map { it.name }
 }
 
-class RiderStore(private val riders: RiderQueries) {
-    fun named(n: String): Int = riders.ridersByName(n).executeAsList().size
+class AuthorStore(private val authors: AuthorQueries) {
+    fun named(n: String): Int = authors.authorsByName(n).executeAsList().size
 }

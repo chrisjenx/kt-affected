@@ -2,9 +2,9 @@ package demo
 
 import kotlin.test.Test
 
-class HorseDaoTest {
+class AuthorDaoTest {
     @Test
     fun runs() {
-        HorseDao().count()
+        AuthorDao().count()
     }
 }

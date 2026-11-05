@@ -1,4 +1,4 @@
-why = "Two stores each hold their own `private val queries`: a .sq change reaching HorseStore.queries must not cross to RiderStore's same-named private property."
-must = ["demo.HorseStoreTest@:db:test"]
-never = ["demo.RiderStoreTest"]
-known_gap = "the mention seeds HorseStore's constructor property `queries`, and RiderStore.named, which writes its own private `queries`, is linked to it by name: RiderStoreTest is selected"
+why = "Two stores each hold their own `private val queries`: a .sq change reaching BookStore.queries must not cross to AuthorStore's same-named private property."
+must = ["demo.BookStoreTest@:db:test"]
+never = ["demo.AuthorStoreTest"]
+known_gap = "the mention seeds BookStore's constructor property `queries`, and AuthorStore.named, which writes its own private `queries`, is linked to it by name: AuthorStoreTest is selected"

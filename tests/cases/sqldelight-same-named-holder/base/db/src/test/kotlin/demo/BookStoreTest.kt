@@ -2,9 +2,9 @@ package demo
 
 import kotlin.test.Test
 
-class HorseStoreTest {
+class BookStoreTest {
     @Test
     fun lists() {
-        HorseStore(testDb().horseQueries).names()
+        BookStore(testDb().bookQueries).names()
     }
 }

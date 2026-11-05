@@ -5,7 +5,7 @@ plugins {
 
 sqldelight {
     databases {
-        create("StableDb") { packageName.set("demo.db") }
+        create("LibraryDb") { packageName.set("demo.db") }
     }
 }
 

@@ -51,7 +51,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `expect-actual-actual-edit` | Editing the jvmMain actual reaches a commonTest caller only under jvmTest: the iOS and wasm binaries link their own actuals. *Known gap: see its `expect.toml`.* |
 | `expect-actual-expect-edit` | Editing the expect declaration (and its actuals) reaches commonTest callers under every target's task. |
 | `file-move` | A file moved to a new path (content unchanged) still selects the tests of the declarations it held. |
-| `flyway-migration` | A Flyway migration seeds Kotlin naming its tables in a string (Table("horses")), not code on other tables. |
+| `flyway-migration` | A Flyway migration seeds Kotlin naming its tables in a string (Table("books")), not code on other tables. |
 | `fully-qualified-call` | A call written with its fully qualified name and no import (`demo.model.Money(100).format()`) reaches the edited member like an imported one. *Known gap: see its `expect.toml`.* |
 | `functional-edits-select` | A literal change, a public parameter rename (named arguments see it) and an inferred-to-explicit return type are functional. |
 | `impl-member-receivers` | An impl member edit reaches tests that can dispatch to it (held in a property, assigned in setUp, handed out by a graph object), not a fake-only test or one calling another member. |
@@ -70,8 +70,8 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `plain-resource-stem` | A plain resource seeds code writing its file name; its bare stem as an identifier (`index`) is not a read of the file. |
 | `reflection-class-literal` | A test reflecting over `Repo::class` sees a member added to Repo, though it calls no member. |
 | `shared-test-source-set` | A custom test source set that jvmTest and wasmJsTest both dependOn runs under both tasks, and not under a target that doesn't include it. |
-| `sqldelight-queries` | A .sq change seeds code naming its generated queries (HorseQueries/horseQueries), not other .sq files' users. |
-| `sqldelight-same-named-holder` | Two stores each hold their own `private val queries`: a .sq change reaching HorseStore.queries must not cross to RiderStore's same-named private property. *Known gap: see its `expect.toml`.* |
+| `sqldelight-queries` | A .sq change seeds code naming its generated queries (BookQueries/bookQueries), not other .sq files' users. |
+| `sqldelight-same-named-holder` | Two stores each hold their own `private val queries`: a .sq change reaching BookStore.queries must not cross to AuthorStore's same-named private property. *Known gap: see its `expect.toml`.* |
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |
 | `test-only-change` | Editing a test selects that test class and no other test of the same code. |
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |

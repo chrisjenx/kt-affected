@@ -1,5 +1,5 @@
 package demo
 
-import demo.db.StableDb
+import demo.db.LibraryDb
 
-fun testDb(): StableDb = TODO("in-memory driver")
+fun testDb(): LibraryDb = TODO("in-memory driver")
