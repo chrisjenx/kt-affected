@@ -414,6 +414,10 @@ struct Settings {
     project_dirs: BTreeMap<String, String>,
     included_builds: Vec<String>,
     warnings: Vec<String>,
+    /// An `include` takes a computed argument: the projects it adds are found on disk.
+    dynamic: bool,
+    /// Every plain string literal in the script.
+    literals: BTreeSet<String>,
 }
 
 fn strip_dir_prefix(s: &str) -> String {
@@ -473,6 +477,14 @@ fn parse_settings(text: &str) -> Settings {
         project_dirs: BTreeMap::new(),
         included_builds: Vec::new(),
         warnings: Vec::new(),
+        dynamic: false,
+        literals: toks
+            .iter()
+            .filter_map(|t| match t {
+                Tok::Str(v, false) => Some(v.clone()),
+                _ => None,
+            })
+            .collect(),
     };
     let mut i = 0;
     while i < toks.len() {
@@ -500,9 +512,10 @@ fn parse_settings(text: &str) -> Settings {
                         _ => {}
                     }
                 }
-                if dynamic {
+                if dynamic && !s.dynamic {
+                    s.dynamic = true;
                     s.warnings.push(format!(
-                        "{kw}: non-literal argument; projects it adds need --gradle-export"
+                        "{kw}: non-literal argument; the projects it adds are taken from directories holding a build script"
                     ));
                 }
                 i = end;
@@ -562,6 +575,158 @@ fn parse_settings(text: &str) -> Settings {
         }
     }
     s
+}
+
+/// Directory names a project scan never descends into: sources, outputs, tooling.
+fn scan_skips(name: &str) -> bool {
+    name.starts_with('.')
+        || matches!(
+            name,
+            "src" | "build" | "buildSrc" | "gradle" | "node_modules" | "out"
+        )
+}
+
+/// A settings script computes its includes (a directory walk, a project DSL): every directory below the
+/// root holding a build script, outside nested and included builds, is taken as a project. Gradle names
+/// a project after its directory path (`:a:b` for `a/b`) unless the script names it otherwise; the
+/// scheme the build scripts' own project references resolve to (`project(":x")`, `projects.x`) is the
+/// one used, so a build naming projects by their leaf directory (`:b` in `a/b`) is read as such.
+/// Returns every directory listed, for the discovery stamp.
+fn add_scanned_projects(root: &Path, s: &mut Settings, warnings: &mut Vec<String>) -> Vec<String> {
+    let builds: BTreeSet<&str> = s.included_builds.iter().map(String::as_str).collect();
+    let mut found: Vec<String> = Vec::new();
+    let mut listed = vec![String::new()];
+    let mut stack = vec![String::new()];
+    while let Some(dir) = stack.pop() {
+        let Ok(rd) = std::fs::read_dir(root.join(&dir)) else {
+            continue;
+        };
+        let mut children: Vec<String> = rd
+            .filter_map(Result::ok)
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+            .filter_map(|e| e.file_name().to_str().map(str::to_string))
+            .filter(|n| !scan_skips(n))
+            .map(|n| {
+                if dir.is_empty() {
+                    n
+                } else {
+                    format!("{dir}/{n}")
+                }
+            })
+            .filter(|d| !builds.contains(d.as_str()))
+            .collect();
+        children.sort();
+        for d in children.into_iter().rev() {
+            if script_in(root, &d, "settings").is_some() {
+                continue;
+            }
+            if script_in(root, &d, "build").is_some() {
+                found.push(d.clone());
+            }
+            listed.push(d.clone());
+            stack.push(d);
+        }
+    }
+    found.sort();
+    let known_dirs: BTreeSet<String> = s
+        .includes
+        .iter()
+        .map(|(p, _)| {
+            s.project_dirs
+                .get(p)
+                .cloned()
+                .unwrap_or_else(|| p.trim_start_matches(':').replace(':', "/"))
+        })
+        .collect();
+    found.retain(|d| !known_dirs.contains(d));
+    let leaf = |d: &str| d.rsplit('/').next().unwrap_or(d).to_string();
+    // A settings DSL naming most of them lists its projects: a build script it never names is a
+    // directory the build no longer includes.
+    let named_count = found
+        .iter()
+        .filter(|d| s.literals.contains(&leaf(d)) || s.literals.contains(*d))
+        .count();
+    if named_count * 2 > found.len() && named_count < found.len() {
+        warnings.push(format!(
+            "settings: {} directories holding a build script are never named by settings; not taken as projects",
+            found.len() - named_count
+        ));
+        found.retain(|d| s.literals.contains(&leaf(d)) || s.literals.contains(d));
+    }
+    let nested: Vec<(String, String)> = found
+        .iter()
+        .map(|d| (format!(":{}", d.replace('/', ":")), d.clone()))
+        .collect();
+    let leaves: BTreeSet<String> = found.iter().map(|d| leaf(d)).collect();
+    let flat: Option<Vec<(String, String)>> = (leaves.len() == found.len()).then(|| {
+        found
+            .iter()
+            .map(|d| (format!(":{}", leaf(d)), d.clone()))
+            .collect()
+    });
+    let mut refs: Vec<Vec<String>> = Vec::new();
+    let mut strs: BTreeSet<String> = BTreeSet::new();
+    for d in std::iter::once(String::new()).chain(found.iter().cloned()) {
+        let Some(text) = script_in(root, &d, "build").and_then(|f| read(root, &f)) else {
+            continue;
+        };
+        let toks = tokenize(&text);
+        for (i, t) in toks.iter().enumerate() {
+            match t {
+                Tok::Str(v, false) if v.starts_with(':') && v.len() > 1 => {
+                    strs.insert(v.clone());
+                }
+                Tok::Ident(id) if id == "projects" && is_p(toks.get(i + 1), '.') => {
+                    let mut chain = Vec::new();
+                    let mut j = i + 1;
+                    while is_p(toks.get(j), '.')
+                        && let Some(n) = ident_at(&toks, j + 1)
+                    {
+                        chain.push(n.to_string());
+                        j += 2;
+                    }
+                    refs.push(chain);
+                }
+                _ => {}
+            }
+        }
+    }
+    let score = |scheme: &[(String, String)]| -> usize {
+        let paths: BTreeSet<&str> = scheme.iter().map(|(p, _)| p.as_str()).collect();
+        let accessors: BTreeSet<Vec<String>> = scheme
+            .iter()
+            .map(|(p, _)| {
+                p.trim_start_matches(':')
+                    .split(':')
+                    .map(accessor_name)
+                    .collect()
+            })
+            .collect();
+        let by_accessor = refs
+            .iter()
+            .filter(|c| {
+                accessors.contains(*c) || (c.len() > 1 && accessors.contains(&c[..c.len() - 1]))
+            })
+            .count();
+        by_accessor + strs.iter().filter(|v| paths.contains(v.as_str())).count()
+    };
+    let (chosen, how) = match flat {
+        Some(f) if score(&f) > score(&nested) => (f, "leaf directory name"),
+        _ => (nested, "directory path"),
+    };
+    if !chosen.is_empty() {
+        warnings.push(format!(
+            "settings: {} projects taken from directories holding a build script, named by {how}",
+            chosen.len()
+        ));
+    }
+    for (p, d) in chosen {
+        if how != "directory path" {
+            s.project_dirs.insert(p.clone(), d);
+        }
+        s.includes.push((p, false));
+    }
+    listed
 }
 
 pub(crate) fn ident_at(toks: &[Tok], i: usize) -> Option<&str> {
@@ -1226,8 +1391,15 @@ pub fn discover(root: &Path) -> Build {
             project_dirs: BTreeMap::new(),
             included_builds: vec![],
             warnings: vec![],
+            dynamic: false,
+            literals: BTreeSet::new(),
         }
     });
+    let mut settings = settings;
+    let mut scanned_dirs = Vec::new();
+    if settings.dynamic {
+        scanned_dirs = add_scanned_projects(root, &mut settings, &mut warnings);
+    }
     warnings.extend(settings.warnings.iter().cloned());
     let root_name = settings.root_name.clone().unwrap_or_else(|| {
         root.file_name()
@@ -1290,6 +1462,8 @@ pub fn discover(root: &Path) -> Build {
     }
 
     let mut inputs: Vec<String> = settings_file.into_iter().collect();
+    // A directory's mtime moves when an entry is added or removed: a new module invalidates discovery.
+    inputs.extend(scanned_dirs);
     let conv = crate::conventions::Conventions::load(root, &settings.included_builds);
     inputs.extend(conv.inputs.iter().cloned());
     warnings.extend(conv.warnings.iter().cloned());

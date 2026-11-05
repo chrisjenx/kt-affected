@@ -1,0 +1,3 @@
+why = "Settings that include projects by walking directories: every directory holding a build script is a project named by its path, so an edit reaches its own tests and its dependents' through projects.books.catalog, and not an unrelated module's."
+must = ["demo.catalog.CatalogTest@:books:catalog:test", "demo.checkout.CheckoutTest@:orders:checkout:test"]
+never = ["demo.history.HistoryTest"]
