@@ -200,6 +200,7 @@ impl Packed {
     }
 
     /// Nodes that reference node `n` (CSR straight off the map).
+    #[cfg(feature = "cli")]
     pub fn referenced_by(&self, n: usize) -> &[u32] {
         self.family(Family::RefBy, n)
     }
@@ -1002,11 +1003,9 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
         if prof {
             eprintln!("  linker new: {}ms", t2.elapsed().as_millis());
         }
-        let g = linker.link(|s| interner.get(s));
-        std::mem::forget(linker);
-        g
+        linker.link(|s| interner.get(s))
     };
-    std::mem::forget(all_refs);
+    drop(all_refs);
     let n_edges = graph.refby.val.len();
     let link_ms = t2.elapsed().as_millis();
 
@@ -1641,6 +1640,7 @@ fn write_packed(path: &Path, sections: &[&[u8]]) -> std::io::Result<()> {
 }
 
 /// Every (target, source) edge of a graph, for comparing an incremental result with a cold one.
+#[cfg(feature = "cli")]
 pub fn edge_set(p: &Packed) -> Vec<(String, u32, String, u32)> {
     let mut out = Vec::with_capacity(p.n_edges());
     let file_of = |n: u32| -> (usize, u32) {
@@ -1664,6 +1664,7 @@ pub fn edge_set(p: &Packed) -> Vec<(String, u32, String, u32)> {
 }
 
 /// Canonical id-free dump of the graph, one `family\ta\tb` line per fact, for diffing two graphs.
+#[cfg(feature = "cli")]
 pub fn dump_edges(p: &Packed) -> Vec<String> {
     use crate::graph::{N_ANY_MEMBERS, N_IN_TEST, N_MARKER, N_NO_WALK, N_PRIVATE};
     let n = p.n_nodes();

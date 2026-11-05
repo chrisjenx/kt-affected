@@ -9,7 +9,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
@@ -1562,6 +1562,7 @@ pub fn discover(root: &Path) -> Build {
 
 // ------------------------------------------------------------------ Gradle export
 
+#[cfg(feature = "cli")]
 pub const INIT_SCRIPT: &str = include_str!("../gradle/kt-affected-export.init.gradle");
 
 #[derive(Debug, Deserialize)]
@@ -1623,11 +1624,13 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
     })
 }
 
+#[cfg(feature = "cli")]
 pub fn write_init_script(to: &Path) -> std::io::Result<()> {
     std::fs::write(to, INIT_SCRIPT)
 }
 
 /// Runs `./gradlew ktAffectedExport` with the shipped init script (the project's own build).
+#[cfg(feature = "cli")]
 pub fn gradle_export(root: &Path) -> std::io::Result<Build> {
     let dir = root.join("build/kt-affected");
     std::fs::create_dir_all(&dir)?;
@@ -1635,7 +1638,7 @@ pub fn gradle_export(root: &Path) -> std::io::Result<Build> {
     write_init_script(&script)?;
     let out = root.join("build/kt-affected/export");
     let _ = std::fs::remove_dir_all(&out);
-    let wrapper: PathBuf = if cfg!(windows) {
+    let wrapper: std::path::PathBuf = if cfg!(windows) {
         root.join("gradlew.bat")
     } else {
         root.join("gradlew")
@@ -1654,6 +1657,7 @@ pub fn gradle_export(root: &Path) -> std::io::Result<Build> {
     read_export(root, &out)
 }
 
+#[cfg(feature = "cli")]
 #[derive(Debug, Default, Serialize)]
 pub struct Comparison {
     pub projects_static: usize,
@@ -1671,6 +1675,7 @@ pub struct Comparison {
 }
 
 /// Static discovery vs a reference (export or another engine), at project and project-dep level.
+#[cfg(feature = "cli")]
 pub fn compare(stat: &Build, other: &Build, compare_tasks: bool) -> Comparison {
     let sp: BTreeSet<&str> = stat
         .projects
@@ -1787,7 +1792,7 @@ mod tests {
 
     use super::*;
 
-    fn tmp(name: &str) -> PathBuf {
+    fn tmp(name: &str) -> std::path::PathBuf {
         let d =
             std::env::temp_dir().join(format!("kt-affected-test-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);

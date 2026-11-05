@@ -1,6 +1,6 @@
 [package]
 name = "kt-affected"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 description = "Which tests can a change to a Kotlin/Gradle project affect? A declaration-level test differ built on kt-syntax."
 license = "MIT OR Apache-2.0"
@@ -14,9 +14,22 @@ publish = false
 
 [workspace]
 
+[lib]
+name = "kt_affected"
+path = "src/lib.rs"
+
 [[bin]]
 name = "kt-affected"
 path = "src/main.rs"
+required-features = ["cli"]
+
+[[example]]
+name = "rss"
+
+[features]
+default = ["cli"]
+# The `kt-affected` binary. A library user turns it off: `default-features = false`.
+cli = []
 
 [dependencies]
 kt-syntax = { git = "https://github.com/Hexay/ktrs", rev = "8ea527ef4fb6ba13af7fbae63b5e9caa19c97f2b" }
@@ -29,6 +42,9 @@ bytemuck = "1"
 rustc-hash = "2"
 regex = "1"
 toml = "0.8"
+
+[dev-dependencies]
+libc = "0.2"
 
 [profile.release]
 debug = false

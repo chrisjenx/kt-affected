@@ -12,27 +12,26 @@ use crate::parse::{
     KIND_ENUM_ENTRY, KIND_INIT, KIND_INTERFACE, KIND_OBJECT, KIND_VAL, KIND_VAR, NONE,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::rc::Rc;
 
-/// Record every closure's first reachers (`Reach::via`), as `KT_AFFECTED_TRACE` does.
-pub static TRACE: AtomicBool = AtomicBool::new(false);
-/// While `Some`, every closure and receiver step adds its first reachers here (`explain`).
-pub static EXPLAIN_VIA: Mutex<Option<FxHashMap<u32, (u32, String)>>> = Mutex::new(None);
+/// First reachers captured for `explain`: node -> (reached from, how). Per call, never global.
+pub type ExplainVia = Rc<RefCell<Option<FxHashMap<u32, (u32, String)>>>>;
 
-/// `n` was first reached from `from` by `how` (kept only while `EXPLAIN_VIA` captures).
-pub fn note(n: u32, from: u32, how: impl FnOnce() -> String) {
-    if let Ok(mut g) = EXPLAIN_VIA.lock()
-        && let Some(m) = g.as_mut()
-        && n != from
-    {
-        m.entry(n).or_insert_with(|| (from, how()));
+impl Routes {
+    /// `n` was first reached from `from` by `how` (kept only while `explain_via` captures).
+    fn note(&self, n: u32, from: u32, how: impl FnOnce() -> String) {
+        if let Some(m) = self.explain_via.borrow_mut().as_mut()
+            && n != from
+        {
+            m.entry(n).or_insert_with(|| (from, how()));
+        }
     }
-}
 
-fn capturing() -> bool {
-    EXPLAIN_VIA.lock().map(|g| g.is_some()).unwrap_or(false)
+    fn capturing(&self) -> bool {
+        self.explain_via.borrow().is_some()
+    }
 }
 
 const OPERATOR_NAMES: &[&str] = &[
@@ -492,6 +491,10 @@ pub struct Routes {
     /// test classpath)? Empty: no restriction. Bounds what `unnamed_receiver_reach` reaches, since
     /// a call through an interface is how reach escapes module visibility.
     pub classpath_ok: std::rc::Rc<Vec<bool>>,
+    /// Record every closure's first reachers (`Reach::via`), as `KT_AFFECTED_TRACE` does.
+    pub trace: bool,
+    /// While it holds `Some`, every closure and receiver step adds its first reachers (`explain`).
+    pub explain_via: ExplainVia,
 }
 
 /// Roots a DI framework binds: annotated with a binding annotation, or referenced from a provider
@@ -963,7 +966,7 @@ pub fn symbol_closure(
     }
     // Holders followed from a gated type (see `container_gate`); members of the set are not reached.
     let mut tentative: FxHashSet<u32> = FxHashSet::default();
-    let tracing = TRACE.load(Ordering::Relaxed) || std::env::var_os("KT_AFFECTED_TRACE").is_some();
+    let tracing = routes.trace || std::env::var_os("KT_AFFECTED_TRACE").is_some();
     let mut via: FxHashMap<u32, (u32, &'static str)> = FxHashMap::default();
     let origins: FxHashSet<u32> = seeds.union(&ancestors).copied().collect();
     // A walk that starts at a routed handler never enters the dispatch bases, through any number of
@@ -1362,9 +1365,9 @@ pub fn symbol_closure(
             }
         }
     }
-    if capturing() {
+    if routes.capturing() {
         for (&n, &(from, how)) in &via {
-            note(n, from, || how.to_string());
+            routes.note(n, from, || how.to_string());
         }
     }
     Reach {
@@ -1396,6 +1399,8 @@ pub fn unnamed_receiver_reach(
         typed_dispatch: routes.typed_dispatch,
         di_graphs: routes.di_graphs.clone(),
         classpath_ok: routes.classpath_ok.clone(),
+        trace: routes.trace,
+        explain_via: routes.explain_via.clone(),
     };
     let routes = &ungated_routes;
     let (parent, flags, root) = (&v.parent, &v.flags, &v.root);
@@ -1579,7 +1584,7 @@ fn receiver_round(
         let implicit = v.implicit.contains(&name[n as usize]);
         let mut p = parent[n as usize];
         while p >= 0 {
-            note(p as u32, n, || "container of the changed member".into());
+            routes.note(p as u32, n, || "container of the changed member".into());
             if implicit {
                 ungated.insert(p as u32);
             } else {
@@ -1646,8 +1651,7 @@ fn receiver_round(
             }
             if observes(n) {
                 let names: Vec<&str> = words.iter().map(|&x| v.p.str(x)).collect();
-                if let Ok(mut g) = EXPLAIN_VIA.lock()
-                    && let Some(m) = g.as_mut()
+                if let Some(m) = routes.explain_via.borrow_mut().as_mut()
                     && let Some(e) = m.get_mut(&n)
                     && !e.1.contains("unnamed receiver")
                 {
@@ -1682,7 +1686,7 @@ fn receiver_round(
                     && !own.contains(&root[n as usize])
                     && seen.insert(n)
                 {
-                    note(n, c, || "holds the changed type".into());
+                    routes.note(n, c, || "holds the changed type".into());
                     holders.push(n);
                 }
             }
@@ -1726,7 +1730,7 @@ fn receiver_round(
                 }
                 // Only a declaration that names both the holder and a changed member reads it here.
                 if users.contains(&w) && !seed_roots.contains(&root[w as usize]) {
-                    note(w, h, || {
+                    routes.note(w, h, || {
                         let names: Vec<&str> = words.iter().map(|&x| v.p.str(x)).collect();
                         format!(
                             "unnamed receiver: reads `{}` and calls `{}`",
@@ -1736,7 +1740,7 @@ fn receiver_round(
                     });
                     keep.insert(w);
                 } else if is_holder(v, w) && !words.contains(&name[w as usize]) {
-                    note(w, h, || format!("holds `{}`", v.p.str(name[h as usize])));
+                    routes.note(w, h, || format!("holds `{}`", v.p.str(name[h as usize])));
                     holders.push(w);
                 }
             }
@@ -1782,7 +1786,7 @@ fn typed_round(
                             .iter()
                             .any(|&s| root[s as usize] == root[m as usize]));
                 if !structural && !prior.contains(&c) {
-                    note(c, m, || "calls it (resolved)".into());
+                    routes.note(c, m, || "calls it (resolved)".into());
                     keep.insert(c);
                 }
             }
@@ -1811,7 +1815,7 @@ fn typed_round(
                     && !words.contains(&name[h as usize])
                     && seen.insert(h)
                 {
-                    note(h, via_member, || "holds the interface".into());
+                    routes.note(h, via_member, || "holds the interface".into());
                     holders.push(h);
                 }
             }
@@ -1834,7 +1838,7 @@ fn typed_round(
             if !seed_roots.contains(&holder_root) && opened.insert(holder_root) {
                 for &u in users_in.get(&holder_root).into_iter().flatten() {
                     if !prior.contains(&u) {
-                        note(u, h, || {
+                        routes.note(u, h, || {
                             format!("calls it on `{}`'s class", v.p.str(name[h as usize]))
                         });
                         keep.insert(u);
@@ -1868,7 +1872,7 @@ fn typed_round(
                     continue;
                 }
                 if users.contains(&w) && !seed_roots.contains(&wr) {
-                    note(w, h, || {
+                    routes.note(w, h, || {
                         let ns: Vec<&str> = words.iter().map(|&x| v.p.str(x)).collect();
                         format!(
                             "reads `{}` and calls `{}`",
@@ -1878,7 +1882,7 @@ fn typed_round(
                     });
                     keep.insert(w);
                 } else if is_holder(v, w) && !words.contains(&name[w as usize]) {
-                    note(w, h, || format!("holds `{}`", v.p.str(name[h as usize])));
+                    routes.note(w, h, || format!("holds `{}`", v.p.str(name[h as usize])));
                     holders.push(w);
                 }
             }
