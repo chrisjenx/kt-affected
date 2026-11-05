@@ -78,6 +78,7 @@ pub fn modules_of(
             id: p.path.clone(),
             prefix: format!("{}/", p.dir.trim_end_matches('/')),
             source_dirs: p.source_dirs.clone(),
+            build_file: p.build_file.clone(),
         })
         .collect();
     list.sort_by(|a, b| {

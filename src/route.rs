@@ -18,6 +18,8 @@ pub struct Module {
     pub prefix: String,
     /// The project's `source_dirs` (`dir relative to prefix` -> source set).
     pub source_dirs: BTreeMap<String, String>,
+    /// The project's build script, relative to the root.
+    pub build_file: Option<String>,
 }
 
 pub struct Modules {
@@ -344,6 +346,119 @@ fn whole_task_effect(
     ));
 }
 
+/// Type-safe accessors (`libs.androidx.core`, `libs.plugins.x`, `libs.bundles.y`) of the catalog
+/// entries whose version a `*.versions.toml` edit changes: an entry whose own text changed, one
+/// whose `version.ref` key changed, and bundles holding a changed library.
+fn changed_catalog_accessors(path: &str, ctx: &Ctx) -> Vec<String> {
+    let Some(catalog) = name_of(path).strip_suffix(".versions.toml") else {
+        return Vec::new();
+    };
+    let parse = |t: Option<String>| -> toml::Table {
+        t.and_then(|t| t.parse::<toml::Table>().ok())
+            .unwrap_or_default()
+    };
+    let (head, base) = (parse((ctx.read)(path)), parse((ctx.read_base)(path)));
+    let table = |t: &toml::Table, name: &str| -> toml::Table {
+        t.get(name)
+            .and_then(|v| v.as_table())
+            .cloned()
+            .unwrap_or_default()
+    };
+    let version_changed =
+        |key: &str| table(&head, "versions").get(key) != table(&base, "versions").get(key);
+    let changed_in = |name: &str| -> BTreeSet<String> {
+        let (h, b) = (table(&head, name), table(&base, name));
+        h.keys()
+            .chain(b.keys())
+            .filter(|k| {
+                let (hv, bv) = (h.get(*k), b.get(*k));
+                hv != bv
+                    || hv
+                        .and_then(|v| v.get("version"))
+                        .and_then(|v| v.get("ref"))
+                        .and_then(|r| r.as_str())
+                        .is_some_and(version_changed)
+            })
+            .cloned()
+            .collect()
+    };
+    let accessor = |kind: &str, key: &str| {
+        let key: String = key
+            .chars()
+            .map(|c| if c == '-' || c == '_' { '.' } else { c })
+            .collect();
+        if kind.is_empty() {
+            format!("{catalog}.{key}")
+        } else {
+            format!("{catalog}.{kind}.{key}")
+        }
+    };
+    let libraries = changed_in("libraries");
+    let mut out: Vec<String> = libraries.iter().map(|k| accessor("", k)).collect();
+    out.extend(changed_in("plugins").iter().map(|k| accessor("plugins", k)));
+    for (name, members) in table(&head, "bundles") {
+        let holds = members.as_array().is_some_and(|m| {
+            m.iter()
+                .any(|x| x.as_str().is_some_and(|x| libraries.contains(x)))
+        });
+        if holds {
+            out.push(accessor("bundles", &name));
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// Does `text` write `accessor` as a whole accessor (not a prefix of a longer one)?
+fn writes_accessor(text: &str, accessor: &str) -> bool {
+    text.match_indices(accessor).any(|(i, _)| {
+        let before = text[..i].chars().next_back();
+        let after = text[i + accessor.len()..].chars().next();
+        !before.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.')
+            && !after.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.')
+    })
+}
+
+/// A catalog edit changing the version of a library or plugin modules declare by accessor: those
+/// modules and their dependents run every class of their test tasks, since the new version is on
+/// their test runtime classpath. Declarations made through a convention plugin are not seen here;
+/// those modules keep the build-logic smoke class.
+fn catalog_users(path: &str, mods: &Modules, ctx: &Ctx, out: &mut Routing) {
+    let accessors = changed_catalog_accessors(path, ctx);
+    if accessors.is_empty() {
+        return;
+    }
+    let mut declarers: BTreeSet<String> = BTreeSet::new();
+    let mut named: BTreeSet<&str> = BTreeSet::new();
+    for m in &mods.list {
+        let Some(text) = m.build_file.as_deref().and_then(|b| (ctx.read)(b)) else {
+            continue;
+        };
+        let code: String = text
+            .lines()
+            .map(|l| l.split("//").next().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join("\n");
+        for a in &accessors {
+            if writes_accessor(&code, a) {
+                declarers.insert(m.id.clone());
+                named.insert(a);
+            }
+        }
+    }
+    if declarers.is_empty() {
+        return;
+    }
+    let scope = mods.reverse_closure(&declarers);
+    out.reasons.push(format!(
+        "{path}: changes the version of {} — declared by {}; every class of their and their dependents' test tasks runs",
+        named.into_iter().collect::<Vec<_>>().join(", "),
+        declarers.iter().cloned().collect::<Vec<_>>().join(", ")
+    ));
+    out.full_modules.extend(scope);
+}
+
 fn build_logic(path: &str, scope: BTreeSet<String>, out: &mut Routing, why: &str) -> bool {
     out.smoke_modules.extend(scope);
     out.reasons.push(format!(
@@ -360,6 +475,9 @@ pub fn route(path: &str, mods: &Modules, cfg: &Config, ctx: &Ctx, out: &mut Rout
     let Some(module) = module else {
         if is_build_logic(path) || (ctx.in_plugin_build)(path) {
             whole_task_effect(path, &everything, cfg, ctx, out);
+            if path.ends_with(".versions.toml") {
+                catalog_users(path, mods, ctx, out);
+            }
             return build_logic(path, everything, out, "build logic");
         }
         out.mentions.push(Mention {
