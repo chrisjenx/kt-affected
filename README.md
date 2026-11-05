@@ -49,7 +49,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.1.0
+- uses: chrisjenx/kt-affected@v0.2.0
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}

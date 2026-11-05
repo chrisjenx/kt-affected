@@ -6,6 +6,12 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.2.0]
+
+On a replay of 586 pull requests of a production app, this release would have run 99 of the 103
+test failures those diffs caused in CI (0.1.0: 91), at 15.1% of the full test time. See
+[docs/accuracy.md](docs/accuracy.md).
+
 Selection changes from the edge-case corpus (every former known gap now passes):
 
 - More selected (missed tests before): accessors declared on a DI graph itself, fully
@@ -45,5 +51,6 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/chrisjenx/kt-affected/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/chrisjenx/kt-affected/releases/tag/v0.1.0
