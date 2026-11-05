@@ -1,0 +1,4 @@
+why = "An Android module with product flavors has no testDebugUnitTest: the shared test source set runs under every flavor's test<Flavor>DebugUnitTest, a flavor's own test source set only under that flavor's."
+must = ["demo.app.PricingTest@:app:testFreeDebugUnitTest", "demo.app.PricingTest@:app:testPaidDebugUnitTest", "demo.app.PaidPricingTest@:app:testPaidDebugUnitTest"]
+never = ["demo.app.PaidPricingTest@:app:testFreeDebugUnitTest"]
+never_tasks = [":app:testDebugUnitTest"]

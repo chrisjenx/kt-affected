@@ -36,6 +36,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 
 | case | pins |
 |------|------|
+| `android-product-flavors` | An Android module with product flavors has no testDebugUnitTest: the shared test source set runs under every flavor's test<Flavor>DebugUnitTest, a flavor's own test source set only under that flavor's. |
 | `android-res` | A changed Android res/drawable file seeds code naming R.drawable.<stem>, not every user of R.drawable. |
 | `build-logic-test-jvm-config` | A convention plugin adding JVM arguments to every Test task runs every class of every task: a smoke class cannot show a JVM-wide effect. |
 | `build-script-change` | A module build script change runs one smoke class per test task of that module and every module depending on it (CI runs every suite), and nothing in unrelated modules. |

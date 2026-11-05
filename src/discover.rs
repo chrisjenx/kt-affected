@@ -308,7 +308,15 @@ pub fn fresh_export(root: &Path, inputs: &[String]) -> Option<(Build, Vec<String
 }
 
 pub fn is_test_source_set(name: &str) -> bool {
-    name == "test" || name.ends_with("Test") || name.ends_with("test")
+    // `testPaid`, `androidTestDebug`: an Android variant's own test sets; `testFixtures` is not a test.
+    let variant = |p: &str| {
+        name.strip_prefix(p)
+            .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_uppercase()))
+    };
+    name == "test"
+        || name.ends_with("Test")
+        || name.ends_with("test")
+        || ((variant("test") || variant("androidTest")) && !name.starts_with("testFixtures"))
 }
 
 // ------------------------------------------------------------------ tokenizer
@@ -1278,6 +1286,8 @@ struct ProjectShape {
     js_envs: BTreeMap<String, BTreeSet<String>>,
     /// Named target -> kind (`ScriptFacts::target_kinds`).
     target_kinds: BTreeMap<String, String>,
+    /// Android product flavors (one dimension): unit tests run per flavor, `test<Flavor>DebugUnitTest`.
+    flavors: Vec<String>,
 }
 
 impl ProjectShape {
@@ -1297,14 +1307,43 @@ fn test_tasks_for(
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     if !shape.kmp {
-        if name == "test" {
+        let flavor_of = |prefix: &str| {
+            shape
+                .flavors
+                .iter()
+                .find(|f| name.strip_prefix(prefix) == Some(capitalize(f).as_str()))
+        };
+        if name == "test" && shape.android && !shape.flavors.is_empty() {
+            for f in &shape.flavors {
+                out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+            }
+        } else if name == "test" {
             out.insert(if shape.android {
                 "testDebugUnitTest".into()
             } else {
                 "test".into()
             });
+        } else if name == "androidTest" && !shape.flavors.is_empty() {
+            for f in &shape.flavors {
+                out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+            }
         } else if name == "androidTest" {
             out.insert("connectedDebugAndroidTest".into());
+        } else if let Some(f) = flavor_of("test").filter(|_| shape.android) {
+            out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+        } else if let Some(f) = flavor_of("androidTest").filter(|_| shape.android) {
+            out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+        } else if let Some(build_type) = name
+            .strip_prefix("test")
+            .filter(|r| shape.android && r.starts_with(|c: char| c.is_ascii_uppercase()))
+        {
+            // A build type's own unit tests (`testRelease`), under each flavor when there are some.
+            if shape.flavors.is_empty() {
+                out.insert(format!("test{build_type}UnitTest"));
+            }
+            for f in &shape.flavors {
+                out.insert(format!("test{}{build_type}UnitTest", capitalize(f)));
+            }
         } else {
             // A custom JVM test suite (`integrationTest`) gets a task of the same name.
             out.insert(name.to_string());
@@ -1337,6 +1376,59 @@ fn test_tasks_for(
         out.extend(leaf_test_tasks(&t, shape));
     }
     out
+}
+
+/// The flavors a `productFlavors { create("x") }` (or `register`, `maybeCreate`, Groovy `x { }`) block
+/// declares. Empty with more than one flavor dimension: each variant then combines flavors in
+/// dimension order, which this does not model.
+fn product_flavors(toks: &[Tok]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut dimensions = BTreeSet::new();
+    for i in 0..toks.len() {
+        if ident(&toks[i]) == Some("dimension")
+            && is_p(toks.get(i + 1), '=')
+            && let Some(Tok::Str(d, _)) = toks.get(i + 2)
+        {
+            dimensions.insert(d.clone());
+        }
+        if ident(&toks[i]) != Some("productFlavors") || !is_p(toks.get(i + 1), '{') {
+            continue;
+        }
+        let end = close_of(toks, i + 1);
+        let mut j = i + 2;
+        while j < end {
+            let named = match (ident(&toks[j]), toks.get(j + 1), toks.get(j + 2)) {
+                (
+                    Some("create" | "register" | "maybeCreate"),
+                    Some(Tok::Punct('(')),
+                    Some(Tok::Str(n, false)),
+                ) => Some(n.clone()),
+                (Some(n), Some(Tok::Punct('{')), _) => Some(n.to_string()),
+                _ => None,
+            };
+            if let Some(n) = named
+                && !out.contains(&n)
+            {
+                out.push(n);
+            }
+            // Skip the flavor's own block: its contents are not flavors.
+            j = match toks[j + 1..end]
+                .iter()
+                .position(|t| matches!(t, Tok::Punct('{')))
+            {
+                Some(k) if named_block_at(toks, j, j + 1 + k) => close_of(toks, j + 1 + k) + 1,
+                _ => j + 1,
+            };
+        }
+    }
+    if dimensions.len() > 1 { vec![] } else { out }
+}
+
+/// Is the `{` at `open` the block of the flavor declaration starting at `at` (same statement)?
+fn named_block_at(toks: &[Tok], at: usize, open: usize) -> bool {
+    !toks[at..open]
+        .iter()
+        .any(|t| *t == Tok::Newline || matches!(t, Tok::Punct(';')))
 }
 
 fn depends_transitively(from: &str, to: &str, sets: &BTreeMap<String, SourceSet>) -> bool {
@@ -1684,6 +1776,11 @@ pub fn discover(root: &Path) -> Build {
             android_unit_dir: source_sets.contains_key("androidUnitTest"),
             js_envs: facts.js_envs.clone(),
             target_kinds: kinds.clone(),
+            flavors: if android {
+                product_flavors(&tokenize(&text))
+            } else {
+                vec![]
+            },
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.
