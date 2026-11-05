@@ -1,0 +1,6 @@
+why = "A routed handler's init block runs wherever the shared registry builds it: every bus user's test runs, whatever event it publishes."
+config = """
+[[dispatch]]
+bases = ["EventHandler"]
+"""
+must = ["demo.PlacedTest@:events:test", "demo.CancelledTest@:events:test"]

@@ -1059,6 +1059,13 @@ pub fn symbol_closure(
             }
         }
     }
+    // Routed event -> the handler roots routed by it.
+    let mut handlers_of: FxHashMap<u32, FxHashSet<u32>> = FxHashMap::default();
+    for (&h, es) in &routes.routes {
+        for &e in es {
+            handlers_of.entry(e).or_default().insert(h);
+        }
+    }
     let mut dispatched: FxHashSet<u32> = FxHashSet::default();
     let mut dispatched_by: FxHashMap<u32, FxHashSet<u32>> = FxHashMap::default();
     let mut altered: FxHashSet<u32> = seeds.clone();
@@ -1218,6 +1225,14 @@ pub fn symbol_closure(
             continue;
         }
         let mut refs: Vec<u32> = v.refby(n).to_vec();
+        // An unchanged event a routed handler reaches is referenced by that handler's own header
+        // (`: Handler<Event>`): that edge carries nothing back into the handler, whose holders the
+        // seed's own walk decides.
+        if sn == 1
+            && let Some(hs) = handlers_of.get(&n)
+        {
+            refs.retain(|r| !hs.contains(r));
+        }
         let routed = v.fam(Family::KoinRouted, n);
         if !routed.is_empty() && !(edited && seeds.contains(&n)) {
             refs.retain(|r| !routed.contains(r));
