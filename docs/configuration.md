@@ -12,6 +12,8 @@ outside_module_ignored_suffixes = [".txt"]
 module_ignored_basenames = ["detekt-baseline.xml"]
 build_logic_globs = ["gradle/plugins/src/main"]  # extra sources whose text decides "is this a build input?"
 classpath_bound = true                    # a test runs edited code only with an edited module on its classpath
+codegen_plugins = ["dev.zacsweers.metro"] # a version-catalog bump of one of these runs every test task whole
+                                          # (default: Kotlin, Compose, KSP, Metro, SQLDelight, Anvil, Dagger, Room, ...)
 
 [database]
 migration_dirs = ["app/src/main/resources/db/migration/"]  # Flyway: seed Kotlin naming the tables
