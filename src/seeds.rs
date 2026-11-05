@@ -775,7 +775,12 @@ impl<'v, 'a> Overrides<'v, 'a> {
 
     fn of(&mut self, n: u32) -> Vec<u32> {
         let v = self.v;
-        if self.done.contains(&n) || v.flags[n as usize] & (N_PRIVATE | N_NO_WALK) != 0 {
+        // Initializer blocks and constructors are not virtual: one class's `init {}` never runs for
+        // a sibling, though both are named alike.
+        if self.done.contains(&n)
+            || v.flags[n as usize] & (N_PRIVATE | N_NO_WALK) != 0
+            || matches!(v.kind[n as usize], KIND_INIT | KIND_CONSTRUCTOR)
+        {
             return vec![];
         }
         self.done.insert(n);
@@ -791,6 +796,7 @@ impl<'v, 'a> Overrides<'v, 'a> {
                 if t as i32 != c
                     && v.parent[t as usize] >= 0
                     && v.flags[t as usize] & N_PRIVATE == 0
+                    && !matches!(v.kind[t as usize], KIND_INIT | KIND_CONSTRUCTOR)
                 {
                     names.entry(v.name[t as usize]).or_default().push(t);
                 }

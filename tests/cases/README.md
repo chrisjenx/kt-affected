@@ -61,6 +61,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `include-build-convention` | A convention plugin in a pluginManagement includeBuild is build logic for every module applying it: each test task runs a smoke class, with a reason. |
 | `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. |
 | `include-build-precompiled-script` | A precompiled script plugin in a pluginManagement includeBuild is build logic for every module: each test task runs a smoke class, with a reason. |
+| `init-block-not-virtual` | An init block is not virtual: a change running in one subclass's init reaches tests constructing it, never a sibling's through the base class's init. |
 | `koin-factory` | Koin `factory<Iface> { Impl() }`: an impl edit reaches tests resolving the interface. |
 | `koin-single-bind` | Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings. |
 | `koin-singleof-bind` | Koin `singleOf(::Impl) { bind<Iface>() }`: an impl member edit reaches tests holding the interface by inject(). |
