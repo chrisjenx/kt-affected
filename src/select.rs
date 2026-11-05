@@ -9,7 +9,7 @@
 use crate::cache::Packed;
 use crate::change;
 use crate::config::{CONFIG_FILE, Config};
-use crate::discover::{Build, is_test_source_set};
+use crate::discover::{Build, KMP_TARGETS, is_test_source_set};
 use crate::git::{Hunk, Repo};
 use crate::route::{self, Ctx, Module, Modules, Routing};
 use crate::seeds::{self, Routes, View};
@@ -1142,11 +1142,17 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                     .push((fq.clone(), explain_path(&v, &via, &all, &node_seeds, r)));
             }
         }
+        let platform = platform_seeds(&v, &mods, build, &node_seeds);
         for r in roots {
             let Some((f, fq)) = v.test_class.get(&r) else {
                 continue;
             };
             for key in idx.owner.get(f).into_iter().flatten() {
+                if let Some(seeds) = &platform
+                    && !compiles_any(build, &key.0, &key.1, seeds)
+                {
+                    continue;
+                }
                 picked.entry(key.clone()).or_default().insert(fq.clone());
             }
         }
@@ -1324,6 +1330,69 @@ fn group(
             .get(module)
             .map(|d| format!("{d}/build/test-results/{task}")),
     }
+}
+
+/// The `(module, target)` of every seed when each lies in one KMP target's own main source set
+/// (`jvmMain`, `iosSimulatorArm64Main`, `wasmJsMain`) that no other source set depends on; such
+/// code compiles into that target alone. None when any seed lies elsewhere.
+fn platform_seeds(
+    v: &View,
+    mods: &Modules,
+    build: &Build,
+    seeds: &FxHashSet<u32>,
+) -> Option<BTreeSet<(String, String)>> {
+    let mut out = BTreeSet::new();
+    let mut files: FxHashSet<u32> = FxHashSet::default();
+    for &n in seeds {
+        if !files.insert(v.file[n as usize]) {
+            continue;
+        }
+        let (m, set) = mods.source_set_of(v.p.file_path(v.file[n as usize] as usize))?;
+        let target = set.strip_suffix("Main")?;
+        let p = build.project(&m.id)?;
+        let platform = KMP_TARGETS.contains(&target)
+            && !target.starts_with("android")
+            && p.targets.contains(target)
+            && !p.source_sets.values().any(|ss| ss.depends_on.contains(set));
+        if !platform {
+            return None;
+        }
+        out.insert((m.id.clone(), target.to_string()));
+    }
+    Some(out)
+}
+
+/// Can test task `task` of `module` run code from any of `seeds` (see `platform_seeds`)? Only a
+/// task known to run one KMP target's compilation (`<target>Test`, `<target>BrowserTest`, ..)
+/// is told no: when that target is none of the seeds' own and, for a seed in another module,
+/// that module has the target too, so the task links that module's own variant of it.
+fn compiles_any(
+    build: &Build,
+    module: &str,
+    task: &str,
+    seeds: &BTreeSet<(String, String)>,
+) -> bool {
+    let Some(p) = build.project(module) else {
+        return true;
+    };
+    let target = p.targets.iter().find(|t| {
+        KMP_TARGETS.contains(&t.as_str())
+            && !t.starts_with("android")
+            && task
+                .strip_prefix(t.as_str())
+                .is_some_and(|rest| matches!(rest, "Test" | "BrowserTest" | "NodeTest" | "D8Test"))
+    });
+    let Some(t) = target else {
+        return true;
+    };
+    seeds.iter().any(|(m, own)| {
+        own == t
+            || (m != module
+                && !build
+                    .project(m)
+                    .map(|q| q.targets.contains(t))
+                    .unwrap_or(false))
+    })
 }
 
 /// Each included build's directory (with a trailing '/', longest first) and whether it supplies
@@ -1513,6 +1582,57 @@ mod tests {
     use super::*;
     use std::path::{Path, PathBuf};
     use std::process::Command;
+
+    #[test]
+    fn a_platform_seed_compiles_only_into_its_own_target_tasks() {
+        let project = |path: &str, targets: &[&str]| crate::discover::Project {
+            path: path.into(),
+            dir: path.trim_start_matches(':').into(),
+            build_file: None,
+            deps: Default::default(),
+            source_sets: Default::default(),
+            targets: targets.iter().map(|t| t.to_string()).collect(),
+            test_tasks: Default::default(),
+            implicit: false,
+            dep_confidence: Default::default(),
+        };
+        let build = Build {
+            root_name: "r".into(),
+            projects: vec![
+                project(":core", &["jvm", "wasmJs", "iosSimulatorArm64"]),
+                project(":app", &["jvm", "wasmJs", "js"]),
+                project(":desktop", &["desktop"]),
+            ],
+            included_builds: vec![],
+            inputs: vec![],
+            warnings: vec![],
+        };
+        let jvm: BTreeSet<(String, String)> = [(":core".into(), "jvm".into())].into();
+        assert!(compiles_any(&build, ":core", "jvmTest", &jvm));
+        assert!(!compiles_any(&build, ":core", "wasmJsBrowserTest", &jvm));
+        assert!(!compiles_any(
+            &build,
+            ":core",
+            "iosSimulatorArm64Test",
+            &jvm
+        ));
+        assert!(
+            !compiles_any(&build, ":app", "wasmJsBrowserTest", &jvm),
+            "app links core's wasm variant"
+        );
+        assert!(
+            compiles_any(&build, ":app", "jsBrowserTest", &jvm),
+            "core has no js variant: can't tell"
+        );
+        assert!(
+            compiles_any(&build, ":core", "screenshots", &jvm),
+            "a task of no known target"
+        );
+        assert!(
+            compiles_any(&build, ":desktop", "desktopTest", &jvm),
+            "a named target"
+        );
+    }
 
     struct Fixture {
         dir: PathBuf,
