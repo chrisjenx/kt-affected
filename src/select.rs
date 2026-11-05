@@ -15,35 +15,44 @@ use crate::route::{self, Ctx, Module, Modules, Routing};
 use crate::seeds::{self, Routes, View};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::LazyLock;
 
 pub const UNMAPPED_TASK: &str = "*";
 
-#[derive(Serialize, Debug, Clone)]
+/// One Gradle test task to run: the whole task, or the listed classes.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
+#[non_exhaustive]
 pub struct Group {
+    /// Gradle project path (`:core`, `:` for the root project).
     pub module: String,
+    /// Test task name in that project (`jvmTest`, `test`), or `*` when the change maps to no task.
     pub task: String,
+    /// Fully qualified test classes to run; every class of the task when `full`.
     pub classes: Vec<String>,
+    /// Run the whole task, not only `classes`.
     pub full: bool,
+    /// Test classes the task holds.
     pub total: usize,
+    /// Length of `classes`.
     pub selected: usize,
+    /// A local loop runs this task (`[tasks] local`); runners defer the others.
     pub local: bool,
+    /// The module is listed in `[modules] fail_open_forks`: a whole run of it needs parallel forks.
     pub fail_open_forks: bool,
+    /// `<module dir>/build/test-results/<task>`, relative to the build root, when the module is known.
     pub result_dir: Option<String>,
 }
 
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
+/// What `select` computed; the public `Selection` is built from it.
+#[derive(Debug)]
 pub struct Plan {
     pub base: String,
     pub changed_files: Vec<String>,
     pub reasons: Vec<String>,
     pub groups: Vec<Group>,
-    pub error: Option<String>,
-    #[serde(skip)]
     pub explain: Option<Explain>,
 }
 
@@ -731,7 +740,6 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
     let (repo, build, cfg) = (inp.repo, inp.build, inp.cfg);
     let v = View::new(inp.packed);
     let mut explain: Option<Box<Explain>> = inp.explain.then(Default::default);
-    seeds::TRACE.store(inp.explain, std::sync::atomic::Ordering::Relaxed);
     let (mods, dirs) = modules_of(&repo.root, build, cfg);
     let idx = test_index(&v, &mods, build, cfg);
     let changed = repo.changed()?;
@@ -1037,6 +1045,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             !(cfg.di.binding_annotations.is_empty() && cfg.di.provider_annotations.is_empty());
         routes.dispatch_rounds = cfg.di.dispatch_rounds;
         routes.typed_dispatch = cfg.di.dispatch == "typed";
+        routes.trace = inp.explain;
         if routes.follow_dispatch {
             let text_of = |p: &str| repo.read(p);
             routes.di_graphs = std::rc::Rc::new(seeds::DiGraphs::new(
@@ -1137,7 +1146,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             trace_path(&v, &reached, &node_seeds, &want.to_string_lossy());
         }
         if explain.is_some() {
-            *seeds::EXPLAIN_VIA.lock().unwrap() = Some(
+            *routes.explain_via.borrow_mut() = Some(
                 reached
                     .via
                     .iter()
@@ -1146,7 +1155,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             );
         }
         let extra = seeds::unnamed_receiver_reach(&v, &routes, &node_seeds, &reached);
-        let via = seeds::EXPLAIN_VIA.lock().unwrap().take();
+        let via = routes.explain_via.borrow_mut().take();
         let mut roots: FxHashSet<u32> = reached
             .nodes()
             .chain(extra.iter().copied())
@@ -1350,7 +1359,6 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         changed_files: changed,
         reasons,
         groups: kept,
-        error: None,
         explain: explain.map(|e| *e),
     })
 }
@@ -1547,119 +1555,6 @@ fn walk_kt(root: &std::path::Path, rel: &str, out: &mut Vec<String>) {
             Ok(_) if name.ends_with(".kt") || name.ends_with(".kts") => out.push(sub),
             _ => {}
         }
-    }
-}
-
-/// `explain`'s text: verdicts, then each selected test's path from a seed.
-pub fn render_explain(plan: &Plan) -> String {
-    use std::fmt::Write;
-    let mut o = String::new();
-    let e = plan.explain.as_ref();
-    let _ = writeln!(o, "changed declarations:");
-    if e.map(|e| e.verdicts.is_empty()).unwrap_or(true) {
-        let _ = writeln!(
-            o,
-            "  none: every Kotlin hunk touches only comments, KDoc, blank lines or imports"
-        );
-    }
-    for (path, decl, line, functional, reason) in e.map(|e| e.verdicts.as_slice()).unwrap_or(&[]) {
-        let verdict = if *functional {
-            "functional"
-        } else {
-            "cosmetic  "
-        };
-        let _ = writeln!(o, "  {verdict} {decl} ({path}:{line}): {reason}");
-    }
-    if !plan.reasons.is_empty() {
-        let _ = writeln!(o, "rules:");
-        for r in &plan.reasons {
-            let _ = writeln!(o, "  {r}");
-        }
-    }
-    let paths: BTreeMap<&str, &Vec<(String, String)>> = e
-        .map(|e| e.paths.iter().map(|(t, p)| (t.as_str(), p)).collect())
-        .unwrap_or_default();
-    let n: usize = plan.groups.iter().map(|g| g.classes.len()).sum();
-    let _ = writeln!(
-        o,
-        "selected tests ({n} classes in {} groups):",
-        plan.groups.len()
-    );
-    for g in &plan.groups {
-        let _ = writeln!(
-            o,
-            "  {}:{}{}",
-            g.module,
-            g.task,
-            if g.full { " (whole task)" } else { "" }
-        );
-        if g.full {
-            continue;
-        }
-        for c in &g.classes {
-            match paths.get(c.as_str()) {
-                Some(steps) => {
-                    let mut it = steps.iter().rev();
-                    let Some((seed, _)) = it.next() else { continue };
-                    let _ = write!(o, "    {c}\n      {seed}");
-                    // Each step records how it was reached from the step before it (toward the seed).
-                    let rest: Vec<&(String, String)> = steps.iter().rev().skip(1).collect();
-                    for (k, (decl, _)) in rest.iter().enumerate() {
-                        let how = &steps[steps.len() - 1 - (k + 1)].1;
-                        let _ = write!(o, "\n        -[{how}]-> {decl}");
-                    }
-                    let _ = writeln!(o);
-                }
-                None => {
-                    let _ = writeln!(
-                        o,
-                        "    {c}  (selected by a path, scanner or smoke rule, not the graph)"
-                    );
-                }
-            }
-        }
-    }
-    o
-}
-
-pub fn render(plan: &Plan, format: &str) -> String {
-    match format {
-        "classes" => plan
-            .groups
-            .iter()
-            .flat_map(|g| {
-                g.classes
-                    .iter()
-                    .map(move |c| format!("{}:{}\t{c}", g.module, g.task))
-            })
-            .collect::<Vec<_>>()
-            .join("\n"),
-        "gradle" => plan
-            .groups
-            .iter()
-            .filter(|g| g.local)
-            .map(|g| {
-                let task = if g.module == ":" {
-                    format!(":{}", g.task)
-                } else {
-                    format!("{}:{}", g.module, g.task)
-                };
-                if g.full {
-                    task
-                } else {
-                    format!(
-                        "{task} {}",
-                        g.classes
-                            .iter()
-                            .map(|c| format!("--tests {c}"))
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    )
-                }
-            })
-            .collect::<Vec<_>>()
-            .join(" "),
-        _ => serde_json::to_string_pretty(plan).unwrap(),
     }
 }
 

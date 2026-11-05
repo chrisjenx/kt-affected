@@ -43,8 +43,8 @@ Priorities, in order:
 - **Multi-target mapping is correct, even though it costs.** A shared test source set runs under
   every test task whose compilation includes it (jvm, wasm, js, iOS, Android). That is where most of
   the extra selection comes from, and it is also what catches failures a jvm-only mapping misses.
-  Projects whose CI skips some targets per pull request restrict them with `[tasks] only`; the tool
-  does not guess.
+  Projects mark tasks a local loop doesn't run as non-local with `[tasks] local` (runners defer
+  them); `[tasks] only` excludes tasks entirely (dropped with a reason). The tool does not guess.
 - **Licence:** dual MIT / Apache-2.0. **MSRV** follows kt-syntax's (`rust-version` in `Cargo.toml`,
   pinned in CI).
 - **kt-syntax** (from [ktrs](https://github.com/Hexay/ktrs)) is a git dependency pinned to a rev.
@@ -88,6 +88,16 @@ was rewritten once to remove such material; keep it clean.
   picked up through an untyped receiver.
 - Accuracy beyond recall is not yet measured; mutation testing (break each changed declaration, see
   which tests catch it, score selectors) is the planned measure.
+
+## Library
+
+The crate is a library (`kt_affected`) with the CLI as a thin binary over it (`docs/library.md`). The
+public API is `lib.rs` alone; every other module stays private, and public structs and enums are
+`#[non_exhaustive]` so fields can be added without a breaking release. A long-lived process links
+it, so a call keeps nothing resident: no growing `static` state, nothing leaked with
+`mem::forget`, per-call state passed down (as `Routes::explain_via` is). The CLI's output must stay
+byte-identical across a refactor of this kind; compare it against the previous release's binary on
+okio and sqldelight.
 
 ## Conventions
 

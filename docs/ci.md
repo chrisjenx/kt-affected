@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0          # the base commit must be in the clone
-      - uses: chrisjenx/kt-affected@v0.2.1
+      - uses: chrisjenx/kt-affected@v0.3.0
         id: affected
       - name: Run affected tests
         if: steps.affected.outputs.gradle-args != ''
@@ -68,4 +68,4 @@ changed is re-parsed.
 ## Getting the same plan everywhere
 
 CI and pre-push give identical plans when they see the same base, head and config. Pin the binary
-(`version: v0.2.1` or `KT_AFFECTED_VERSION`) so a release changes plans only when you upgrade.
+(`version: v0.3.0` or `KT_AFFECTED_VERSION`) so a release changes plans only when you upgrade.
