@@ -6,6 +6,36 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- Static discovery reads settings scripts that include projects through code (a directory walk, a
+  project DSL): every directory holding a build script, outside nested and included builds, is a
+  project, named the way the build scripts' own project references resolve (`:a:b` or the leaf
+  `:b`). element-x-android goes from 14 to 359 projects, ktor from 1 to 138.
+- The flattened `<stem>/src`, `<stem>/test` source layout (build logic calling
+  `kotlin.setSrcDirs`, as ktor and the kotlinx libraries do) is read as source sets; before, a
+  functional edit in such a build selected nothing.
+- An Android module with product flavors runs its unit tests under `test<Flavor>DebugUnitTest`
+  (it has no `testDebugUnitTest`), and a variant's own test source sets (`testPaid`) are tests.
+- Per-project script and convention-plugin reading runs in parallel (ktor discovery about 7x
+  faster).
+- Discovery goldens and the CI benchmark cover five more pinned builds: kotlinconf-app, Confetti,
+  circuit, element-x-android and ktor.
+
+## [0.3.1]
+
+- Several processes or threads can now update one cache dir at once (a Gradle task and an editor
+  server both selecting after an edit, say). Before, they shared one temp file name, so one could
+  rename another's half-written `graph.bin` or `parses.bin` into place (seen as `No such file or
+  directory` errors, and able to leave a torn cache), and two writers appending to `parses.bin`
+  could leave records at offsets the graph did not expect. Updates now take turns on an exclusive
+  lock on `<cache>/lock`, held from the file walk to the last rename; a caller that waited finds
+  the cache fresh and does no work. Readers need no lock. A lock held for over 5 minutes is an
+  error ("run everything"), and the OS releases the lock of a process that dies.
+- Temp files are unique per writer, and ones a killed writer left are removed by the next update.
+- `graph.bin` records which `parses.bin` it was built with (a lineage id written at the start of
+  `parses.bin`, and its length). A pair from different updates, or one a crash left half-replaced,
+  now rebuilds cold instead of linking against the wrong records. The cache format changed, so
+  the first run after upgrading rebuilds the graph.
+
 ## [0.3.0]
 
 kt-affected is now a library (`kt_affected`) with the CLI as a thin binary over it. Selection
@@ -84,7 +114,8 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/chrisjenx/kt-affected/compare/v0.1.0...v0.2.0

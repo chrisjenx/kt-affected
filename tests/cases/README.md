@@ -36,6 +36,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 
 | case | pins |
 |------|------|
+| `android-product-flavors` | An Android module with product flavors has no testDebugUnitTest: the shared test source set runs under every flavor's test<Flavor>DebugUnitTest, a flavor's own test source set only under that flavor's. |
 | `android-res` | A changed Android res/drawable file seeds code naming R.drawable.<stem>, not every user of R.drawable. |
 | `build-logic-test-jvm-config` | A convention plugin adding JVM arguments to every Test task runs every class of every task: a smoke class cannot show a JVM-wide effect. |
 | `build-script-change` | A module build script change runs one smoke class per test task of that module and every module depending on it (CI runs every suite), and nothing in unrelated modules. |
@@ -59,6 +60,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `expect-actual-actual-edit` | Editing the jvmMain actual reaches a commonTest caller only under jvmTest: the iOS and wasm binaries link their own actuals. |
 | `expect-actual-expect-edit` | Editing the expect declaration (and its actuals) reaches commonTest callers under every target's task. |
 | `file-move` | A file moved to a new path (content unchanged) still selects the tests of the declarations it held. |
+| `flat-source-layout` | Build logic that re-points every source set with kotlin.setSrcDirs to the flattened `<stem>/src`, `<stem>/test` layout: common/test is commonTest and runs under jvmTest when common/src changes; jvm/test, which never reaches the edit, does not. |
 | `flyway-migration` | A Flyway migration seeds Kotlin naming its tables in a string (Table("books")), not code on other tables. |
 | `fully-qualified-call` | A call written with its fully qualified name and no import (`demo.model.Money(100).format()`) reaches the edited member like an imported one. |
 | `functional-edits-select` | A literal change, a public parameter rename (named arguments see it) and an inferred-to-explicit return type are functional. |
@@ -81,9 +83,12 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `module-script-test-jvm-config` | A module script changing its own Test task's JVM runs that module whole; dependents get a smoke class; unrelated modules nothing. |
 | `plain-resource-stem` | A plain resource seeds code writing its file name; its bare stem as an identifier (`index`) is not a read of the file. |
 | `reflection-class-literal` | A test reflecting over `Repo::class` sees a member added to Repo, though it calls no member. |
+| `settings-computed-includes` | Settings that include projects by walking directories: every directory holding a build script is a project named by its path, so an edit reaches its own tests and its dependents' through projects.books.catalog, and not an unrelated module's. |
+| `settings-project-dsl-leaf-names` | A settings DSL that includes projects by their leaf directory name (`:shop-catalog` in shop-books/shop-catalog): the projects are read from disk under the names the build scripts' own references use, and a directory holding a build script that the settings never names is not a project. |
 | `shared-test-source-set` | A custom test source set that jvmTest and wasmJsTest both dependOn runs under both tasks, and not under a target that doesn't include it. |
 | `sqldelight-queries` | A .sq change seeds code naming its generated queries (BookQueries/bookQueries), not other .sq files' users. |
 | `sqldelight-same-named-holder` | Two stores each hold their own `private val queries`: a .sq change reaching BookStore.queries must not cross to AuthorStore's same-named private property. |
+| `stale-target-source-dir` | A leftover iosX64Main directory in a module whose script declares its targets (jvm, iosArm64, iosSimulatorArm64) is not a target: no iosX64Test task exists to run. (known gap) |
 | `tasks-only-excluded-source-set` | `[tasks] only` removing every task of a source set drops it with a reason; the module and its dependents are not failed open and no `*` group is emitted. |
 | `tasks-only-excluded-target-edit` | An edit only an excluded target compiles (iosMain, with `[tasks] only` keeping jvmTest) selects nothing and says so; it does not fail the module open. |
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |

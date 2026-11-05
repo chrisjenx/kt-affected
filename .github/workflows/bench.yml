@@ -1,8 +1,9 @@
 name: Benchmark
 
-# Times the graph (cold, warm, after a body edit, after a new declaration) on pinned open-source KMP
-# builds. On a pull request the base and head binaries run interleaved on the same runner, so the
-# change column compares like for like; shared runners are noisy, so it reports and never fails.
+# Times the graph (cold, warm, after a body edit, after a new declaration) on the open-source KMP
+# builds pinned in tests/oss/projects.tsv. On a pull request the base and head binaries run
+# interleaved on the same runner, so the change column compares like for like; shared runners are
+# noisy, so it reports and never fails.
 
 on:
   push:
@@ -44,8 +45,10 @@ jobs:
           {
             echo "## kt-affected benchmark"
             echo
-            for p in okio sqldelight; do
-              python3 bench/oss_bench.py --root ".oss/$p" --label "$p" --runs 7 \
+            # project:runs. The two largest builds take fewer runs to keep the job short.
+            for pr in okio:7 sqldelight:7 kotlinconf-app:5 confetti:5 circuit:5 element-x-android:3 ktor:3; do
+              p=${pr%%:*}
+              python3 bench/oss_bench.py --root ".oss/$p" --label "$p" --runs "${pr##*:}" \
                 --bin "$RUNNER_TEMP/kt-affected-head" "${base[@]}" --json bench-results.jsonl
               echo
             done

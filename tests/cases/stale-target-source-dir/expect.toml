@@ -1,0 +1,4 @@
+why = "A leftover iosX64Main directory in a module whose script declares its targets (jvm, iosArm64, iosSimulatorArm64) is not a target: no iosX64Test task exists to run."
+must = ["demo.AuthorTest@:shared:jvmTest", "demo.AuthorTest@:shared:iosSimulatorArm64Test"]
+never_tasks = [":shared:iosX64Test"]
+known_gap = "a target is inferred from any <target>Main directory, even when the script lists its targets; a convention plugin may add targets static reading does not see, so dropping it needs evidence"

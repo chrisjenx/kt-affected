@@ -11,7 +11,8 @@ while IFS=$'\t' read -r name url sha; do
     rm -rf "${DIR:?}/$name"
     git init -q "$DIR/$name"
     git -C "$DIR/$name" fetch -q --depth 1 "$url" "$sha"
-    git -C "$DIR/$name" checkout -q FETCH_HEAD
+    # Large binaries (screenshots) stay LFS pointers: only build scripts and sources are read.
+    GIT_LFS_SKIP_SMUDGE=1 git -C "$DIR/$name" checkout -q FETCH_HEAD
   fi
   echo "$name $sha"
 done < tests/oss/projects.tsv

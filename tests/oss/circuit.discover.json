@@ -1,0 +1,2413 @@
+{
+  "root_name": "circuit-root",
+  "projects": [
+    {
+      "path": ":",
+      "dir": "",
+      "build_file": "build.gradle.kts",
+      "deps": [
+        [
+          "dokka",
+          ":backstack"
+        ],
+        [
+          "dokka",
+          ":circuit-codegen"
+        ],
+        [
+          "dokka",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "dokka",
+          ":circuit-foundation"
+        ],
+        [
+          "dokka",
+          ":circuit-overlay"
+        ],
+        [
+          "dokka",
+          ":circuit-retained"
+        ],
+        [
+          "dokka",
+          ":circuit-runtime"
+        ],
+        [
+          "dokka",
+          ":circuit-runtime-presenter"
+        ],
+        [
+          "dokka",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "dokka",
+          ":circuit-runtime-ui"
+        ],
+        [
+          "dokka",
+          ":circuit-serialization"
+        ],
+        [
+          "dokka",
+          ":circuit-serialization-reflect"
+        ],
+        [
+          "dokka",
+          ":circuit-test"
+        ],
+        [
+          "dokka",
+          ":circuitx:android"
+        ],
+        [
+          "dokka",
+          ":circuitx:effects"
+        ],
+        [
+          "dokka",
+          ":circuitx:gesture-navigation"
+        ],
+        [
+          "dokka",
+          ":circuitx:overlays"
+        ]
+      ],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backstack",
+      "dir": "backstack",
+      "build_file": "backstack/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime-navigation"
+        ],
+        [
+          "commonTestImplementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "commonJvmTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "commonJvmTest": [
+          "jvmTest",
+          "testAndroidHostTest"
+        ],
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "macosArm64Test",
+          "testAndroidHostTest",
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-codegen",
+      "dir": "circuit-codegen",
+      "build_file": "circuit-codegen/build.gradle.kts",
+      "deps": [
+        [
+          "testImplementation",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "testImplementation",
+          ":circuit-runtime-presenter"
+        ],
+        [
+          "testImplementation",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "testImplementation",
+          ":circuit-runtime-ui"
+        ],
+        [
+          "testImplementation",
+          ":circuit-serialization"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-codegen-annotations",
+      "dir": "circuit-codegen-annotations",
+      "build_file": "circuit-codegen-annotations/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ]
+      ],
+      "source_sets": {
+        "commonJvmMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuit-foundation",
+      "dir": "circuit-foundation",
+      "build_file": "circuit-foundation/build.gradle.kts",
+      "deps": [
+        [
+          "androidDeviceTestImplementation",
+          ":internal-test-utils"
+        ],
+        [
+          "commonMainApi",
+          ":backstack"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-retained"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-navigation"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-presenter"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-ui"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-shared-elements"
+        ],
+        [
+          "commonTestImplementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "androidDeviceTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "browserCommonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "commonJvmTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        },
+        "nativeTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "androidDeviceTest": [],
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "browserCommonTest": [
+          "jsBrowserTest",
+          "wasmJsBrowserTest"
+        ],
+        "commonJvmTest": [
+          "jvmTest",
+          "testAndroidHostTest"
+        ],
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "macosArm64Test",
+          "testAndroidHostTest",
+          "wasmJsBrowserTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "nativeTest": [
+          "iosSimulatorArm64Test",
+          "macosArm64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-overlay",
+      "dir": "circuit-overlay",
+      "build_file": "circuit-overlay/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":circuit-shared-elements"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-retained",
+      "dir": "circuit-retained",
+      "build_file": "circuit-retained/build.gradle.kts",
+      "deps": [
+        [
+          "androidDeviceTestImplementation",
+          ":circuit-retained"
+        ]
+      ],
+      "source_sets": {
+        "androidDeviceTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "sharedMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "sharedMain"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "sharedMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest",
+            "sharedTest"
+          ]
+        },
+        "linuxMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "macosMain": {
+          "test": false,
+          "depends_on": [
+            "sharedMain"
+          ]
+        },
+        "mingwMain": {
+          "test": false,
+          "depends_on": [
+            "nativeMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "sharedMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "tvosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "watchosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "sharedMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {
+        "androidDeviceTest": [],
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-runtime",
+      "dir": "circuit-runtime",
+      "build_file": "circuit-runtime/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime-navigation"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-runtime-navigation",
+      "dir": "circuit-runtime-navigation",
+      "build_file": "circuit-runtime-navigation/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuit-runtime-presenter",
+      "dir": "circuit-runtime-presenter",
+      "build_file": "circuit-runtime-presenter/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuit-runtime-screen",
+      "dir": "circuit-runtime-screen",
+      "build_file": "circuit-runtime-screen/build.gradle.kts",
+      "deps": [
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-runtime-ui",
+      "dir": "circuit-runtime-ui",
+      "build_file": "circuit-runtime-ui/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuit-serialization",
+      "dir": "circuit-serialization",
+      "build_file": "circuit-serialization/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-runtime-screen"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "commonJvmMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "linuxArm64",
+        "linuxX64",
+        "macosArm64",
+        "mingwX64",
+        "tvosArm64",
+        "tvosSimulatorArm64",
+        "wasmJs",
+        "watchosArm32",
+        "watchosArm64",
+        "watchosSimulatorArm64"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuit-serialization-reflect",
+      "dir": "circuit-serialization-reflect",
+      "build_file": "circuit-serialization-reflect/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-serialization"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "commonJvmMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "jvm"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "jvmTest": [
+          "jvmTest",
+          "testR8"
+        ]
+      },
+      "implicit": false,
+      "test_filters": {
+        "testR8": {
+          "include": [
+            "com.slack.circuit.serialization.reflect.ReflectiveSerializableCircuitSaverR8Test"
+          ]
+        }
+      }
+    },
+    {
+      "path": ":circuit-shared-elements",
+      "dir": "circuit-shared-elements",
+      "build_file": "circuit-shared-elements/build.gradle.kts",
+      "deps": [
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuit-test",
+      "dir": "circuit-test",
+      "build_file": "circuit-test/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "implementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuitx",
+      "dir": "circuitx",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":circuitx:android",
+      "dir": "circuitx/android",
+      "build_file": "circuitx/android/build.gradle.kts",
+      "deps": [
+        [
+          "api",
+          ":circuit-runtime"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:effects",
+      "dir": "circuitx/effects",
+      "build_file": "circuitx/effects/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-retained"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-runtime"
+        ],
+        [
+          "commonTestImplementation",
+          ":circuit-test"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "nativeTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "webTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "macosArm64Test",
+          "testAndroidHostTest",
+          "wasmJsBrowserTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "nativeTest": [
+          "iosSimulatorArm64Test",
+          "macosArm64Test"
+        ],
+        "webTest": [
+          "jsBrowserTest",
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:gesture-navigation",
+      "dir": "circuitx/gesture-navigation",
+      "build_file": "circuitx/gesture-navigation/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "commonTestImplementation",
+          ":circuit-test"
+        ],
+        [
+          "commonTestImplementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "iosTest": {
+          "test": true,
+          "depends_on": [
+            "appleTest"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "testAndroidHostTest",
+          "wasmJsBrowserTest"
+        ],
+        "iosTest": [
+          "iosSimulatorArm64Test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:navigation",
+      "dir": "circuitx/navigation",
+      "build_file": "circuitx/navigation/build.gradle.kts",
+      "deps": [
+        [
+          "androidMainApi",
+          ":circuitx:android"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "commonTestImplementation",
+          ":circuit-test"
+        ],
+        [
+          "commonTestImplementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonJvmMain",
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonJvmTest",
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:overlays",
+      "dir": "circuitx/overlays",
+      "build_file": "circuitx/overlays/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-overlay"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-foundation"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:subcircuit",
+      "dir": "circuitx/subcircuit",
+      "build_file": "circuitx/subcircuit/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuitx:subcircuit-codegen-annotations"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:subcircuit-codegen",
+      "dir": "circuitx/subcircuit-codegen",
+      "build_file": "circuitx/subcircuit-codegen/build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:subcircuit-codegen-annotations",
+      "dir": "circuitx/subcircuit-codegen-annotations",
+      "build_file": "circuitx/subcircuit-codegen-annotations/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":circuitx:subcircuit-test",
+      "dir": "circuitx/subcircuit-test",
+      "build_file": "circuitx/subcircuit-test/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuitx:subcircuit"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "macosArm64Test",
+          "testAndroidHostTest",
+          "wasmJsBrowserTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":internal-runtime",
+      "dir": "internal-runtime",
+      "build_file": "internal-runtime/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "browserCommonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nativeMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":internal-test-utils",
+      "dir": "internal-test-utils",
+      "build_file": "internal-test-utils/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":backstack"
+        ],
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainApi",
+          ":internal-runtime"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "macosArm64",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples",
+      "dir": "samples",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":samples:bottom-navigation",
+      "dir": "samples/bottom-navigation",
+      "build_file": "samples/bottom-navigation/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-serialization"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:gesture-navigation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:navigation"
+        ]
+      ],
+      "source_sets": {
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "jvm"
+      ],
+      "test_tasks": {
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:bottom-navigation:androidApp",
+      "dir": "samples/bottom-navigation/androidApp",
+      "build_file": "samples/bottom-navigation/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "implementation",
+          ":circuitx:android"
+        ],
+        [
+          "implementation",
+          ":circuitx:gesture-navigation"
+        ],
+        [
+          "implementation",
+          ":circuitx:navigation"
+        ],
+        [
+          "implementation",
+          ":samples:bottom-navigation"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:counter",
+      "dir": "samples/counter",
+      "build_file": "samples/counter/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-serialization"
+        ]
+      ],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:counter:androidApp",
+      "dir": "samples/counter/androidApp",
+      "build_file": "samples/counter/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":samples:counter"
+        ],
+        [
+          "implementation",
+          ":samples:counter:apps"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:counter:apps",
+      "dir": "samples/counter/apps",
+      "build_file": "samples/counter/apps/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainApi",
+          ":samples:counter"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-retained"
+        ]
+      ],
+      "source_sets": {
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:counter:mosaic",
+      "dir": "samples/counter/mosaic",
+      "build_file": "samples/counter/mosaic/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "implementation",
+          ":samples:counter"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:inbox",
+      "dir": "samples/inbox",
+      "build_file": "samples/inbox/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-retained"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-serialization"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:effects"
+        ],
+        [
+          "commonTestImplementation",
+          ":circuit-test"
+        ],
+        [
+          "ksp${targetConfigSuffix}",
+          ":circuit-codegen"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "jvm"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "jvmTest",
+          "testAndroidHostTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:inbox:androidApp",
+      "dir": "samples/inbox/androidApp",
+      "build_file": "samples/inbox/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":backstack"
+        ],
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "implementation",
+          ":samples:inbox"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:interop",
+      "dir": "samples/interop",
+      "build_file": "samples/interop/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "testImplementation",
+          ":internal-test-utils"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "testDebugUnitTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:kotlin-inject",
+      "dir": "samples/kotlin-inject",
+      "build_file": "samples/kotlin-inject/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "ksp",
+          ":circuit-codegen"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:star",
+      "dir": "samples/star",
+      "build_file": "samples/star/build.gradle.kts",
+      "deps": [
+        [
+          "androidMainImplementation",
+          ":circuitx:android"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-foundation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-overlay"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-retained"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-serialization"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:gesture-navigation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:navigation"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuitx:overlays"
+        ],
+        [
+          "commonMainImplementation",
+          ":internal-runtime"
+        ],
+        [
+          "commonTestImplementation",
+          ":circuit-test"
+        ],
+        [
+          "implementation",
+          ":circuit-test"
+        ],
+        [
+          "implementation",
+          ":internal-test-utils"
+        ],
+        [
+          "implementation",
+          ":samples:star:coil-rule"
+        ],
+        [
+          "ksp${targetConfigSuffix}",
+          ":circuit-codegen"
+        ]
+      ],
+      "source_sets": {
+        "androidDeviceTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidHostTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "jvmCommonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "iosArm64Main": {
+          "test": false,
+          "depends_on": [
+            "iosMain"
+          ]
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "iosSimulatorArm64Main": {
+          "test": false,
+          "depends_on": [
+            "iosMain"
+          ]
+        },
+        "iosTest": {
+          "test": true,
+          "depends_on": [
+            "appleTest"
+          ]
+        },
+        "iosX64Main": {
+          "test": false,
+          "depends_on": [
+            "iosMain"
+          ]
+        },
+        "jvmCommonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain",
+            "jvmCommonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest",
+            "jvmCommonTest"
+          ]
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "iosX64",
+        "jvm"
+      ],
+      "test_tasks": {
+        "androidDeviceTest": [],
+        "androidHostTest": [
+          "testAndroidHostTest"
+        ],
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "iosX64Test",
+          "jvmTest",
+          "testAndroidHostTest"
+        ],
+        "iosTest": [
+          "iosSimulatorArm64Test",
+          "iosX64Test"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ],
+        "test": []
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:star:androidApp",
+      "dir": "samples/star/androidApp",
+      "build_file": "samples/star/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "api",
+          ":samples:star"
+        ],
+        [
+          "baselineProfile",
+          ":samples:star:benchmark"
+        ],
+        [
+          "from",
+          ":samples:star:benchmark"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "release": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:star:benchmark",
+      "dir": "samples/star/benchmark",
+      "build_file": "samples/star/benchmark/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:star:coil-rule",
+      "dir": "samples/star/coil-rule",
+      "build_file": "samples/star/coil-rule/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "jvm"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":samples:tacos",
+      "dir": "samples/tacos",
+      "build_file": "samples/tacos/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":circuit-codegen-annotations"
+        ],
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "ksp",
+          ":circuit-codegen"
+        ],
+        [
+          "testImplementation",
+          ":circuit-test"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "testDebugUnitTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:tutorial",
+      "dir": "samples/tutorial",
+      "build_file": "samples/tutorial/build.gradle.kts",
+      "deps": [
+        [
+          "androidMainImplementation",
+          ":circuit-serialization-reflect"
+        ],
+        [
+          "commonMainImplementation",
+          ":circuit-foundation"
+        ],
+        [
+          "jvmMainImplementation",
+          ":circuit-serialization-reflect"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "jvm"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":samples:tutorial:androidApp",
+      "dir": "samples/tutorial/androidApp",
+      "build_file": "samples/tutorial/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":backstack"
+        ],
+        [
+          "implementation",
+          ":circuit-foundation"
+        ],
+        [
+          "implementation",
+          ":samples:tutorial"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    }
+  ],
+  "included_builds": [
+    "build-logic"
+  ],
+  "inputs": [
+    "settings.gradle.kts",
+    "build-logic/build.gradle.kts",
+    "build-logic/src/main/kotlin/CircuitProjectExtension.kt",
+    "build-logic/src/main/kotlin/circuit.android.gradle.kts",
+    "build-logic/src/main/kotlin/circuit.base.gradle.kts",
+    "build-logic/src/main/kotlin/circuit.publish.gradle.kts",
+    "build.gradle.kts",
+    "backstack/build.gradle.kts",
+    "circuit-codegen/build.gradle.kts",
+    "circuit-codegen-annotations/build.gradle.kts",
+    "circuit-foundation/build.gradle.kts",
+    "circuit-overlay/build.gradle.kts",
+    "circuit-retained/build.gradle.kts",
+    "circuit-runtime/build.gradle.kts",
+    "circuit-runtime-navigation/build.gradle.kts",
+    "circuit-runtime-presenter/build.gradle.kts",
+    "circuit-runtime-screen/build.gradle.kts",
+    "circuit-runtime-ui/build.gradle.kts",
+    "circuit-serialization/build.gradle.kts",
+    "circuit-serialization-reflect/build.gradle.kts",
+    "circuit-shared-elements/build.gradle.kts",
+    "circuit-test/build.gradle.kts",
+    "circuitx/android/build.gradle.kts",
+    "circuitx/effects/build.gradle.kts",
+    "circuitx/gesture-navigation/build.gradle.kts",
+    "circuitx/navigation/build.gradle.kts",
+    "circuitx/overlays/build.gradle.kts",
+    "circuitx/subcircuit/build.gradle.kts",
+    "circuitx/subcircuit-codegen/build.gradle.kts",
+    "circuitx/subcircuit-codegen-annotations/build.gradle.kts",
+    "circuitx/subcircuit-test/build.gradle.kts",
+    "internal-runtime/build.gradle.kts",
+    "internal-test-utils/build.gradle.kts",
+    "samples/bottom-navigation/build.gradle.kts",
+    "samples/bottom-navigation/androidApp/build.gradle.kts",
+    "samples/counter/build.gradle.kts",
+    "samples/counter/androidApp/build.gradle.kts",
+    "samples/counter/apps/build.gradle.kts",
+    "samples/counter/mosaic/build.gradle.kts",
+    "samples/inbox/build.gradle.kts",
+    "samples/inbox/androidApp/build.gradle.kts",
+    "samples/interop/build.gradle.kts",
+    "samples/kotlin-inject/build.gradle.kts",
+    "samples/star/build.gradle.kts",
+    "samples/star/androidApp/build.gradle.kts",
+    "samples/star/benchmark/build.gradle.kts",
+    "samples/star/coil-rule/build.gradle.kts",
+    "samples/tacos/build.gradle.kts",
+    "samples/tutorial/build.gradle.kts",
+    "samples/tutorial/androidApp/build.gradle.kts"
+  ],
+  "warnings": []
+}

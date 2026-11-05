@@ -16,6 +16,8 @@ pub struct Module {
     pub id: String,
     /// `dir/` (never empty: the root project is not a module here).
     pub prefix: String,
+    /// The project's `source_dirs` (`dir relative to prefix` -> source set).
+    pub source_dirs: BTreeMap<String, String>,
 }
 
 pub struct Modules {
@@ -30,13 +32,11 @@ impl Modules {
         self.list.iter().find(|m| path.starts_with(&m.prefix))
     }
 
-    /// (module, source set) for `<module>/src/<set>/...`.
-    pub fn source_set_of<'p>(&self, path: &'p str) -> Option<(&Module, &'p str)> {
+    /// (module, source set) for `<module>/src/<set>/...` or a file under one of its `source_dirs`.
+    pub fn source_set_of<'s>(&'s self, path: &'s str) -> Option<(&'s Module, &'s str)> {
         let m = self.module_of(path)?;
         let rest = &path[m.prefix.len()..];
-        let mut parts = rest.splitn(3, '/');
-        let (a, b, c) = (parts.next()?, parts.next()?, parts.next());
-        (a == "src" && c.is_some()).then_some((m, b))
+        crate::discover::source_set_at(&m.source_dirs, rest).map(|s| (m, s))
     }
 
     pub fn reverse_closure(&self, targets: &BTreeSet<String>) -> BTreeSet<String> {

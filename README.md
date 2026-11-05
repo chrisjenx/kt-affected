@@ -21,8 +21,9 @@ your Gradle build to do so, keeps the graph incremental, and answers in well und
 
 [![kt-affected vs the previous selector over 586 pull requests](docs/img/accuracy-vs-python.svg)](docs/accuracy.md)
 
-> Status: early (0.x). Validated in depth on one large production KMP app and checked on okio and
-> sqldelight. Feedback from other builds is very welcome.
+> Status: early (0.x). Validated in depth on one large production KMP app and checked on seven
+> open-source builds (okio, sqldelight, kotlinconf-app, Confetti, circuit, element-x-android, ktor).
+> Feedback from other builds is very welcome.
 
 ## Install
 
@@ -49,7 +50,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.3.0
+- uses: chrisjenx/kt-affected@v0.3.1
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}
@@ -78,7 +79,7 @@ The same selector is a Rust library, for tools that want the plan without spawni
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.0", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.1", default-features = false }
 ```
 
 ```rust
@@ -143,6 +144,27 @@ Method: Apple M3 Max, 16 cores, 128 GB, macOS; prebuilt release binary (compile 
 a fresh process timed with `/usr/bin/time -l`; medians of 5 runs (3 for Gradle); OS file cache warm.
 Public, reproducible numbers on open-source projects run in CI on every change:
 [docs/benchmarks.md](docs/benchmarks.md).
+
+### Public benchmarks
+
+The seven open-source builds pinned in [`tests/oss/projects.tsv`](tests/oss/projects.tsv), which CI
+also benchmarks and checks static discovery against. Each cell is time (peak RSS), median of 5
+fresh-process runs of `bench/oss_bench.py`; "after edit" appends a comment to one main-source file.
+
+| Project | `.kt` files | Gradle projects | declarations / edges | cold | after edit | warm |
+|---|---:|---:|---:|---:|---:|---:|
+| [okio](https://github.com/square/okio) | 313 | 12 | 5,425 / 66,960 | 0.21 s (38 MB) | 0.04 s (12 MB) | 0.04 s (4 MB) |
+| [sqldelight](https://github.com/sqldelight/sqldelight) | 736 | 44 | 5,712 / 19,858 | 0.27 s (41 MB) | 0.16 s (12 MB) | 0.13 s (5 MB) |
+| [kotlinconf-app](https://github.com/JetBrains/kotlinconf-app) | 260 | 10 | 2,027 / 6,230 | 0.08 s (27 MB) | 0.04 s (9 MB) | 0.03 s (4 MB) |
+| [Confetti](https://github.com/joreilly/Confetti) | 339 | 17 | 3,251 / 10,073 | 0.11 s (33 MB) | 0.04 s (10 MB) | 0.02 s (4 MB) |
+| [circuit](https://github.com/slackhq/circuit) | 535 | 46 | 5,444 / 25,261 | 0.22 s (40 MB) | 0.10 s (12 MB) | 0.05 s (5 MB) |
+| [element-x-android](https://github.com/element-hq/element-x-android) | 4,384 | 359 | 32,968 / 171,886 | 0.92 s (136 MB) | 0.39 s (34 MB) | 0.25 s (8 MB) |
+| [ktor](https://github.com/ktorio/ktor) | 2,445 | 138 | 28,801 / 238,846 | 0.96 s (112 MB) | 0.21 s (28 MB) | 0.16 s (7 MB) |
+
+Gradle projects counts the root and the parent projects Gradle creates for nested paths. Measured
+2026-11-05 with kt-affected 0.3.1 from `main` on an Apple M3 Max, 16 cores, 128 GB, macOS, under
+heavy unrelated load (load average about 53): read these as upper bounds; the CI job compares like
+for like on one runner.
 
 ## Documentation
 

@@ -1,0 +1,449 @@
+{
+  "root_name": "Confetti",
+  "projects": [
+    {
+      "path": ":",
+      "dir": "",
+      "build_file": "build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":androidApp",
+      "dir": "androidApp",
+      "build_file": "androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "baselineProfile",
+          ":androidBenchmark"
+        ],
+        [
+          "implementation",
+          ":common:car"
+        ],
+        [
+          "implementation",
+          ":shared"
+        ]
+      ],
+      "source_sets": {
+        "debug": {
+          "test": false,
+          "depends_on": []
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "screenshotTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "screenshotTest": [
+          "screenshotTest"
+        ],
+        "test": [
+          "testDebugUnitTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":androidBenchmark",
+      "dir": "androidBenchmark",
+      "build_file": "androidBenchmark/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "benchmark": {
+          "test": false,
+          "depends_on": []
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backend",
+      "dir": "backend",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backend:datastore",
+      "dir": "backend/datastore",
+      "build_file": "backend/datastore/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "jvm"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backend:service-graphql",
+      "dir": "backend/service-graphql",
+      "build_file": "backend/service-graphql/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":backend:datastore"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backend:service-import",
+      "dir": "backend/service-import",
+      "build_file": "backend/service-import/build.gradle.kts",
+      "deps": [
+        [
+          "jvmMainImplementation",
+          ":backend:datastore"
+        ]
+      ],
+      "source_sets": {
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "jvm"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":backend:terraform",
+      "dir": "backend/terraform",
+      "build_file": "backend/terraform/build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":common",
+      "dir": "common",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":common:car",
+      "dir": "common/car",
+      "build_file": "common/car/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":shared"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":compose-desktop",
+      "dir": "compose-desktop",
+      "build_file": "compose-desktop/build.gradle.kts",
+      "deps": [
+        [
+          "jvmMainImplementation",
+          ":shared"
+        ]
+      ],
+      "source_sets": {
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "jvm"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":compose-web",
+      "dir": "compose-web",
+      "build_file": "compose-web/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":shared"
+        ]
+      ],
+      "source_sets": {
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        }
+      },
+      "targets": [
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":proto",
+      "dir": "proto",
+      "build_file": "proto/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "jvm"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":shared",
+      "dir": "shared",
+      "build_file": "shared/build.gradle.kts",
+      "deps": [
+        [
+          "androidMainApi",
+          ":proto"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "mobileMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "mobileMain"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "mobileMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":wearApp",
+      "dir": "wearApp",
+      "build_file": "wearApp/build.gradle.kts",
+      "deps": [
+        [
+          "baselineProfile",
+          ":wearBenchmark"
+        ],
+        [
+          "implementation",
+          ":shared"
+        ]
+      ],
+      "source_sets": {
+        "benchmark": {
+          "test": false,
+          "depends_on": []
+        },
+        "debug": {
+          "test": false,
+          "depends_on": []
+        },
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "screenshotTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "screenshotTest": [
+          "screenshotTest"
+        ],
+        "test": [
+          "testDebugUnitTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":wearBenchmark",
+      "dir": "wearBenchmark",
+      "build_file": "wearBenchmark/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":website",
+      "dir": "website",
+      "build_file": "website/build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    }
+  ],
+  "included_builds": [
+    "build-logic"
+  ],
+  "inputs": [
+    "settings.gradle.kts",
+    "build-logic/build.gradle.kts",
+    "build-logic/src/main/kotlin/BuildImageTaskAction.kt",
+    "build-logic/src/main/kotlin/BumpCloudRunRevision.kt",
+    "build-logic/src/main/kotlin/Dependencies.kt",
+    "build-logic/src/main/kotlin/PlayStoreScreenshotTask.kt",
+    "build-logic/src/main/kotlin/ReadmeScreenshotTask.kt",
+    "build-logic/src/main/kotlin/deploy.kt",
+    "build-logic/src/main/kotlin/options.kt",
+    "build-logic/src/main/kotlin/website.kt",
+    "build.gradle.kts",
+    "androidApp/build.gradle.kts",
+    "androidBenchmark/build.gradle.kts",
+    "backend/datastore/build.gradle.kts",
+    "backend/service-graphql/build.gradle.kts",
+    "backend/service-import/build.gradle.kts",
+    "backend/terraform/build.gradle.kts",
+    "common/car/build.gradle.kts",
+    "compose-desktop/build.gradle.kts",
+    "compose-web/build.gradle.kts",
+    "proto/build.gradle.kts",
+    "shared/build.gradle.kts",
+    "wearApp/build.gradle.kts",
+    "wearBenchmark/build.gradle.kts",
+    "website/build.gradle.kts"
+  ],
+  "warnings": []
+}
