@@ -56,7 +56,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `functional-edits-select` | A literal change, a public parameter rename (named arguments see it) and an inferred-to-explicit return type are functional. |
 | `impl-member-receivers` | An impl member edit reaches tests that can dispatch to it (held in a property, assigned in setUp, handed out by a graph object), not a fake-only test or one calling another member. |
 | `include-build-convention` | A convention plugin in a pluginManagement includeBuild is build logic for every module applying it: each test task runs a smoke class, with a reason. |
-| `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. *Known gap: see its `expect.toml`.* |
+| `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. |
 | `include-build-precompiled-script` | A precompiled script plugin in a pluginManagement includeBuild is build logic for every module: each test task runs a smoke class, with a reason. |
 | `koin-factory` | Koin `factory<Iface> { Impl() }`: an impl edit reaches tests resolving the interface. |
 | `koin-single-bind` | Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings. |

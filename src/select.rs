@@ -779,6 +779,15 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             continue;
         }
         let Some(module) = mods.module_of(path).cloned() else {
+            // An included library build is substituted for its coordinates: its code is on the
+            // classpath of whoever depends on them, and the graph links it like any other.
+            if path.ends_with(".kt")
+                && v.path_file.contains_key(path.as_str())
+                && included_build_of(path) == Some(false)
+            {
+                seed_files.insert(path.clone());
+                continue;
+            }
             if cfg
                 .selector
                 .outside_module_ignored_suffixes

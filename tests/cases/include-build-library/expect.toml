@@ -1,4 +1,3 @@
 why = "A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules."
 must = ["demo.app.PathsTest@:app:test"]
 never = ["demo.other.OtherTest"]
-known_gap = "an included library build is outside every module: its source is not indexed and the edit seeds only what names the file, so PathsTest is not selected"
