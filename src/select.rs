@@ -137,7 +137,8 @@ const NAME_TASKS: &[(&str, &str)] = &[
 /// closure. When discovery saw no compilation including the set (a convention plugin added the
 /// target, or the set is an intermediate one), the conventional task for its name; an unknown
 /// name runs under every test task of its module, since it feeds at least one of them.
-fn tasks_for(build: &Build, cfg: &Config, module: &str, set: &str) -> Vec<String> {
+/// Returns the tasks kept and those `[tasks] only` removed.
+fn tasks_for(build: &Build, cfg: &Config, module: &str, set: &str) -> (Vec<String>, Vec<String>) {
     let found: Vec<String> = if let Some(t) = cfg.tasks.source_sets.get(set) {
         t.clone()
     } else {
@@ -169,12 +170,9 @@ fn tasks_for(build: &Build, cfg: &Config, module: &str, set: &str) -> Vec<String
         }
     };
     if cfg.tasks.only.is_empty() {
-        found
+        (found, Vec::new())
     } else {
-        found
-            .into_iter()
-            .filter(|t| cfg.tasks.only.contains(t))
-            .collect()
+        found.into_iter().partition(|t| cfg.tasks.only.contains(t))
     }
 }
 
@@ -184,6 +182,10 @@ struct Index {
     /// Classes from source sets that run under this task alone: the task-specific smoke candidates.
     leaf: BTreeMap<(String, String), BTreeSet<String>>,
     unknown: BTreeSet<String>,
+    /// Source sets per module whose every task `[tasks] only` removed: dropped, not failed open.
+    excluded: BTreeMap<String, BTreeSet<String>>,
+    /// `(module, kept task)` -> tasks `[tasks] only` removed from a source set that also runs there.
+    only_dropped: BTreeMap<(String, String), BTreeSet<String>>,
     /// Tasks whose build script filters the classes they run (`filter.includeTestsMatching`).
     filters: BTreeMap<(String, String), crate::discover::TestFilter>,
 }
@@ -205,6 +207,8 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         full: Default::default(),
         leaf: Default::default(),
         unknown: Default::default(),
+        excluded: Default::default(),
+        only_dropped: Default::default(),
         filters: Default::default(),
     };
     for p in &build.projects {
@@ -221,10 +225,25 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         if !is_test_source_set(set) {
             continue;
         }
-        let tasks = tasks_for(build, cfg, &m.id, set);
+        let (tasks, dropped) = tasks_for(build, cfg, &m.id, set);
         if tasks.is_empty() {
-            idx.unknown.insert(m.id.clone());
+            if dropped.is_empty() {
+                idx.unknown.insert(m.id.clone());
+            } else {
+                idx.excluded
+                    .entry(m.id.clone())
+                    .or_default()
+                    .insert(set.to_string());
+            }
             continue;
+        }
+        if !dropped.is_empty() {
+            for t in &tasks {
+                idx.only_dropped
+                    .entry((m.id.clone(), t.clone()))
+                    .or_default()
+                    .extend(dropped.iter().cloned());
+            }
         }
         let classes = by_file.get(&f).cloned().unwrap_or_default();
         let mut keys = Vec::new();
@@ -1325,6 +1344,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         }
     }
     reasons.extend(omitted.into_values());
+    reasons.extend(only_reasons(&idx, &mods, &changed, &kept));
     Ok(Plan {
         base: repo.base.clone(),
         changed_files: changed,
@@ -1333,6 +1353,45 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         error: None,
         explain: explain.map(|e| *e),
     })
+}
+
+/// What `[tasks] only` left out, for modules the plan touches: a source set none of whose tasks it
+/// kept (for a module a change lies in or a group runs in), and each task it removed beside a
+/// selected group's.
+fn only_reasons(idx: &Index, mods: &Modules, changed: &[String], kept: &[Group]) -> Vec<String> {
+    let mut out = Vec::new();
+    for (module, sets) in &idx.excluded {
+        let touched = kept.iter().any(|g| &g.module == module)
+            || changed.iter().any(|c| {
+                mods.source_set_of(c)
+                    .map(|(m, _)| &m.id == module)
+                    .unwrap_or(false)
+            });
+        if touched {
+            for set in sets {
+                out.push(format!(
+                    "{module}: {set} not run (excluded by [tasks] only)"
+                ));
+            }
+        }
+    }
+    let mut dropped: BTreeSet<(&str, &str)> = BTreeSet::new();
+    for g in kept {
+        for t in idx
+            .only_dropped
+            .get(&(g.module.clone(), g.task.clone()))
+            .into_iter()
+            .flatten()
+        {
+            dropped.insert((g.module.as_str(), t.as_str()));
+        }
+    }
+    for (module, task) in dropped {
+        out.push(format!(
+            "{module}: {task} not run (excluded by [tasks] only)"
+        ));
+    }
+    out
 }
 
 fn group(
@@ -1779,6 +1838,44 @@ mod tests {
                 ),
             ],
         )
+    }
+
+    /// `[tasks] only` drops source sets whose every task it removed, but a source set mapped to no
+    /// task to begin with still fails its module open.
+    #[test]
+    fn only_keeps_failing_open_a_source_set_with_no_task() {
+        let f = Fixture::new(
+            "only-no-task",
+            &[
+                ("settings.gradle.kts", SETTINGS),
+                ("lib/build.gradle.kts", ""),
+                ("lib/src/main/kotlin/x/Repo.kt", REPO_API),
+                (
+                    "lib/src/fooTest/kotlin/x/FooTest.kt",
+                    &test_class("x", "FooTest", "val r: Repo? = null"),
+                ),
+            ],
+        );
+        f.write(
+            "lib/src/main/kotlin/x/Repo.kt",
+            &REPO_API.replace("announce", "shout"),
+        );
+        let mut cfg = Config::default();
+        cfg.tasks.only.insert("jvmTest".into());
+        cfg.tasks.source_sets.insert("fooTest".into(), Vec::new());
+        let plan = f.select(&cfg);
+        assert!(
+            plan.groups
+                .iter()
+                .any(|g| g.module == ":lib" && g.task == UNMAPPED_TASK && g.full),
+            "{:?}",
+            plan.reasons
+        );
+        assert!(
+            plan.reasons
+                .iter()
+                .any(|r| r == ":lib: test source set with no test task")
+        );
     }
 
     /// A body edit to one member no longer walks to every caller of its interface's other members.

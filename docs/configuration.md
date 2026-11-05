@@ -28,7 +28,7 @@ manual = [":screenshots"]                 # never selected
 
 [tasks]
 local = ["test", "jvmTest"]               # default: JVM-hosted tasks are local
-only = []                                 # restrict emitted tasks (empty: all)
+only = []                                 # drop every other task, with a reason (empty: all)
 [tasks.source_sets]
 uiTest = ["jvmTest", "wasmJsBrowserTest"] # override discovery for a source set
 
@@ -55,6 +55,15 @@ dispatch = "typed"                        # "names": also keep any test code wri
 classify = true                           # false: every touched declaration seeds
 cosmetic_annotations = ["Suppress"]       # adding, removing or editing these never changes behaviour
 ```
+
+`[tasks] local` and `[tasks] only` cut what runs in different ways. `local` keeps every group in the
+plan and marks each with `local`, so a runner can run the local ones now and defer the rest (to CI,
+say) without losing them. `only` removes tasks from the plan: a task not listed is never emitted, and
+the plan says so in `reasons` (`:core: iosSimulatorArm64Test not run (excluded by [tasks] only)`). A
+test source set whose every task `only` removes (`iosTest` when only `jvmTest` is kept) is dropped
+the same way, with a reason, instead of failing its module open. Use `local` to defer tasks a local
+loop does not run; use `only` to exclude tasks you never want selected. A source set mapped to no
+task at all, without `only` removing any, still runs its module and every dependent whole.
 
 A member edit also walks from the member's class to every member of the class's supertypes, so a
 body change to `RepoImpl.update` would reach every caller of `Repo.insert`, and every test holding a

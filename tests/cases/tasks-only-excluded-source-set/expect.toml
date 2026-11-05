@@ -1,0 +1,14 @@
+why = "`[tasks] only` removing every task of a source set drops it with a reason; the module and its dependents are not failed open and no `*` group is emitted."
+config = '''
+[tasks]
+only = ["jvmTest"]
+'''
+must = ["demo.pricing.PriceTest@:core:jvmTest", "demo.orders.OrderTest@:orders:jvmTest"]
+never = ["demo.pricing.TaxTest", "demo.pricing.IosFormatTest", "demo.pricing.JsFormatTest", "demo.orders.InvoiceTest"]
+never_tasks = [":core:*", ":orders:*", ":core:iosSimulatorArm64Test", ":core:jsBrowserTest", ":orders:iosSimulatorArm64Test"]
+reasons = [
+    ":core: iosTest not run (excluded by [tasks] only)",
+    ":core: jsTest not run (excluded by [tasks] only)",
+    ":core: iosSimulatorArm64Test not run (excluded by [tasks] only)",
+    ":orders: iosSimulatorArm64Test not run (excluded by [tasks] only)",
+]

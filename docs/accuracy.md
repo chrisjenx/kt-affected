@@ -38,8 +38,9 @@ deliberately runs only when the integration module itself changes (`[modules] di
 
 **Where the extra test time goes.** Mostly the same multi-target mapping that catches those 30
 failures: shared tests also run under the js, wasm, iOS and Android test tasks. If your CI does not
-run some of those per pull request, leave them out with `[tasks] only` (see
-[configuration](configuration.md)) and the cost goes with them. The rest is DI dispatch through
+run some of those per pull request, mark the ones a quick loop runs with `[tasks] local` so a runner
+defers the rest, or exclude tasks you never want selected with `[tasks] only` (see
+[configuration](configuration.md)); either way the cost goes with them. The rest is DI dispatch through
 widely used interfaces, which is sound but conservative.
 
 ## Is skipping safe?
