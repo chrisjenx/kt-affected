@@ -12,7 +12,7 @@ cargo test
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo clippy --lib --no-default-features -- -D warnings   # the library without the CLI
-scripts/oss-golden.sh target/release/kt-affected     # static discovery of pinned okio/sqldelight vs goldens
+scripts/oss-golden.sh target/release/kt-affected     # static discovery of the pinned OSS builds vs goldens
 ```
 
 CI runs all of these on Linux, macOS and Windows, plus a `cargo check` on the minimum supported Rust

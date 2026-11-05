@@ -34,6 +34,26 @@ pub struct Project {
     /// class it excludes never runs there. Absent when the task has none, or one not read statically.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub test_filters: BTreeMap<String, TestFilter>,
+    /// Source directory (relative to `dir`) -> source set, for a layout other than `src/<set>/`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub source_dirs: BTreeMap<String, String>,
+}
+
+/// The source set a path relative to its project directory lies in: `src/<set>/..`, or under a
+/// directory of the project's `source_dirs`.
+pub(crate) fn source_set_at<'p>(
+    source_dirs: &'p BTreeMap<String, String>,
+    rest: &'p str,
+) -> Option<&'p str> {
+    for (d, set) in source_dirs {
+        if rest.len() > d.len() && rest.starts_with(d.as_str()) && rest.as_bytes()[d.len()] == b'/'
+        {
+            return Some(set);
+        }
+    }
+    let mut parts = rest.splitn(3, '/');
+    let (a, b, c) = (parts.next()?, parts.next()?, parts.next());
+    (a == "src" && c.is_some()).then_some(b)
 }
 
 /// A Test task's `filter { }` patterns, as Gradle's `includeTestsMatching` / `excludeTestsMatching`
@@ -288,7 +308,15 @@ pub fn fresh_export(root: &Path, inputs: &[String]) -> Option<(Build, Vec<String
 }
 
 pub fn is_test_source_set(name: &str) -> bool {
-    name == "test" || name.ends_with("Test") || name.ends_with("test")
+    // `testPaid`, `androidTestDebug`: an Android variant's own test sets; `testFixtures` is not a test.
+    let variant = |p: &str| {
+        name.strip_prefix(p)
+            .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_uppercase()))
+    };
+    name == "test"
+        || name.ends_with("Test")
+        || name.ends_with("test")
+        || ((variant("test") || variant("androidTest")) && !name.starts_with("testFixtures"))
 }
 
 // ------------------------------------------------------------------ tokenizer
@@ -414,6 +442,10 @@ struct Settings {
     project_dirs: BTreeMap<String, String>,
     included_builds: Vec<String>,
     warnings: Vec<String>,
+    /// An `include` takes a computed argument: the projects it adds are found on disk.
+    dynamic: bool,
+    /// Every plain string literal in the script.
+    literals: BTreeSet<String>,
 }
 
 fn strip_dir_prefix(s: &str) -> String {
@@ -473,6 +505,14 @@ fn parse_settings(text: &str) -> Settings {
         project_dirs: BTreeMap::new(),
         included_builds: Vec::new(),
         warnings: Vec::new(),
+        dynamic: false,
+        literals: toks
+            .iter()
+            .filter_map(|t| match t {
+                Tok::Str(v, false) => Some(v.clone()),
+                _ => None,
+            })
+            .collect(),
     };
     let mut i = 0;
     while i < toks.len() {
@@ -500,9 +540,10 @@ fn parse_settings(text: &str) -> Settings {
                         _ => {}
                     }
                 }
-                if dynamic {
+                if dynamic && !s.dynamic {
+                    s.dynamic = true;
                     s.warnings.push(format!(
-                        "{kw}: non-literal argument; projects it adds need --gradle-export"
+                        "{kw}: non-literal argument; the projects it adds are taken from directories holding a build script"
                     ));
                 }
                 i = end;
@@ -562,6 +603,158 @@ fn parse_settings(text: &str) -> Settings {
         }
     }
     s
+}
+
+/// Directory names a project scan never descends into: sources, outputs, tooling.
+fn scan_skips(name: &str) -> bool {
+    name.starts_with('.')
+        || matches!(
+            name,
+            "src" | "build" | "buildSrc" | "gradle" | "node_modules" | "out"
+        )
+}
+
+/// A settings script computes its includes (a directory walk, a project DSL): every directory below the
+/// root holding a build script, outside nested and included builds, is taken as a project. Gradle names
+/// a project after its directory path (`:a:b` for `a/b`) unless the script names it otherwise; the
+/// scheme the build scripts' own project references resolve to (`project(":x")`, `projects.x`) is the
+/// one used, so a build naming projects by their leaf directory (`:b` in `a/b`) is read as such.
+/// Returns every directory listed, for the discovery stamp.
+fn add_scanned_projects(root: &Path, s: &mut Settings, warnings: &mut Vec<String>) -> Vec<String> {
+    let builds: BTreeSet<&str> = s.included_builds.iter().map(String::as_str).collect();
+    let mut found: Vec<String> = Vec::new();
+    let mut listed = vec![String::new()];
+    let mut stack = vec![String::new()];
+    while let Some(dir) = stack.pop() {
+        let Ok(rd) = std::fs::read_dir(root.join(&dir)) else {
+            continue;
+        };
+        let mut children: Vec<String> = rd
+            .filter_map(Result::ok)
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+            .filter_map(|e| e.file_name().to_str().map(str::to_string))
+            .filter(|n| !scan_skips(n))
+            .map(|n| {
+                if dir.is_empty() {
+                    n
+                } else {
+                    format!("{dir}/{n}")
+                }
+            })
+            .filter(|d| !builds.contains(d.as_str()))
+            .collect();
+        children.sort();
+        for d in children.into_iter().rev() {
+            if script_in(root, &d, "settings").is_some() {
+                continue;
+            }
+            if script_in(root, &d, "build").is_some() {
+                found.push(d.clone());
+            }
+            listed.push(d.clone());
+            stack.push(d);
+        }
+    }
+    found.sort();
+    let known_dirs: BTreeSet<String> = s
+        .includes
+        .iter()
+        .map(|(p, _)| {
+            s.project_dirs
+                .get(p)
+                .cloned()
+                .unwrap_or_else(|| p.trim_start_matches(':').replace(':', "/"))
+        })
+        .collect();
+    found.retain(|d| !known_dirs.contains(d));
+    let leaf = |d: &str| d.rsplit('/').next().unwrap_or(d).to_string();
+    // A settings DSL naming most of them lists its projects: a build script it never names is a
+    // directory the build no longer includes.
+    let named_count = found
+        .iter()
+        .filter(|d| s.literals.contains(&leaf(d)) || s.literals.contains(*d))
+        .count();
+    if named_count * 2 > found.len() && named_count < found.len() {
+        warnings.push(format!(
+            "settings: {} directories holding a build script are never named by settings; not taken as projects",
+            found.len() - named_count
+        ));
+        found.retain(|d| s.literals.contains(&leaf(d)) || s.literals.contains(d));
+    }
+    let nested: Vec<(String, String)> = found
+        .iter()
+        .map(|d| (format!(":{}", d.replace('/', ":")), d.clone()))
+        .collect();
+    let leaves: BTreeSet<String> = found.iter().map(|d| leaf(d)).collect();
+    let flat: Option<Vec<(String, String)>> = (leaves.len() == found.len()).then(|| {
+        found
+            .iter()
+            .map(|d| (format!(":{}", leaf(d)), d.clone()))
+            .collect()
+    });
+    let mut refs: Vec<Vec<String>> = Vec::new();
+    let mut strs: BTreeSet<String> = BTreeSet::new();
+    for d in std::iter::once(String::new()).chain(found.iter().cloned()) {
+        let Some(text) = script_in(root, &d, "build").and_then(|f| read(root, &f)) else {
+            continue;
+        };
+        let toks = tokenize(&text);
+        for (i, t) in toks.iter().enumerate() {
+            match t {
+                Tok::Str(v, false) if v.starts_with(':') && v.len() > 1 => {
+                    strs.insert(v.clone());
+                }
+                Tok::Ident(id) if id == "projects" && is_p(toks.get(i + 1), '.') => {
+                    let mut chain = Vec::new();
+                    let mut j = i + 1;
+                    while is_p(toks.get(j), '.')
+                        && let Some(n) = ident_at(&toks, j + 1)
+                    {
+                        chain.push(n.to_string());
+                        j += 2;
+                    }
+                    refs.push(chain);
+                }
+                _ => {}
+            }
+        }
+    }
+    let score = |scheme: &[(String, String)]| -> usize {
+        let paths: BTreeSet<&str> = scheme.iter().map(|(p, _)| p.as_str()).collect();
+        let accessors: BTreeSet<Vec<String>> = scheme
+            .iter()
+            .map(|(p, _)| {
+                p.trim_start_matches(':')
+                    .split(':')
+                    .map(accessor_name)
+                    .collect()
+            })
+            .collect();
+        let by_accessor = refs
+            .iter()
+            .filter(|c| {
+                accessors.contains(*c) || (c.len() > 1 && accessors.contains(&c[..c.len() - 1]))
+            })
+            .count();
+        by_accessor + strs.iter().filter(|v| paths.contains(v.as_str())).count()
+    };
+    let (chosen, how) = match flat {
+        Some(f) if score(&f) > score(&nested) => (f, "leaf directory name"),
+        _ => (nested, "directory path"),
+    };
+    if !chosen.is_empty() {
+        warnings.push(format!(
+            "settings: {} projects taken from directories holding a build script, named by {how}",
+            chosen.len()
+        ));
+    }
+    for (p, d) in chosen {
+        if how != "directory path" {
+            s.project_dirs.insert(p.clone(), d);
+        }
+        s.includes.push((p, false));
+    }
+    listed
 }
 
 pub(crate) fn ident_at(toks: &[Tok], i: usize) -> Option<&str> {
@@ -1093,6 +1286,8 @@ struct ProjectShape {
     js_envs: BTreeMap<String, BTreeSet<String>>,
     /// Named target -> kind (`ScriptFacts::target_kinds`).
     target_kinds: BTreeMap<String, String>,
+    /// Android product flavors (one dimension): unit tests run per flavor, `test<Flavor>DebugUnitTest`.
+    flavors: Vec<String>,
 }
 
 impl ProjectShape {
@@ -1112,14 +1307,43 @@ fn test_tasks_for(
 ) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     if !shape.kmp {
-        if name == "test" {
+        let flavor_of = |prefix: &str| {
+            shape
+                .flavors
+                .iter()
+                .find(|f| name.strip_prefix(prefix) == Some(capitalize(f).as_str()))
+        };
+        if name == "test" && shape.android && !shape.flavors.is_empty() {
+            for f in &shape.flavors {
+                out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+            }
+        } else if name == "test" {
             out.insert(if shape.android {
                 "testDebugUnitTest".into()
             } else {
                 "test".into()
             });
+        } else if name == "androidTest" && !shape.flavors.is_empty() {
+            for f in &shape.flavors {
+                out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+            }
         } else if name == "androidTest" {
             out.insert("connectedDebugAndroidTest".into());
+        } else if let Some(f) = flavor_of("test").filter(|_| shape.android) {
+            out.insert(format!("test{}DebugUnitTest", capitalize(f)));
+        } else if let Some(f) = flavor_of("androidTest").filter(|_| shape.android) {
+            out.insert(format!("connected{}DebugAndroidTest", capitalize(f)));
+        } else if let Some(build_type) = name
+            .strip_prefix("test")
+            .filter(|r| shape.android && r.starts_with(|c: char| c.is_ascii_uppercase()))
+        {
+            // A build type's own unit tests (`testRelease`), under each flavor when there are some.
+            if shape.flavors.is_empty() {
+                out.insert(format!("test{build_type}UnitTest"));
+            }
+            for f in &shape.flavors {
+                out.insert(format!("test{}{build_type}UnitTest", capitalize(f)));
+            }
         } else {
             // A custom JVM test suite (`integrationTest`) gets a task of the same name.
             out.insert(name.to_string());
@@ -1154,6 +1378,59 @@ fn test_tasks_for(
     out
 }
 
+/// The flavors a `productFlavors { create("x") }` (or `register`, `maybeCreate`, Groovy `x { }`) block
+/// declares. Empty with more than one flavor dimension: each variant then combines flavors in
+/// dimension order, which this does not model.
+fn product_flavors(toks: &[Tok]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut dimensions = BTreeSet::new();
+    for i in 0..toks.len() {
+        if ident(&toks[i]) == Some("dimension")
+            && is_p(toks.get(i + 1), '=')
+            && let Some(Tok::Str(d, _)) = toks.get(i + 2)
+        {
+            dimensions.insert(d.clone());
+        }
+        if ident(&toks[i]) != Some("productFlavors") || !is_p(toks.get(i + 1), '{') {
+            continue;
+        }
+        let end = close_of(toks, i + 1);
+        let mut j = i + 2;
+        while j < end {
+            let named = match (ident(&toks[j]), toks.get(j + 1), toks.get(j + 2)) {
+                (
+                    Some("create" | "register" | "maybeCreate"),
+                    Some(Tok::Punct('(')),
+                    Some(Tok::Str(n, false)),
+                ) => Some(n.clone()),
+                (Some(n), Some(Tok::Punct('{')), _) => Some(n.to_string()),
+                _ => None,
+            };
+            if let Some(n) = named
+                && !out.contains(&n)
+            {
+                out.push(n);
+            }
+            // Skip the flavor's own block: its contents are not flavors.
+            j = match toks[j + 1..end]
+                .iter()
+                .position(|t| matches!(t, Tok::Punct('{')))
+            {
+                Some(k) if named_block_at(toks, j, j + 1 + k) => close_of(toks, j + 1 + k) + 1,
+                _ => j + 1,
+            };
+        }
+    }
+    if dimensions.len() > 1 { vec![] } else { out }
+}
+
+/// Is the `{` at `open` the block of the flavor declaration starting at `at` (same statement)?
+fn named_block_at(toks: &[Tok], at: usize, open: usize) -> bool {
+    !toks[at..open]
+        .iter()
+        .any(|t| *t == Tok::Newline || matches!(t, Tok::Punct(';')))
+}
+
 fn depends_transitively(from: &str, to: &str, sets: &BTreeMap<String, SourceSet>) -> bool {
     let mut seen = BTreeSet::new();
     let mut q = vec![from.to_string()];
@@ -1176,6 +1453,29 @@ fn depends_transitively(from: &str, to: &str, sets: &BTreeMap<String, SourceSet>
 }
 
 // ------------------------------------------------------------------ discover
+
+/// `<stem>/src` -> `<stem>Main` and `<stem>/test` -> `<stem>Test` for each child directory of a
+/// project named like a source-set stem (`common`, `jvm`, `nonJvm`).
+fn flat_source_dirs(project_dir: &Path) -> BTreeMap<String, String> {
+    let mut out = BTreeMap::new();
+    let Ok(rd) = std::fs::read_dir(project_dir) else {
+        return out;
+    };
+    for e in rd.flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let stem_like = name.starts_with(|c: char| c.is_ascii_lowercase())
+            && name.chars().all(|c| c.is_ascii_alphanumeric());
+        if !stem_like || name == "src" || name == "build" || !e.path().is_dir() {
+            continue;
+        }
+        for (sub, suf) in [("src", "Main"), ("test", "Test")] {
+            if e.path().join(sub).is_dir() {
+                out.insert(format!("{name}/{sub}"), format!("{name}{suf}"));
+            }
+        }
+    }
+    out
+}
 
 fn read(root: &Path, rel: &str) -> Option<String> {
     std::fs::read_to_string(root.join(rel)).ok()
@@ -1226,8 +1526,15 @@ pub fn discover(root: &Path) -> Build {
             project_dirs: BTreeMap::new(),
             included_builds: vec![],
             warnings: vec![],
+            dynamic: false,
+            literals: BTreeSet::new(),
         }
     });
+    let mut settings = settings;
+    let mut scanned_dirs = Vec::new();
+    if settings.dynamic {
+        scanned_dirs = add_scanned_projects(root, &mut settings, &mut warnings);
+    }
     warnings.extend(settings.warnings.iter().cloned());
     let root_name = settings.root_name.clone().unwrap_or_else(|| {
         root.file_name()
@@ -1290,38 +1597,56 @@ pub fn discover(root: &Path) -> Build {
     }
 
     let mut inputs: Vec<String> = settings_file.into_iter().collect();
+    // A directory's mtime moves when an entry is added or removed: a new module invalidates discovery.
+    inputs.extend(scanned_dirs);
     let conv = crate::conventions::Conventions::load(root, &settings.included_builds);
     inputs.extend(conv.inputs.iter().cloned());
     warnings.extend(conv.warnings.iter().cloned());
     let mut projects = Vec::new();
     // Warning from a shared plugin -> the projects it applies to.
     let mut conv_warnings: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for (path, (dir, implicit)) in &paths {
-        if !dir.is_empty() && !root.join(dir).is_dir() {
-            warnings.push(format!("{path}: directory {dir} missing"));
-            continue;
-        }
+    // Each project's script and convention plugins are read independently: in parallel.
+    let read_project = |path: &str, dir: &str| {
         let build_file = script_in(root, dir, "build");
         let text = build_file
             .as_deref()
             .and_then(|f| read(root, f))
             .unwrap_or_default();
+        let facts = parse_script(&text, &accessors, path);
+        let fx = conv.effects(
+            path,
+            &facts.plugins,
+            &tokenize(&text),
+            build_file.as_deref().unwrap_or(""),
+        );
+        (build_file, text, facts, fx)
+    };
+    let mut read_projects: Vec<_> = {
+        use rayon::prelude::*;
+        paths
+            .par_iter()
+            .map(|(path, (dir, _))| {
+                (dir.is_empty() || root.join(dir).is_dir()).then(|| read_project(path, dir))
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect()
+    };
+    for (path, (dir, implicit)) in &paths {
+        let Some((build_file, text, mut facts, fx)) = read_projects.pop().flatten() else {
+            warnings.push(format!("{path}: directory {dir} missing"));
+            continue;
+        };
         if let Some(b) = &build_file {
             inputs.push(b.clone());
         }
-        let mut facts = parse_script(&text, &accessors, path);
         let mut dep_confidence = BTreeMap::new();
         let host_tests_by_plugin;
         let if_config_exists;
         let custom_tests;
         let test_filters;
         {
-            let fx = conv.effects(
-                path,
-                &facts.plugins,
-                &tokenize(&text),
-                build_file.as_deref().unwrap_or(""),
-            );
             for ((c, t), conf) in fx.deps {
                 if c == "?" {
                     warnings.push(format!(
@@ -1374,6 +1699,21 @@ pub fn discover(root: &Path) -> Build {
             .collect::<Vec<_>>()
             .join(" ")
             .to_lowercase();
+        // A build whose logic re-points source directories (`kotlin.setSrcDirs(..)`) from a
+        // template, with no `src/` here: the flattened `<set stem>/src`, `<set stem>/test` layout.
+        let mut source_dirs = BTreeMap::new();
+        if source_sets.is_empty() && (text.contains("setSrcDirs") || conv.mentions("setSrcDirs")) {
+            source_dirs = flat_source_dirs(&root.join(dir));
+            for set in source_dirs.values() {
+                source_sets.insert(
+                    set.clone(),
+                    SourceSet {
+                        test: is_test_source_set(set),
+                        depends_on: BTreeSet::new(),
+                    },
+                );
+            }
+        }
         let kmp = plugin_text.contains("multiplatform")
             || plugin_text.contains("kmp")
             || source_sets.contains_key("commonMain")
@@ -1436,6 +1776,11 @@ pub fn discover(root: &Path) -> Build {
             android_unit_dir: source_sets.contains_key("androidUnitTest"),
             js_envs: facts.js_envs.clone(),
             target_kinds: kinds.clone(),
+            flavors: if android {
+                product_flavors(&tokenize(&text))
+            } else {
+                vec![]
+            },
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.
@@ -1543,6 +1888,7 @@ pub fn discover(root: &Path) -> Build {
             implicit: *implicit,
             dep_confidence,
             test_filters,
+            source_dirs,
         });
     }
     for (w, ps) in conv_warnings {
@@ -1611,6 +1957,7 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
             implicit: false,
             dep_confidence: BTreeMap::new(),
             test_filters: Default::default(),
+            source_dirs: BTreeMap::new(),
         });
     }
     projects.sort_by(|a, b| a.path.cmp(&b.path));

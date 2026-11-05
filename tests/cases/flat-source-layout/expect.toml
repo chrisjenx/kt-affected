@@ -1,0 +1,3 @@
+why = "Build logic that re-points every source set with kotlin.setSrcDirs to the flattened `<stem>/src`, `<stem>/test` layout: common/test is commonTest and runs under jvmTest when common/src changes; jvm/test, which never reaches the edit, does not."
+must = ["demo.InvoiceTest@:ledger:jvmTest"]
+never = ["demo.PrinterTest"]

@@ -55,7 +55,7 @@ Priorities, in order:
 Measured on a 14k-file, 193-project KMP app with a prebuilt release binary (compile excluded):
 cold graph < 5 s, after a one-file edit < 300 ms, warm (nothing changed) < 150 ms and < 150 MB peak.
 Current numbers are in the README. A change that slows these needs a reason; the `Benchmark` workflow
-compares every pull request with its base on the same runner (okio and sqldelight).
+compares every pull request with its base on the same runner (the builds in `tests/oss/projects.tsv`).
 
 ## How accuracy is judged
 

@@ -15,10 +15,17 @@ selector kt-affected replaced there and beside Gradle itself.
 
 ## Open-source projects (CI)
 
-`.github/workflows/bench.yml` runs `bench/oss_bench.py` on pinned okio and sqldelight checkouts on
-every push and pull request. On a pull request the base and head binaries run interleaved on the
-same runner and the job summary shows the change per case. Shared runners are noisy, so it reports
-and never fails.
+`.github/workflows/bench.yml` runs `bench/oss_bench.py` on every push and pull request over seven
+builds pinned at a commit in `tests/oss/projects.tsv`: okio, sqldelight, kotlinconf-app, Confetti,
+circuit, element-x-android and ktor (`scripts/oss-checkout.sh` fetches them shallow, LFS files left
+as pointers). The two largest, element-x-android and ktor, take 3 runs per case, the rest 5 or 7. On
+a pull request the base and head binaries run interleaved on the same runner and the job summary
+shows one table per project with the change per case. Shared runners are noisy, so it reports and
+never fails. A local run of all seven is in the README's "Public benchmarks" table.
+
+The same seven are the discovery goldens: `scripts/oss-golden.sh` compares static `discover --json`
+of each with `tests/oss/<name>.discover.json` in CI, so any change to what discovery sees shows up as
+a reviewable diff.
 
 ## Your own project
 

@@ -1,0 +1,3 @@
+why = "A settings DSL that includes projects by their leaf directory name (`:shop-catalog` in shop-books/shop-catalog): the projects are read from disk under the names the build scripts' own references use, and a directory holding a build script that the settings never names is not a project."
+must = ["demo.catalog.CatalogTest@:shop-catalog:test", "demo.checkout.CheckoutTest@:shop-checkout:test"]
+never_tasks = [":shop-legacy:test"]
