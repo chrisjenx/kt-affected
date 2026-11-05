@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 230" width="920" height="230" role="img" aria-labelledby="tt dd">
+<title id="tt">kt-affected vs the Python selector over 586 pull requests</title>
+<desc id="dd">Real CI failures selected: Python 58 of 103, kt-affected 99 of 103. Test time as a share of running everything: Python 12.4%, kt-affected 15.1%.</desc>
+<style>
+.bg{fill:#fcfcfb} text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.t{font-size:15px;font-weight:600;fill:#0b0b0b} .s,.a{font-size:12px;fill:#52514e} .l{font-size:13px;fill:#0b0b0b} .v{font-size:13px;font-weight:600;fill:#0b0b0b}
+.track{fill:#f0efec} .py{fill:#eb6834} .kt{fill:#2a78d6} .all{fill:#9b9a95}
+@media (prefers-color-scheme: dark){.bg{fill:#1a1a19} .t,.l,.v{fill:#f0efec} .s,.a{fill:#c3c2b7} .track{fill:#383835} .py{fill:#d95926} .kt{fill:#3987e5} .all{fill:#6f6e69}}
+</style>
+<rect class="bg" width="920" height="230" rx="8"/>
+<text x="20" y="28" class="t">Real CI failures it would have run</text>
+<text x="20" y="47" class="s">higher is better · 103 diff-caused failures</text>
+<text x="20" y="86" class="l">Python</text>
+<rect x="140" y="70" width="220" height="22" rx="4" class="track"/>
+<rect x="140" y="70" width="123.9" height="22" rx="4" class="py"><title>Python: 58 / 103</title></rect>
+<text x="370" y="86" class="v">58 / 103</text>
+<text x="20" y="126" class="l">kt-affected</text>
+<rect x="140" y="110" width="220" height="22" rx="4" class="track"/>
+<rect x="140" y="110" width="211.5" height="22" rx="4" class="kt"><title>kt-affected: 99 / 103</title></rect>
+<text x="370" y="126" class="v">99 / 103</text>
+<text x="140.0" y="158" class="a" text-anchor="middle">0%</text>
+<text x="250.0" y="158" class="a" text-anchor="middle">50%</text>
+<text x="360.0" y="158" class="a" text-anchor="middle">100%</text>
+<text x="480" y="28" class="t">Test time it costs</text>
+<text x="480" y="47" class="s">share of running every test · lower is better</text>
+<text x="480" y="86" class="l">Run everything</text>
+<rect x="600" y="70" width="220" height="22" rx="4" class="track"/>
+<rect x="600" y="70" width="220.0" height="22" rx="4" class="all"><title>Run everything: 100%</title></rect>
+<text x="830" y="86" class="v">100%</text>
+<text x="480" y="126" class="l">Python</text>
+<rect x="600" y="110" width="220" height="22" rx="4" class="track"/>
+<rect x="600" y="110" width="27.3" height="22" rx="4" class="py"><title>Python: 12.4%</title></rect>
+<text x="830" y="126" class="v">12.4%</text>
+<text x="480" y="166" class="l">kt-affected</text>
+<rect x="600" y="150" width="220" height="22" rx="4" class="track"/>
+<rect x="600" y="150" width="33.2" height="22" rx="4" class="kt"><title>kt-affected: 15.1%</title></rect>
+<text x="830" y="166" class="v">15.1%</text>
+<text x="600.0" y="198" class="a" text-anchor="middle">0%</text>
+<text x="710.0" y="198" class="a" text-anchor="middle">50%</text>
+<text x="820.0" y="198" class="a" text-anchor="middle">100%</text>
+</svg>
