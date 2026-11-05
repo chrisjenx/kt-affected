@@ -45,11 +45,17 @@ def run_once(cmd: list[str]) -> tuple[float, int]:
 
 
 def pick_file(root: Path) -> str:
-    """A deterministic, mid-sized main-source .kt file, so the edit cases touch ordinary code."""
+    """A deterministic, mid-sized main-source .kt file, so the edit cases touch ordinary code.
+
+    Build logic (a nested build: buildSrc, an included build) is skipped: editing it reruns
+    discovery, which is not the body edit the case means to time.
+    """
+    nested = {d.parent for d in root.glob("*/settings.gradle*")} | {root / "buildSrc"}
     files = sorted(
         p for p in root.rglob("*.kt")
         if "/build/" not in str(p) and "/src/" in str(p) and "Test" not in str(p)
-        and any(s in str(p) for s in ("/commonMain/", "/main/", "/jvmMain/"))
+        and not any(n in p.parents for n in nested)
+        and any(s in str(p) for s in ("/commonMain/", "/main/", "/jvmMain/", "/common/src/", "/jvm/src/"))
     )
     if not files:
         sys.exit(f"no main-source .kt files under {root}")

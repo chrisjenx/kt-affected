@@ -1,0 +1,335 @@
+{
+  "root_name": "KotlinConfApp",
+  "projects": [
+    {
+      "path": ":",
+      "dir": "",
+      "build_file": "build.gradle.kts",
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":app",
+      "dir": "app",
+      "build_file": null,
+      "deps": [],
+      "source_sets": {},
+      "targets": [],
+      "test_tasks": {},
+      "implicit": true
+    },
+    {
+      "path": ":app:adminApp",
+      "dir": "app/adminApp",
+      "build_file": "app/adminApp/build.gradle.kts",
+      "deps": [
+        [
+          "jsMainImplementation",
+          ":core"
+        ]
+      ],
+      "source_sets": {
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        }
+      },
+      "targets": [
+        "js"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":app:androidApp",
+      "dir": "app/androidApp",
+      "build_file": "app/androidApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":app:shared"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":app:desktopApp",
+      "dir": "app/desktopApp",
+      "build_file": "app/desktopApp/build.gradle.kts",
+      "deps": [
+        [
+          "implementation",
+          ":app:shared"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":app:shared",
+      "dir": "app/shared",
+      "build_file": "app/shared/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainApi",
+          ":app:ui-components"
+        ],
+        [
+          "commonMainApi",
+          ":core"
+        ]
+      ],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "commonTest": {
+          "test": true,
+          "depends_on": []
+        },
+        "iosMain": {
+          "test": false,
+          "depends_on": [
+            "appleMain"
+          ]
+        },
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "jvmMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "jvmTest": {
+          "test": true,
+          "depends_on": [
+            "commonTest"
+          ]
+        },
+        "nonAndroidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "nonWebMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {
+        "commonTest": [
+          "iosSimulatorArm64Test",
+          "jsBrowserTest",
+          "jvmTest",
+          "wasmJsBrowserTest"
+        ],
+        "jvmTest": [
+          "jvmTest"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":app:ui-components",
+      "dir": "app/ui-components",
+      "build_file": "app/ui-components/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "androidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        },
+        "jsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "nonAndroidMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        },
+        "wasmJsMain": {
+          "test": false,
+          "depends_on": [
+            "webMain"
+          ]
+        },
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "android",
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":app:webApp",
+      "dir": "app/webApp",
+      "build_file": "app/webApp/build.gradle.kts",
+      "deps": [
+        [
+          "commonMainImplementation",
+          ":app:shared"
+        ]
+      ],
+      "source_sets": {
+        "webMain": {
+          "test": false,
+          "depends_on": [
+            "commonMain"
+          ]
+        }
+      },
+      "targets": [
+        "js",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    },
+    {
+      "path": ":backend",
+      "dir": "backend",
+      "build_file": "backend/build.gradle.kts",
+      "deps": [
+        [
+          "add",
+          ":app:adminApp"
+        ],
+        [
+          "implementation",
+          ":core"
+        ]
+      ],
+      "source_sets": {
+        "main": {
+          "test": false,
+          "depends_on": []
+        },
+        "test": {
+          "test": true,
+          "depends_on": []
+        }
+      },
+      "targets": [],
+      "test_tasks": {
+        "test": [
+          "test"
+        ]
+      },
+      "implicit": false
+    },
+    {
+      "path": ":core",
+      "dir": "core",
+      "build_file": "core/build.gradle.kts",
+      "deps": [],
+      "source_sets": {
+        "commonMain": {
+          "test": false,
+          "depends_on": []
+        }
+      },
+      "targets": [
+        "androidLibrary",
+        "iosArm64",
+        "iosSimulatorArm64",
+        "js",
+        "jvm",
+        "wasmJs"
+      ],
+      "test_tasks": {},
+      "implicit": false
+    }
+  ],
+  "included_builds": [],
+  "inputs": [
+    "settings.gradle.kts",
+    "build.gradle.kts",
+    "app/adminApp/build.gradle.kts",
+    "app/androidApp/build.gradle.kts",
+    "app/desktopApp/build.gradle.kts",
+    "app/shared/build.gradle.kts",
+    "app/ui-components/build.gradle.kts",
+    "app/webApp/build.gradle.kts",
+    "backend/build.gradle.kts",
+    "core/build.gradle.kts"
+  ],
+  "warnings": []
+}

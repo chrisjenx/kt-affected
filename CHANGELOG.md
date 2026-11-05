@@ -6,6 +6,20 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- Static discovery reads settings scripts that include projects through code (a directory walk, a
+  project DSL): every directory holding a build script, outside nested and included builds, is a
+  project, named the way the build scripts' own project references resolve (`:a:b` or the leaf
+  `:b`). element-x-android goes from 14 to 359 projects, ktor from 1 to 138.
+- The flattened `<stem>/src`, `<stem>/test` source layout (build logic calling
+  `kotlin.setSrcDirs`, as ktor and the kotlinx libraries do) is read as source sets; before, a
+  functional edit in such a build selected nothing.
+- An Android module with product flavors runs its unit tests under `test<Flavor>DebugUnitTest`
+  (it has no `testDebugUnitTest`), and a variant's own test source sets (`testPaid`) are tests.
+- Per-project script and convention-plugin reading runs in parallel (ktor discovery about 7x
+  faster).
+- Discovery goldens and the CI benchmark cover five more pinned builds: kotlinconf-app, Confetti,
+  circuit, element-x-android and ktor.
+
 ## [0.3.1]
 
 - Several processes or threads can now update one cache dir at once (a Gradle task and an editor
