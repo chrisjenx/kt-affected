@@ -26,6 +26,9 @@ struct Expect {
     /// `:module:task` groups that must run some class (a smoke class, say).
     #[serde(default)]
     tasks: Vec<String>,
+    /// `:module:task` groups that must run some class but not the whole task.
+    #[serde(default)]
+    smoke_tasks: Vec<String>,
     /// `:module:task` groups that must not appear at all.
     #[serde(default)]
     never_tasks: Vec<String>,
@@ -147,6 +150,15 @@ fn check(e: &Expect, plan: &Plan) -> Vec<String> {
             .any(|g| g.key() == *t && !g.classes.is_empty())
         {
             wrong.push(format!("{t} runs nothing"));
+        }
+    }
+    for t in &e.smoke_tasks {
+        if !plan
+            .groups
+            .iter()
+            .any(|g| g.key() == *t && !g.classes.is_empty() && !g.full)
+        {
+            wrong.push(format!("{t} is not a partial run"));
         }
     }
     for t in &e.never_tasks {

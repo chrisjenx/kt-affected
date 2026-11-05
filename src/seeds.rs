@@ -775,7 +775,12 @@ impl<'v, 'a> Overrides<'v, 'a> {
 
     fn of(&mut self, n: u32) -> Vec<u32> {
         let v = self.v;
-        if self.done.contains(&n) || v.flags[n as usize] & (N_PRIVATE | N_NO_WALK) != 0 {
+        // Initializer blocks and constructors are not virtual: one class's `init {}` never runs for
+        // a sibling, though both are named alike.
+        if self.done.contains(&n)
+            || v.flags[n as usize] & (N_PRIVATE | N_NO_WALK) != 0
+            || matches!(v.kind[n as usize], KIND_INIT | KIND_CONSTRUCTOR)
+        {
             return vec![];
         }
         self.done.insert(n);
@@ -791,6 +796,7 @@ impl<'v, 'a> Overrides<'v, 'a> {
                 if t as i32 != c
                     && v.parent[t as usize] >= 0
                     && v.flags[t as usize] & N_PRIVATE == 0
+                    && !matches!(v.kind[t as usize], KIND_INIT | KIND_CONSTRUCTOR)
                 {
                     names.entry(v.name[t as usize]).or_default().push(t);
                 }
@@ -850,11 +856,20 @@ pub fn container_gate(
         let whole_type = matches!(v.kind[i], KIND_CLASS | KIND_INTERFACE | KIND_OBJECT);
         // An interface member's edit is a contract change every implementer, test fakes included, sees.
         let contract = v.kind[v.parent[i] as usize] == KIND_INTERFACE;
+        // An abstract, unannotated property declared on a graph itself (`val repo: Repo`) is an
+        // accessor: the generated graph only hands a binding out through it, and creates nothing
+        // until it is read, so only code reading its name sees it. Wiring (`@Provides`, `@Binds`,
+        // multibindings, `@Includes`) carries an annotation or a body and stays ungated.
+        let accessor = matches!(v.kind[i], KIND_VAL | KIND_VAR)
+            && v.dflags[i] & (FLAG_INITIALIZED | FLAG_CTOR_PROP) == 0
+            && v.parent[i] as u32 == v.root[i]
+            && is_graph(v.root[i])
+            && v.p.node_annotations(i).is_empty();
         if whole_type
-            || contract
+            || (contract && !accessor)
             || v.rides[i]
             || v.implicit.contains(&v.name[i])
-            || is_graph(v.root[i])
+            || (is_graph(v.root[i]) && !accessor)
         {
             let mut p = v.parent[i];
             while p >= 0 {
@@ -1424,7 +1439,7 @@ pub fn unnamed_receiver_reach(
     };
     // Round 0 is the walk without DI; the dispatch rounds only add to it. They see no main reach:
     // what the main walk reached is not expanded through receivers there.
-    let (mut out, first_by) = receiver_round(
+    let (mut out, mut first_by, mut chain) = receiver_round(
         v,
         routes,
         &changed,
@@ -1432,6 +1447,43 @@ pub fn unnamed_receiver_reach(
         reached,
         &FxHashSet::default(),
     );
+    // A caller found through an unnamed receiver runs the change too, and its own callers may reach
+    // it the same way (`holder.build()` on a constructor property inside a lambda with a receiver):
+    // follow the chain, class by class, as far as it goes (bounded like the dispatch rounds).
+    let none_seen: FxHashSet<u32> = FxHashSet::default();
+    // The chain's classes join its own rounds' seed roots only: the dispatch rounds below keep
+    // seeing them as holders and callers.
+    let mut chain_roots = seed_roots.clone();
+    // Kept apart until the dispatch rounds are done: a node only partly walked here must still be
+    // expanded by them.
+    let mut chain_out: FxHashSet<u32> = FxHashSet::default();
+    let mut chained: FxHashSet<u32> = changed.clone();
+    for _ in 0..routes.dispatch_rounds {
+        chain.retain(|&n| {
+            let i = n as usize;
+            parent[i] >= 0
+                && flags[i] & N_PRIVATE == 0
+                && !v.rides[i]
+                && !v.test_class.contains_key(&root[i])
+                && !chain_roots.contains(&root[i])
+                && chained.insert(n)
+        });
+        if chain.is_empty() {
+            break;
+        }
+        chain_roots.extend(chain.iter().map(|&n| root[n as usize]));
+        let (got, by, next) = receiver_round(
+            v,
+            routes,
+            &chain,
+            &chain_roots,
+            &Reach::default(),
+            &none_seen,
+        );
+        chain_out.extend(got);
+        merge_by(&mut first_by, &by);
+        chain = next;
+    }
     let off_classpath = |n: u32| {
         let r = root[n as usize];
         v.test_class.contains_key(&r)
@@ -1476,7 +1528,8 @@ pub fn unnamed_receiver_reach(
             let (got, by) = if routes.typed_dispatch {
                 typed_round(v, routes, &targets, &seed_roots, &prior)
             } else {
-                receiver_round(v, routes, &targets, &seed_roots, &none, &prior)
+                let (got, by, _) = receiver_round(v, routes, &targets, &seed_roots, &none, &prior);
+                (got, by)
             };
             for n in got {
                 let r = root[n as usize];
@@ -1499,6 +1552,7 @@ pub fn unnamed_receiver_reach(
             pending.len()
         );
     }
+    out.extend(chain_out.into_iter().filter(|&n| !off_classpath(n)));
     out
 }
 
@@ -1511,7 +1565,11 @@ fn receiver_round(
     seed_roots: &FxHashSet<u32>,
     reached: &Reach,
     prior: &FxHashSet<u32>,
-) -> (FxHashSet<u32>, FxHashMap<u32, FxHashSet<u32>>) {
+) -> (
+    FxHashSet<u32>,
+    FxHashMap<u32, FxHashSet<u32>>,
+    FxHashSet<u32>,
+) {
     let (parent, flags, name, root) = (&v.parent, &v.flags, &v.name, &v.root);
     let mut dispatched: FxHashSet<u32> = FxHashSet::default();
     let mut dispatched_by: FxHashMap<u32, FxHashSet<u32>> = FxHashMap::default();
@@ -1691,7 +1749,7 @@ fn receiver_round(
         out.extend(r.nodes());
     }
     let _ = dispatched;
-    (out, dispatched_by)
+    (out, dispatched_by, keep)
 }
 
 /// A dispatch round over interface members `targets`, by type: code whose call resolves to one of

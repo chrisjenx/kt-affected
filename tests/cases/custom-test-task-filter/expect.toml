@@ -1,0 +1,3 @@
+why = "A registered Test task's class filter is honoured: a class its includeTestsMatching/excludeTestsMatching leaves out never runs there; a filter set in a loop is not read, so that task keeps every class."
+must = ["demo.screens.PriceScreenTest@:m:test", "demo.logic.PriceLogicTest@:m:test", "demo.screens.PriceScreenTest@:m:captureScreens", "demo.logic.PriceLogicTest@:m:logicOnly", "demo.screens.PriceScreenTest@:m:bucketed", "demo.logic.PriceLogicTest@:m:bucketed"]
+never = ["demo.logic.PriceLogicTest@:m:captureScreens", "demo.screens.PriceScreenTest@:m:logicOnly"]

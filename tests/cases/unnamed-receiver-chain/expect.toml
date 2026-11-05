@@ -1,0 +1,3 @@
+why = "Calls on receivers the linker cannot type (`holder.build()` inside a lambda with a receiver) are followed hop after hop, not just from the edited class: tests calling the outer service run; one calling a same-named member of another class does not."
+must = ["p.LineServiceTest@:m:test", "p.DirectServiceTest@:m:test"]
+never = ["p.UnrelatedTest"]

@@ -1,0 +1,5 @@
+why = "A module script changing its own Test task's JVM (heap, forks, arguments) runs that module's tests whole; its dependents get the build-logic smoke class; unrelated modules nothing."
+full_tasks = [":core:test"]
+smoke_tasks = [":feature:test"]
+never_tasks = [":other:test"]
+reasons = ["core/build.gradle.kts: changes the test JVM or framework (`maxHeapSize`)"]

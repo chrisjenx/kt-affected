@@ -1,3 +1,3 @@
 why = "A buildSrc convention plugin change is build logic for every module: one smoke class per test task, everywhere, with a reason."
-tasks = [":core:test", ":feature:test", ":other:test"]
+smoke_tasks = [":core:test", ":feature:test", ":other:test"]
 reasons = ["buildSrc/src/main/kotlin/kotlin-conventions.gradle.kts: build logic"]

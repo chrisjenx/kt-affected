@@ -1,4 +1,4 @@
 why = "A module build script change runs one smoke class per test task of that module and every module depending on it (CI runs every suite), and nothing in unrelated modules."
-tasks = [":core:test", ":feature:test"]
+smoke_tasks = [":core:test", ":feature:test"]
 never_tasks = [":other:test"]
 reasons = ["core/build.gradle.kts: build logic"]

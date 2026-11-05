@@ -1,0 +1,11 @@
+[versions]
+kotlin = "2.1.0"
+ksp = "2.1.0-1.0.29"
+okio = "3.9.1"
+
+[libraries]
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

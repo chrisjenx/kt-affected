@@ -81,6 +81,8 @@ pub struct Effects {
     pub if_config_exists: BTreeSet<(String, String)>,
     /// Test tasks registered by hand: (source set whose classes they run, `None` = the JVM test set; task).
     pub custom_tests: BTreeSet<(Option<String>, String)>,
+    /// A registered test task's class filter, when its block sets one that reads statically.
+    pub test_filters: BTreeMap<String, crate::discover::TestFilter>,
     pub warnings: Vec<String>,
 }
 
@@ -700,6 +702,7 @@ fn merge(into: &mut Effects, from: Effects) {
     into.android_host_tests |= from.android_host_tests;
     into.if_config_exists.extend(from.if_config_exists);
     into.custom_tests.extend(from.custom_tests);
+    into.test_filters.extend(from.test_filters);
     for w in from.warnings {
         if !into.warnings.contains(&w) {
             into.warnings.push(w);
@@ -1513,6 +1516,9 @@ impl<'a> Run<'a> {
                                 .map(str::to_string)
                         })
                 });
+            if let Some(f) = test_filter(inner) {
+                self.out.test_filters.insert(task.clone(), f);
+            }
             self.out.custom_tests.insert((ss, task));
         }
         if ids
@@ -1892,6 +1898,82 @@ fn registered_test_task(label: &[Tok]) -> Option<String> {
             None
         }
     })
+}
+
+/// The class filter a registered Test task's block sets: `filter.includeTestsMatching("p.*")`,
+/// `excludeTestsMatching`, `includeTest("p.Cls", ..)` or `includePatterns`/`excludePatterns`, alone or
+/// in a `filter { }` block. `None` when there is none, or when one cannot be read: a non-literal
+/// argument, or a call under any other nested block (a condition or loop decides it).
+fn test_filter(inner: &[Tok]) -> Option<crate::discover::TestFilter> {
+    let mut f = crate::discover::TestFilter::default();
+    let mut found = false;
+    // Open braces, and whether each is a `filter { }` block.
+    let mut blocks: Vec<bool> = Vec::new();
+    let mut k = 0;
+    while k < inner.len() {
+        let t = &inner[k];
+        if is_p(Some(t), '{') {
+            let prev = inner[..k].iter().rev().find(|t| !matches!(t, Tok::Newline));
+            blocks.push(prev.and_then(ident) == Some("filter"));
+        } else if is_p(Some(t), '}') {
+            blocks.pop();
+        }
+        let call = match ident(t) {
+            Some(n @ ("includeTestsMatching" | "excludeTestsMatching" | "includeTest"))
+                if is_p(inner.get(k + 1), '(') =>
+            {
+                Some((n, k + 1))
+            }
+            Some(
+                n @ ("includePatterns" | "excludePatterns" | "setIncludePatterns"
+                | "setExcludePatterns"),
+            ) => Some((n, k + 1)),
+            _ => None,
+        };
+        let Some((name, at)) = call else {
+            k += 1;
+            continue;
+        };
+        found = true;
+        if blocks.iter().any(|&is_filter| !is_filter) {
+            return None;
+        }
+        let end = if is_p(inner.get(at), '(') {
+            close_of(inner, at)
+        } else {
+            inner[at..]
+                .iter()
+                .position(|t| matches!(t, Tok::Newline))
+                .map(|p| at + p)
+                .unwrap_or(inner.len())
+        };
+        let args = &inner[at..end.min(inner.len())];
+        let mut strs = Vec::new();
+        for a in args {
+            match a {
+                Tok::Str(s, false) => strs.push(s.clone()),
+                Tok::Str(_, true) => return None,
+                Tok::Ident(i)
+                    if !matches!(i.as_str(), "setOf" | "listOf" | "mutableSetOf" | "null") =>
+                {
+                    return None;
+                }
+                _ => {}
+            }
+        }
+        if strs.is_empty() {
+            return None;
+        }
+        match name {
+            "includeTest" => f.include.push(strs[0].clone()),
+            "includeTestsMatching" | "includePatterns" | "setIncludePatterns" => {
+                f.include.extend(strs)
+            }
+            _ => f.exclude.extend(strs),
+        }
+        k = end + 1;
+    }
+    found.then_some(f)
 }
 
 /// The receiver of `.forEach`: the whole label minus a leading `val x =` / `dependencies.` qualifier.

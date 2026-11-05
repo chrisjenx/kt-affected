@@ -1,0 +1,3 @@
+why = "An init block is not virtual: a change that runs in one subclass's init reaches tests constructing that subclass, never a sibling subclass's tests through the base class's init."
+must = ["p.FakeListViewTest@:m:test"]
+never = ["p.DetailComponentTest", "p.ListComponentTest"]
