@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 const MAGIC: &[u8; 8] = b"KTAFGRF1";
-const FORMAT: u32 = 5;
+const FORMAT: u32 = 6;
 pub const SKIP_DIRS: &[&str] = &[
     "build",
     ".git",
@@ -299,6 +299,7 @@ fn encode_refs(r: &FileRefs, out: &mut Vec<u32>) {
     encode_rows(&r.refs, out);
     encode_rows(&r.anon, out);
     encode_rows(&r.receiver, out);
+    encode_rows(&r.qualified, out);
     out.push(r.in_code.len() as u32);
     out.extend(&r.in_code);
     out.push(r.koin.len() as u32);
@@ -366,6 +367,7 @@ fn decode_refs(w: &[u32]) -> FileRefs {
     let refs = rows();
     let anon = rows();
     let receiver = rows();
+    let qualified = rows();
     let n = next() as usize;
     let in_code = (0..n).map(|_| next()).collect();
     let vec_of = |next: &mut dyn FnMut() -> u32| -> Vec<u32> {
@@ -422,6 +424,7 @@ fn decode_refs(w: &[u32]) -> FileRefs {
         refs,
         anon,
         receiver,
+        qualified,
         in_code,
         koin,
         builds,
@@ -993,7 +996,9 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
 
     // ---- link
     let graph = {
-        let linker = Linker::new(&sym, &modules.vis, &all_refs, |s| interner.get(s));
+        let linker = Linker::new(&sym, &modules.vis, &all_refs, &interner.strs, |s| {
+            interner.get(s)
+        });
         if prof {
             eprintln!("  linker new: {}ms", t2.elapsed().as_millis());
         }
@@ -1360,7 +1365,7 @@ fn delta(
         }
     }
     lap("symbols", t2);
-    let linker = Linker::new(&sym, &modules.vis, &[], |s| interner.get(s));
+    let linker = Linker::new(&sym, &modules.vis, &[], &interner.strs, |s| interner.get(s));
     lap("linker", t2);
     let mut outs: Vec<(usize, crate::graph::FileOut)> = Vec::with_capacity(fresh.len());
     for (&i, (fp, before)) in &fresh {
@@ -1993,6 +1998,63 @@ mod tests {
             modes.get("incremental").copied().unwrap_or(0) >= 10,
             "full relink barely exercised: {modes:?}"
         );
+    }
+
+    #[test]
+    fn private_members_link_only_inside_their_top_level_declaration_and_qualified_names_link() {
+        let root = tmp("private-fq");
+        let mut clock = 0;
+        write(
+            &root,
+            "settings.gradle.kts",
+            "include(\":a\")\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/build.gradle.kts",
+            "plugins { kotlin(\"jvm\") }\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/demo/Stores.kt",
+            "package demo\n\nclass One(private val q: Int) {\n    fun a() = q\n    class Inner { fun b(o: One) = o.q }\n}\n\nclass Two(private val q: Int) {\n    fun c() = q\n}\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/demo/model/Money.kt",
+            "package demo.model\n\nclass Money(val cents: Int) {\n    fun format() = cents.toString()\n}\n",
+            &mut clock,
+        );
+        write(
+            &root,
+            "a/src/main/kotlin/other/Use.kt",
+            "package other\n\nfun use() = demo.model.Money(1).format()\n",
+            &mut clock,
+        );
+        let build = discover::discover(&root);
+        let dir = root.join("build/g");
+        update(&root, &build, &dir, true).unwrap();
+        let edges = dump_edges(&Packed::open(&dir.join("graph.bin")).unwrap());
+        let has = |from: &str, to: &str| {
+            edges.iter().any(|e| {
+                e.starts_with("ref\t")
+                    && e.ends_with(&format!("#{to}"))
+                    && e.contains(&format!("#{from}\t"))
+            })
+        };
+        assert!(has("One/a", "One/q"), "{edges:#?}");
+        assert!(
+            has("One/Inner/b", "One/q"),
+            "a nested class sees its outer's private member"
+        );
+        assert!(has("Two/c", "Two/q"));
+        assert!(!has("Two/c", "One/q"), "{edges:#?}");
+        assert!(!has("One/a", "Two/q"));
+        assert!(has("use", "Money"), "{edges:#?}");
+        assert!(has("use", "Money/format"), "{edges:#?}");
     }
 
     fn walk_both(root: &Path) -> (Vec<(String, u64, u64)>, Vec<(String, u64, u64)>) {

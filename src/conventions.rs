@@ -10,7 +10,7 @@
 //! arguments) and recorded as `assumed`, or skipped with a warning naming the file and line: a dependency
 //! is never silently dropped and never silently guessed.
 
-use crate::discover::{KMP_TARGETS, Tok, close_of, ident, is_p, tokenize};
+use crate::discover::{KMP_TARGETS, Tok, close_of, ident, is_p, named_target, tokenize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
@@ -73,6 +73,8 @@ pub struct Effects {
     pub deps: BTreeMap<(String, String), Confidence>,
     pub plugins: BTreeSet<String>,
     pub targets: BTreeSet<String>,
+    /// Named target -> its kind (`jvm("desktop")`).
+    pub target_kinds: BTreeMap<String, String>,
     pub js_envs: BTreeMap<String, BTreeSet<String>>,
     pub android_host_tests: bool,
     /// Deps added through `configurations.matching { .. }`: they land only where the configuration exists.
@@ -691,6 +693,7 @@ fn merge(into: &mut Effects, from: Effects) {
     }
     into.plugins.extend(from.plugins);
     into.targets.extend(from.targets);
+    into.target_kinds.extend(from.target_kinds);
     for (t, e) in from.js_envs {
         into.js_envs.entry(t).or_default().extend(e);
     }
@@ -1552,8 +1555,16 @@ impl<'a> Run<'a> {
         if ctx.kmp
             && let Some(t) = ids.iter().rev().find(|i| KMP_TARGETS.contains(i))
         {
-            self.out.targets.insert(t.to_string());
-            c.target = Some(t.to_string());
+            let name = label
+                .iter()
+                .rposition(|x| ident(x) == Some(*t))
+                .and_then(|at| named_target(label, at));
+            if let Some(n) = &name {
+                self.out.target_kinds.insert(n.clone(), t.to_string());
+            }
+            let t = name.unwrap_or_else(|| t.to_string());
+            self.out.targets.insert(t.clone());
+            c.target = Some(t);
         }
         if let Some(env_name) = last.filter(|l| matches!(*l, "browser" | "nodejs" | "d8"))
             && let Some(t) = &ctx.target
@@ -1643,7 +1654,15 @@ impl<'a> Run<'a> {
         }
         // KMP targets declared as calls: jvm(), iosSimulatorArm64()
         if ctx.kmp && !prev_dot && is_p(toks.get(i + 1), '(') && KMP_TARGETS.contains(&id) {
-            self.out.targets.insert(id.to_string());
+            match named_target(toks, i) {
+                Some(n) => {
+                    self.out.target_kinds.insert(n.clone(), id.to_string());
+                    self.out.targets.insert(n);
+                }
+                None => {
+                    self.out.targets.insert(id.to_string());
+                }
+            }
         }
         if ctx.kmp && id == "withHostTest" {
             self.out.android_host_tests = true;

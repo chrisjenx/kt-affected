@@ -5,4 +5,3 @@ bases = ["EventHandler"]
 """
 must = ["demo.PlacedTest@:events:test"]
 never = ["demo.CancelledTest"]
-known_gap = "the routed walk re-enters the handler from its event (the handler writes the event type) and follows the handler's construction in the shared bus() to every bus user: CancelledTest is selected"

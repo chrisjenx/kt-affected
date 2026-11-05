@@ -9,7 +9,7 @@
 use crate::cache::Packed;
 use crate::change;
 use crate::config::{CONFIG_FILE, Config};
-use crate::discover::{Build, is_test_source_set};
+use crate::discover::{Build, KMP_TARGETS, is_test_source_set};
 use crate::git::{Hunk, Repo};
 use crate::route::{self, Ctx, Module, Modules, Routing};
 use crate::seeds::{self, Routes, View};
@@ -731,10 +731,21 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             paths.iter().filter_map(|p| repo.read(p)).collect()
         })
     };
+    // (included build dir with a trailing '/', supplies plugins) per included build.
+    let included: std::cell::OnceCell<Vec<(String, bool)>> = std::cell::OnceCell::new();
+    let included_build_of = |path: &str| -> Option<bool> {
+        included
+            .get_or_init(|| included_builds(&repo.root, build))
+            .iter()
+            .find(|(d, _)| path.starts_with(d.as_str()))
+            .map(|(_, plugin)| *plugin)
+    };
+    let in_plugin_build = |path: &str| included_build_of(path) == Some(true);
     let ctx = Ctx {
         read: &read,
         read_base: &read_base,
         build_logic: &build_logic,
+        in_plugin_build: &in_plugin_build,
     };
 
     let mut seed_files: BTreeSet<String> = BTreeSet::new();
@@ -768,6 +779,15 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             continue;
         }
         let Some(module) = mods.module_of(path).cloned() else {
+            // An included library build is substituted for its coordinates: its code is on the
+            // classpath of whoever depends on them, and the graph links it like any other.
+            if path.ends_with(".kt")
+                && v.path_file.contains_key(path.as_str())
+                && included_build_of(path) == Some(false)
+            {
+                seed_files.insert(path.clone());
+                continue;
+            }
             if cfg
                 .selector
                 .outside_module_ignored_suffixes
@@ -1094,6 +1114,17 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         if let Some(wide) = &wide_roots {
             roots.retain(|r| wide.contains(r));
         }
+        // A test whose graphs all leave out every edited implementation can only hold a fake of
+        // it: none of the edit runs there (`DiGraphs::never_holds`).
+        let edited_roots: FxHashSet<u32> = node_seeds.iter().map(|&n| v.root[n as usize]).collect();
+        if routes.follow_dispatch && edited_roots.iter().all(|&i| routes.di_graphs.excludable(i)) {
+            roots.retain(|&r| {
+                !v.test_class.contains_key(&r)
+                    || !edited_roots
+                        .iter()
+                        .all(|&i| routes.di_graphs.never_holds(&v, r, i))
+            });
+        }
         if !routes.classpath_ok.is_empty() {
             roots.retain(|&r| {
                 !v.test_class.contains_key(&r) || routes.classpath_ok[v.file[r as usize] as usize]
@@ -1111,11 +1142,17 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                     .push((fq.clone(), explain_path(&v, &via, &all, &node_seeds, r)));
             }
         }
+        let platform = platform_seeds(&v, &mods, build, &node_seeds);
         for r in roots {
             let Some((f, fq)) = v.test_class.get(&r) else {
                 continue;
             };
             for key in idx.owner.get(f).into_iter().flatten() {
+                if let Some(seeds) = &platform
+                    && !compiles_any(build, &key.0, &key.1, seeds)
+                {
+                    continue;
+                }
                 picked.entry(key.clone()).or_default().insert(fq.clone());
             }
         }
@@ -1295,6 +1332,122 @@ fn group(
     }
 }
 
+/// The `(module, target)` of every seed when each lies in one KMP target's own main source set
+/// (`jvmMain`, `iosSimulatorArm64Main`, `wasmJsMain`) that no other source set depends on; such
+/// code compiles into that target alone. None when any seed lies elsewhere.
+fn platform_seeds(
+    v: &View,
+    mods: &Modules,
+    build: &Build,
+    seeds: &FxHashSet<u32>,
+) -> Option<BTreeSet<(String, String)>> {
+    let mut out = BTreeSet::new();
+    let mut files: FxHashSet<u32> = FxHashSet::default();
+    for &n in seeds {
+        if !files.insert(v.file[n as usize]) {
+            continue;
+        }
+        let (m, set) = mods.source_set_of(v.p.file_path(v.file[n as usize] as usize))?;
+        let target = set.strip_suffix("Main")?;
+        let p = build.project(&m.id)?;
+        let platform = KMP_TARGETS.contains(&target)
+            && !target.starts_with("android")
+            && p.targets.contains(target)
+            && !p.source_sets.values().any(|ss| ss.depends_on.contains(set));
+        if !platform {
+            return None;
+        }
+        out.insert((m.id.clone(), target.to_string()));
+    }
+    Some(out)
+}
+
+/// Can test task `task` of `module` run code from any of `seeds` (see `platform_seeds`)? Only a
+/// task known to run one KMP target's compilation (`<target>Test`, `<target>BrowserTest`, ..)
+/// is told no: when that target is none of the seeds' own and, for a seed in another module,
+/// that module has the target too, so the task links that module's own variant of it.
+fn compiles_any(
+    build: &Build,
+    module: &str,
+    task: &str,
+    seeds: &BTreeSet<(String, String)>,
+) -> bool {
+    let Some(p) = build.project(module) else {
+        return true;
+    };
+    let target = p.targets.iter().find(|t| {
+        KMP_TARGETS.contains(&t.as_str())
+            && !t.starts_with("android")
+            && task
+                .strip_prefix(t.as_str())
+                .is_some_and(|rest| matches!(rest, "Test" | "BrowserTest" | "NodeTest" | "D8Test"))
+    });
+    let Some(t) = target else {
+        return true;
+    };
+    seeds.iter().any(|(m, own)| {
+        own == t
+            || (m != module
+                && !build
+                    .project(m)
+                    .map(|q| q.targets.contains(t))
+                    .unwrap_or(false))
+    })
+}
+
+/// Each included build's directory (with a trailing '/', longest first) and whether it supplies
+/// plugins: included under `pluginManagement`, or a build script in it applies `kotlin-dsl` /
+/// `java-gradle-plugin` or declares `gradlePlugin`. Any other is a library build.
+fn included_builds(root: &std::path::Path, build: &Build) -> Vec<(String, bool)> {
+    let settings = ["settings.gradle.kts", "settings.gradle"]
+        .iter()
+        .find_map(|f| std::fs::read_to_string(root.join(f)).ok())
+        .unwrap_or_default();
+    let managed = crate::discover::plugin_management_builds(&settings);
+    let mut out: Vec<(String, bool)> = build
+        .included_builds
+        .iter()
+        .filter(|d| !d.is_empty() && *d != ".")
+        .map(|d| {
+            let mut scripts = Vec::new();
+            walk_build_scripts(root, d, &mut scripts);
+            let plugin = managed.contains(d)
+                || scripts.iter().any(|t| {
+                    t.contains("kotlin-dsl")
+                        || t.contains("java-gradle-plugin")
+                        || t.contains("gradlePlugin")
+                });
+            (format!("{}/", d.trim_end_matches('/')), plugin)
+        })
+        .collect();
+    out.sort_by_key(|(d, _)| std::cmp::Reverse(d.len()));
+    out
+}
+
+/// The text of every build script under `rel`, outside source and output directories.
+fn walk_build_scripts(root: &std::path::Path, rel: &str, out: &mut Vec<String>) {
+    let Ok(rd) = std::fs::read_dir(root.join(rel)) else {
+        return;
+    };
+    for e in rd.flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let sub = format!("{}/{}", rel.trim_end_matches('/'), name);
+        match e.file_type() {
+            Ok(t) if t.is_dir() => {
+                if !matches!(name.as_str(), "src" | "build" | ".gradle" | ".git") {
+                    walk_build_scripts(root, &sub, out);
+                }
+            }
+            Ok(_) if matches!(name.as_str(), "build.gradle.kts" | "build.gradle") => {
+                if let Ok(t) = std::fs::read_to_string(e.path()) {
+                    out.push(t);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 fn walk_kt(root: &std::path::Path, rel: &str, out: &mut Vec<String>) {
     let dir = root.join(rel);
     let Ok(rd) = std::fs::read_dir(&dir) else {
@@ -1429,6 +1582,57 @@ mod tests {
     use super::*;
     use std::path::{Path, PathBuf};
     use std::process::Command;
+
+    #[test]
+    fn a_platform_seed_compiles_only_into_its_own_target_tasks() {
+        let project = |path: &str, targets: &[&str]| crate::discover::Project {
+            path: path.into(),
+            dir: path.trim_start_matches(':').into(),
+            build_file: None,
+            deps: Default::default(),
+            source_sets: Default::default(),
+            targets: targets.iter().map(|t| t.to_string()).collect(),
+            test_tasks: Default::default(),
+            implicit: false,
+            dep_confidence: Default::default(),
+        };
+        let build = Build {
+            root_name: "r".into(),
+            projects: vec![
+                project(":core", &["jvm", "wasmJs", "iosSimulatorArm64"]),
+                project(":app", &["jvm", "wasmJs", "js"]),
+                project(":desktop", &["desktop"]),
+            ],
+            included_builds: vec![],
+            inputs: vec![],
+            warnings: vec![],
+        };
+        let jvm: BTreeSet<(String, String)> = [(":core".into(), "jvm".into())].into();
+        assert!(compiles_any(&build, ":core", "jvmTest", &jvm));
+        assert!(!compiles_any(&build, ":core", "wasmJsBrowserTest", &jvm));
+        assert!(!compiles_any(
+            &build,
+            ":core",
+            "iosSimulatorArm64Test",
+            &jvm
+        ));
+        assert!(
+            !compiles_any(&build, ":app", "wasmJsBrowserTest", &jvm),
+            "app links core's wasm variant"
+        );
+        assert!(
+            compiles_any(&build, ":app", "jsBrowserTest", &jvm),
+            "core has no js variant: can't tell"
+        );
+        assert!(
+            compiles_any(&build, ":core", "screenshots", &jvm),
+            "a task of no known target"
+        );
+        assert!(
+            compiles_any(&build, ":desktop", "desktopTest", &jvm),
+            "a named target"
+        );
+    }
 
     struct Fixture {
         dir: PathBuf,

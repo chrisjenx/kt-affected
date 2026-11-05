@@ -6,6 +6,17 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+Selection changes from the edge-case corpus (every former known gap now passes):
+
+- More selected (missed tests before): accessors declared on a DI graph itself, fully
+  qualified names with no import, Kotlin in an included plugin build (build logic) or an
+  included library build (code), named KMP targets (`jvm("desktop")` -> `desktopTest`).
+- Less selected, each narrowing argued sound in its commit: a private class member links
+  only inside its top-level declaration; a test whose DI graphs all exclude the edited
+  implementation; a platform-only (`jvmMain`) edit under other targets' tasks; event routing
+  through a template-method base and a shared handler registry.
+- The graph cache format is bumped (6): the first run after upgrading rebuilds cold.
+
 ## [0.1.0]
 
 First public release.

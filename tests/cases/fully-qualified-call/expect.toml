@@ -1,4 +1,3 @@
 why = "A call written with its fully qualified name and no import (`demo.model.Money(100).format()`) reaches the edited member like an imported one."
 must = ["demo.billing.BillingTest@:feature:billing:test"]
 never = ["demo.weather.WeatherTest"]
-known_gap = "a fully qualified call with no import is not linked to the declaration: only the model module's own test is selected"

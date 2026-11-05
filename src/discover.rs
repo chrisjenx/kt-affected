@@ -354,6 +354,31 @@ fn strip_dir_prefix(s: &str) -> String {
     s.trim_start_matches("./").trim_end_matches('/').to_string()
 }
 
+/// Builds a settings script includes inside `pluginManagement { .. }`: plugin builds.
+pub(crate) fn plugin_management_builds(settings: &str) -> BTreeSet<String> {
+    let toks = tokenize(settings);
+    let mut out = BTreeSet::new();
+    for i in 0..toks.len() {
+        if ident(&toks[i]) != Some("pluginManagement") || !is_p(toks.get(i + 1), '{') {
+            continue;
+        }
+        let end = close_of(&toks, i + 1);
+        for j in i + 2..end {
+            if ident(&toks[j]) == Some("includeBuild") {
+                let k = if is_p(toks.get(j + 1), '(') {
+                    j + 2
+                } else {
+                    j + 1
+                };
+                if let Some(Tok::Str(v, _)) = toks.get(k) {
+                    out.insert(strip_dir_prefix(v));
+                }
+            }
+        }
+    }
+    out
+}
+
 fn norm_path(p: &str) -> String {
     if p.starts_with(':') {
         p.to_string()
@@ -514,9 +539,22 @@ pub(crate) const KMP_TARGETS: &[&str] = &[
     "androidNativeX64",
 ];
 
+/// `jvm("desktop")`: the name a target call at `at` (a KMP target identifier) gives its target.
+pub(crate) fn named_target(toks: &[Tok], at: usize) -> Option<String> {
+    if !is_p(toks.get(at + 1), '(') {
+        return None;
+    }
+    match (toks.get(at + 2), toks.get(at + 3)) {
+        (Some(Tok::Str(n, false)), Some(Tok::Punct(')' | ','))) if !n.is_empty() => Some(n.clone()),
+        _ => None,
+    }
+}
+
 struct ScriptFacts {
     deps: BTreeSet<(String, String)>,
     targets: BTreeSet<String>,
+    /// Named target -> its kind (`jvm("desktop")`: desktop -> jvm). A target absent here is its kind.
+    target_kinds: BTreeMap<String, String>,
     depends_on: BTreeMap<String, BTreeSet<String>>,
     plugins: BTreeSet<String>,
     js_envs: BTreeMap<String, BTreeSet<String>>, // target -> {browser, nodejs, d8}
@@ -574,6 +612,7 @@ fn parse_script(text: &str, accessors: &BTreeMap<Vec<String>, String>, here: &st
     let mut f = ScriptFacts {
         deps: BTreeSet::new(),
         targets: BTreeSet::new(),
+        target_kinds: BTreeMap::new(),
         depends_on: BTreeMap::new(),
         plugins: BTreeSet::new(),
         js_envs: BTreeMap::new(),
@@ -620,6 +659,13 @@ fn parse_script(text: &str, accessors: &BTreeMap<Vec<String>, String>, here: &st
                     .rev()
                     .find(|i| KMP_TARGETS.contains(i))
                     .map(|s| s.to_string());
+                if let Some(kind) = target.clone()
+                    && let Some(at) = label.iter().rposition(|t| ident(t) == Some(kind.as_str()))
+                    && let Some(name) = named_target(label, at)
+                {
+                    f.target_kinds.insert(name.clone(), kind);
+                    target = Some(name);
+                }
                 if in_kotlin && ids.as_slice() == ["android"] {
                     target = Some("androidLibrary".into());
                 }
@@ -652,7 +698,15 @@ fn parse_script(text: &str, accessors: &BTreeMap<Vec<String>, String>, here: &st
                 if let Some(c) = &callee {
                     if KMP_TARGETS.contains(&c.as_str()) && !is_p(toks.get(i.wrapping_sub(2)), '.')
                     {
-                        f.targets.insert(c.clone());
+                        match named_target(&toks, i - 1) {
+                            Some(name) => {
+                                f.target_kinds.insert(name.clone(), c.clone());
+                                f.targets.insert(name);
+                            }
+                            None => {
+                                f.targets.insert(c.clone());
+                            }
+                        }
                     }
                     if matches!(c.as_str(), "browser" | "nodejs" | "d8")
                         && let Some(t) = blocks.iter().rev().find_map(|b| b.2.clone())
@@ -912,8 +966,8 @@ fn target_of_stem(stem: &str) -> Option<&str> {
 }
 
 fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
-    match target {
-        "jvm" => vec!["jvmTest".into()],
+    match project.kind_of(target) {
+        "jvm" => vec![format!("{target}Test")],
         "android" | "androidTarget" | "androidLibrary" => {
             // Only what the build or the layout states: a guessed task name fails the Gradle invocation.
             if project.android_target_call {
@@ -942,12 +996,12 @@ fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
             }
             v
         }
-        "wasmWasi" => vec!["wasmWasiNodeTest".into()],
+        "wasmWasi" => vec![format!("{target}NodeTest")],
         // Device-only native targets have no test task.
         "iosArm64" | "tvosArm64" | "watchosArm32" | "watchosArm64" | "watchosDeviceArm64"
         | "androidNativeArm32" | "androidNativeArm64" | "androidNativeX86" | "androidNativeX64"
         | "linuxArm64" => vec![],
-        t => vec![format!("{t}Test")],
+        _ => vec![format!("{target}Test")],
     }
 }
 
@@ -959,6 +1013,17 @@ struct ProjectShape {
     android_target_call: bool,
     android_unit_dir: bool,
     js_envs: BTreeMap<String, BTreeSet<String>>,
+    /// Named target -> kind (`ScriptFacts::target_kinds`).
+    target_kinds: BTreeMap<String, String>,
+}
+
+impl ProjectShape {
+    fn kind_of<'s>(&'s self, target: &'s str) -> &'s str {
+        self.target_kinds
+            .get(target)
+            .map(String::as_str)
+            .unwrap_or(target)
+    }
 }
 
 fn test_tasks_for(
@@ -995,7 +1060,7 @@ fn test_tasks_for(
     // Every leaf test source set that (transitively) depends on `name` runs it.
     let mut leaves = BTreeSet::new();
     for t in targets {
-        let stem = if matches!(t.as_str(), "androidTarget" | "androidLibrary") {
+        let stem = if matches!(shape.kind_of(t), "androidTarget" | "androidLibrary") {
             "android"
         } else {
             t.as_str()
@@ -1191,6 +1256,7 @@ pub fn discover(root: &Path) -> Build {
             }
             facts.plugins.extend(fx.plugins);
             facts.targets.extend(fx.targets);
+            facts.target_kinds.extend(fx.target_kinds);
             for (t, e) in fx.js_envs {
                 facts.js_envs.entry(t).or_default().extend(e);
             }
@@ -1243,12 +1309,17 @@ pub fn discover(root: &Path) -> Build {
         let android_host_tests = host_tests_by_plugin
             || text.contains("withHostTest")
             || source_sets.contains_key("androidHostTest");
+        let kinds = &facts.target_kinds;
+        let kind_of =
+            |t: &str| -> String { kinds.get(t).cloned().unwrap_or_else(|| t.to_string()) };
         let mut targets = facts.targets.clone();
         for name in source_sets.keys() {
-            if let Some((stem, _)) = split_stem(name)
-                && let Some(t) = target_of_stem(stem)
-            {
-                targets.insert(t.to_string());
+            if let Some((stem, _)) = split_stem(name) {
+                if kinds.contains_key(stem) {
+                    targets.insert(stem.to_string());
+                } else if let Some(t) = target_of_stem(stem) {
+                    targets.insert(t.to_string());
+                }
             }
         }
         if kmp {
@@ -1259,7 +1330,7 @@ pub fn discover(root: &Path) -> Build {
                 if ss.depends_on.is_empty()
                     && let Some((stem, suf)) = split_stem(name)
                 {
-                    if let Some(p) = template_parent(stem) {
+                    if let Some(p) = template_parent(&kind_of(stem)) {
                         ss.depends_on.insert(format!("{p}{suf}"));
                     } else if stem.starts_with("android") {
                         ss.depends_on.insert(format!("common{suf}"));
@@ -1284,16 +1355,37 @@ pub fn discover(root: &Path) -> Build {
             android_target_call: facts.targets.contains("androidTarget"),
             android_unit_dir: source_sets.contains_key("androidUnitTest"),
             js_envs: facts.js_envs.clone(),
+            target_kinds: kinds.clone(),
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.
         let mut hier = source_sets.clone();
+        // A named target's source sets exist without a directory too, under its kind's parent.
+        for (name, kind) in kinds {
+            for suf in ["Main", "Test"] {
+                hier.entry(format!("{name}{suf}"))
+                    .or_insert_with(|| SourceSet {
+                        test: suf == "Test",
+                        depends_on: template_parent(kind)
+                            .map(|p| format!("{p}{suf}"))
+                            .into_iter()
+                            .collect(),
+                    });
+            }
+        }
         if kmp {
-            for (group, members) in template_groups(&tokenize(&text)) {
+            for (group, mut members) in template_groups(&tokenize(&text)) {
+                // `withJvm()` takes every target of that kind, `jvm("desktop")` included.
+                let named: Vec<String> = kinds
+                    .iter()
+                    .filter(|(_, k)| members.contains(k))
+                    .map(|(n, _)| n.clone())
+                    .collect();
+                members.extend(named);
                 for suf in ["Main", "Test"] {
                     for m in &members {
                         let child = format!("{m}{suf}");
-                        let parent = template_parent(m).map(|p| format!("{p}{suf}"));
+                        let parent = template_parent(&kind_of(m)).map(|p| format!("{p}{suf}"));
                         for sets in [&mut source_sets, &mut hier] {
                             if let Some(ss) = sets.get_mut(&child) {
                                 ss.depends_on.insert(format!("{group}{suf}"));
@@ -1330,14 +1422,19 @@ pub fn discover(root: &Path) -> Build {
         let mut deps = BTreeSet::new();
         // A KMP project's configurations are prefixed by a target or `common`; a JVM project's are not.
         let config_exists = |c: &str| {
+            let names = || kinds.keys().map(String::as_str);
             let prefixed = KMP_TARGETS
                 .iter()
-                .chain(&["common", "android"])
+                .copied()
+                .chain(["common", "android"])
+                .chain(names())
                 .any(|t| c.starts_with(t) && c[t.len()..].starts_with(char::is_uppercase));
             let target_ok = KMP_TARGETS
                 .iter()
-                .chain(&["common"])
-                .any(|t| c.starts_with(t) && (*t == "common" || targets.contains(*t)));
+                .copied()
+                .chain(["common"])
+                .chain(names())
+                .any(|t| c.starts_with(t) && (t == "common" || targets.contains(t)));
             if kmp {
                 prefixed && target_ok
             } else {
@@ -1633,6 +1730,56 @@ mod tests {
     }
 
     #[test]
+    fn named_kmp_targets_get_their_own_source_sets_and_test_tasks() {
+        let r = tmp("named-targets");
+        write(&r, "settings.gradle.kts", "include(\":ui\")\n");
+        write(
+            &r,
+            "ui/build.gradle.kts",
+            "plugins { kotlin(\"multiplatform\") }\nkotlin {\n  jvm(\"desktop\")\n  js(\"site\") { browser() }\n  wasmJs(\"wasmApp\") { nodejs() }\n  iosSimulatorArm64(\"sim\")\n  iosArm64(\"device\")\n  sourceSets {\n    val desktopTest by getting { dependencies { implementation(kotlin(\"test\")) } }\n  }\n}\n",
+        );
+        for d in [
+            "commonTest",
+            "desktopMain",
+            "desktopTest",
+            "simTest",
+            "siteTest",
+        ] {
+            write(&r, &format!("ui/src/{d}/kotlin/X.kt"), "");
+        }
+        let b = discover(&r);
+        let ui = b.project(":ui").unwrap();
+        let set = |v: &[&str]| {
+            v.iter()
+                .map(|s| s.to_string())
+                .collect::<BTreeSet<String>>()
+        };
+        assert_eq!(
+            ui.test_tasks["commonTest"],
+            set(&[
+                "desktopTest",
+                "siteBrowserTest",
+                "wasmAppNodeTest",
+                "simTest"
+            ])
+        );
+        assert_eq!(ui.test_tasks["desktopTest"], set(&["desktopTest"]));
+        assert_eq!(ui.test_tasks["simTest"], set(&["simTest"]));
+        assert_eq!(ui.test_tasks["siteTest"], set(&["siteBrowserTest"]));
+        assert_eq!(
+            ui.source_sets["desktopMain"].depends_on,
+            set(&["commonMain"])
+        );
+        assert_eq!(ui.source_sets["simTest"].depends_on, set(&["iosTest"]));
+        assert!(!ui.targets.contains("jvm"), "{:?}", ui.targets);
+        assert!(
+            ui.deps.is_empty() && !b.warnings.iter().any(|w| w.contains("desktopTest")),
+            "{:?}",
+            b.warnings
+        );
+    }
+
+    #[test]
     fn kmp_typesafe_accessors_and_source_sets() {
         let r = tmp("kmp");
         write(
@@ -1679,6 +1826,13 @@ mod tests {
             ui.source_sets["jvmTest"].depends_on,
             BTreeSet::from(["commonTest".to_string()])
         );
+    }
+
+    #[test]
+    fn plugin_management_include_builds_are_plugin_builds() {
+        let s = "pluginManagement {\n  includeBuild(\"build-logic\")\n  repositories { gradlePluginPortal() }\n}\nincludeBuild(\"./shared-lib\")\n";
+        let got: Vec<String> = plugin_management_builds(s).into_iter().collect();
+        assert_eq!(vec!["build-logic".to_string()], got);
     }
 
     #[test]

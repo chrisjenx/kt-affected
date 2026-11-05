@@ -1,0 +1,7 @@
+why = "A test calling the inherited `handle` on the handler itself, with its event built by a helper elsewhere, still runs an `onEvent` edit; a test publishing another event does not."
+config = """
+[[dispatch]]
+bases = ["EventHandler"]
+"""
+must = ["demo.PlacedTest@:events:test", "demo.DirectTest@:events:test"]
+never = ["demo.CancelledTest"]

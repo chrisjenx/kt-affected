@@ -138,6 +138,9 @@ pub struct RawDecl {
     pub anon: Vec<String>,
     /// Receiver type path of a top-level extension `fun`/`val`/`var`: `Outer.Inner.f` -> [Outer, Inner].
     pub receiver: Vec<String>,
+    /// Dotted chains led by a lowercase name, as a package qualifier is (`demo.model.Money(1)` ->
+    /// [demo, model, Money]): a fully qualified name needs no import.
+    pub qualified: Vec<Vec<String>>,
 }
 
 #[derive(Default, Debug)]
@@ -195,6 +198,8 @@ pub struct FileRefs {
     pub refs: Vec<Vec<u32>>,
     pub anon: Vec<Vec<u32>>,
     pub receiver: Vec<Vec<u32>>,
+    /// Per declaration, its `RawDecl::qualified` chains, each ended by `NONE`.
+    pub qualified: Vec<Vec<u32>>,
     pub in_code: Vec<u32>,
     pub koin: Vec<KoinModuleI>,
     /// (local class, construction names; None when the header does not parse)
@@ -286,7 +291,14 @@ impl Interner {
         let mut refs = Vec::with_capacity(raw.decls.len());
         let mut anon = Vec::with_capacity(raw.decls.len());
         let mut receiver = Vec::with_capacity(raw.decls.len());
+        let mut qualified = Vec::with_capacity(raw.decls.len());
         for d in raw.decls {
+            let mut q = Vec::new();
+            for chain in &d.qualified {
+                q.extend(chain.iter().map(|s| self.intern(s)));
+                q.push(NONE);
+            }
+            qualified.push(q);
             refs.push(d.refs.iter().map(|s| self.intern(s)).collect());
             anon.push(d.anon.iter().map(|s| self.intern(s)).collect());
             receiver.push(d.receiver.iter().map(|s| self.intern(s)).collect());
@@ -336,6 +348,7 @@ impl Interner {
                 refs,
                 anon,
                 receiver,
+                qualified,
                 in_code,
                 koin,
                 builds,
@@ -500,6 +513,51 @@ fn user_type_path(ut: Node) -> Vec<String> {
     }
     segs.reverse();
     segs
+}
+
+/// The dotted chain starting at `node`, when it may be a fully qualified name: a type
+/// (`a.b.C`, outermost user type only) or the innermost `a.b` of an expression, read on through
+/// selectors up to the first call (`a.b.C(1).f()` -> [a, b, C]). The lead is lowercase, as a
+/// package is; `Outer.Inner` already resolves through `Outer`.
+fn qualified_chain(node: Node) -> Option<Vec<String>> {
+    let segs = match node.kind() {
+        K::USER_TYPE if node.parent().map(|p| p.kind()) != Some(K::USER_TYPE) => {
+            user_type_path(node)
+        }
+        K::DOT_QUALIFIED_EXPRESSION => {
+            let first = node.child_nodes().next()?;
+            if first.kind() != K::REFERENCE_EXPRESSION {
+                return None;
+            }
+            let mut segs = vec![ident(first)];
+            let mut cur = node;
+            loop {
+                let sel = cur.child_nodes().nth(1)?;
+                match sel.kind() {
+                    K::REFERENCE_EXPRESSION => segs.push(ident(sel)),
+                    K::CALL_EXPRESSION => {
+                        if let Some(c) = callee_name(sel) {
+                            segs.push(c.trim_matches('`').to_string());
+                        }
+                        break;
+                    }
+                    _ => break,
+                }
+                match cur.parent() {
+                    Some(p)
+                        if p.kind() == K::DOT_QUALIFIED_EXPRESSION
+                            && p.child_nodes().next() == Some(cur) =>
+                    {
+                        cur = p
+                    }
+                    _ => break,
+                }
+            }
+            segs
+        }
+        _ => return None,
+    };
+    (segs.len() >= 2 && segs[0].starts_with(|c: char| c.is_ascii_lowercase())).then_some(segs)
 }
 
 /// `fun Outer.Inner<T>?.f()` -> [Outer, Inner].
@@ -745,6 +803,12 @@ pub fn parse_file(text: &str, _test_source: bool) -> RawFile {
                 }
                 if is_registration_call(node) {
                     registration_depth.push(node.range());
+                }
+                if let Some(f) = frames.last()
+                    && let Some(chain) = qualified_chain(node)
+                    && !fp.decls[f.decl].qualified.contains(&chain)
+                {
+                    fp.decls[f.decl].qualified.push(chain);
                 }
                 if !registration_depth.is_empty() && is_registered_type(node) {
                     walk.skip_subtree();
@@ -1022,6 +1086,25 @@ mod tests {
 
     fn refs_of<'a>(raw: &'a RawFile, name: &str) -> &'a Vec<String> {
         &raw.decls.iter().find(|d| d.name == name).unwrap().refs
+    }
+
+    #[test]
+    fn fully_qualified_chains_are_read_to_the_first_call() {
+        let src = "fun f(m: demo.model.Money): Int {\n  demo.model.Money(1).format().length\n  this.x.y\n  Outer.Inner.z\n  return user.name.size\n}\n";
+        let raw = parse_file(src, false);
+        let q = &raw.decls[0].qualified;
+        let has = |c: &[&str]| q.iter().any(|x| x == c);
+        assert!(has(&["demo", "model", "Money"]), "{q:?}");
+        assert!(has(&["user", "name", "size"]), "{q:?}");
+        assert!(
+            !q.iter().any(|x| x[0] == "this" || x[0] == "Outer"),
+            "{q:?}"
+        );
+        assert_eq!(
+            2,
+            q.len(),
+            "the parameter type and the call share a chain: {q:?}"
+        );
     }
 
     #[test]

@@ -508,6 +508,8 @@ pub struct DiGraphs {
     of_test: std::cell::OnceCell<FxHashMap<u32, FxHashSet<u32>>>,
     /// implementation root -> test roots that name it outside a graph (lazily)
     direct: std::cell::RefCell<FxHashMap<u32, FxHashSet<u32>>>,
+    /// implementation root -> roots that can hold it, at any depth (lazily)
+    holders: std::cell::RefCell<FxHashMap<u32, FxHashSet<u32>>>,
 }
 
 /// Root-level hops a test is searched for from a graph or an implementation.
@@ -647,6 +649,43 @@ impl DiGraphs {
                 .or_insert_with(|| DiGraphs::referrers(v, i, &self.graphs));
             !named.contains(&t)
         })
+    }
+
+    /// Can test `t` never run edited implementation `i`? Only when every graph it reaches excludes
+    /// `i` and nothing it reaches, at any depth, names `i` or a graph that binds it. The depth
+    /// matters here: the test reaches `i` through its interface either way, so only its graphs
+    /// and the code that names `i` decide.
+    pub fn never_holds(&self, v: &View, t: u32, i: u32) -> bool {
+        if !self.excludable(i) || !self.blocked(v, t, &[i].into_iter().collect()) {
+            return false;
+        }
+        let mut holders = self.holders.borrow_mut();
+        let can = holders.entry(i).or_insert_with(|| {
+            let excluding: FxHashSet<u32> = self
+                .excludes
+                .iter()
+                .filter(|(_, e)| e.contains(&i))
+                .map(|(&g, _)| g)
+                .collect();
+            let mut seen: FxHashSet<u32> = [i].into_iter().collect();
+            seen.extend(self.graphs.iter().filter(|g| !excluding.contains(g)));
+            let mut stack: Vec<u32> = seen.iter().copied().collect();
+            while let Some(r) = stack.pop() {
+                for m in r..v.n as u32 {
+                    if m != r && v.root[m as usize] != r {
+                        break;
+                    }
+                    for &x in v.refby(m) {
+                        let xr = v.root[x as usize];
+                        if !excluding.contains(&xr) && seen.insert(xr) {
+                            stack.push(xr);
+                        }
+                    }
+                }
+            }
+            seen
+        });
+        !can.contains(&t)
     }
 }
 
@@ -944,10 +983,28 @@ pub fn symbol_closure(
     };
     let routed = |n: &u32| routes.routes.contains_key(&root[*n as usize]);
     let mut walked = walk_from(&mut origins.iter().copied().filter(|n| routed(n)), true);
-    walked.extend(walk_from(
-        &mut origins.iter().copied().filter(|n| !routed(n)),
-        false,
-    ));
+    let unrouted = walk_from(&mut origins.iter().copied().filter(|n| !routed(n)), false);
+    // Members only a routed handler's supertype walk reaches that implement a dispatch base's
+    // member (a template method's `handle`): code calling them dispatches through the base, by
+    // event, which the route already answers. Reached virtually only, they hand nothing on.
+    let dispatch_entry: FxHashSet<u32> = walked
+        .iter()
+        .copied()
+        .filter(|&n| {
+            let p = parent[n as usize];
+            p >= 0
+                && !unrouted.contains(&n)
+                && !routes.routes.contains_key(&root[n as usize])
+                && v.supertypes(p as u32).iter().any(|&t| {
+                    let tp = parent[t as usize];
+                    tp >= 0
+                        && tp != p
+                        && v.name[t as usize] == v.name[n as usize]
+                        && routes.bases.contains(&root[t as usize])
+                })
+        })
+        .collect();
+    walked.extend(unrouted);
     let mut virtual_: FxHashSet<u32> = walked.difference(&origins).copied().collect();
     // What only the walk from a seed's containers added: gated by `routes.gate` (see container_gate).
     let mut container_only: FxHashSet<u32> = FxHashSet::default();
@@ -1018,6 +1075,13 @@ pub fn symbol_closure(
                     virtual_.insert(e);
                 }
             }
+        }
+    }
+    // Routed event -> the handler roots routed by it.
+    let mut handlers_of: FxHashMap<u32, FxHashSet<u32>> = FxHashMap::default();
+    for (&h, es) in &routes.routes {
+        for &e in es {
+            handlers_of.entry(e).or_default().insert(h);
         }
     }
     let mut dispatched: FxHashSet<u32> = FxHashSet::default();
@@ -1179,6 +1243,17 @@ pub fn symbol_closure(
             continue;
         }
         let mut refs: Vec<u32> = v.refby(n).to_vec();
+        // An unchanged event a routed handler reaches is referenced by that handler's own header
+        // (`: Handler<Event>`): that edge carries nothing back into the handler, whose holders the
+        // seed's own walk decides.
+        if sn == 1
+            && let Some(hs) = handlers_of.get(&n)
+        {
+            refs.retain(|r| !hs.contains(r));
+        }
+        if sn == 1 && dispatch_entry.contains(&n) {
+            refs.clear();
+        }
         let routed = v.fam(Family::KoinRouted, n);
         if !routed.is_empty() && !(edited && seeds.contains(&n)) {
             refs.retain(|r| !routed.contains(r));
@@ -1523,8 +1598,25 @@ fn receiver_round(
                 keep.insert(n);
             }
         }
-        // A holder references a container directly (`val a: ServiceA = ServiceA()`).
+        // A holder references a container directly (`val a: ServiceA = ServiceA()`), or a supertype
+        // declaring a changed name, which can hand the container out (`val a: Service`, a DI
+        // graph's own accessor): `a.m()` on it can dispatch to the change.
+        let mut held: Vec<u32> = containers.iter().copied().collect();
         for &c in &containers {
+            for t in v.supertypes(root[c as usize]) {
+                let p = v.parent[t as usize];
+                if p >= 0
+                    && root[p as usize] != root[c as usize]
+                    && flags[t as usize] & N_PRIVATE == 0
+                    && words.contains(&name[t as usize])
+                {
+                    held.push(p as u32);
+                }
+            }
+        }
+        held.sort_unstable();
+        held.dedup();
+        for &c in &held {
             for &n in v.refby(c) {
                 if is_holder(v, n)
                     && !words.contains(&name[n as usize])

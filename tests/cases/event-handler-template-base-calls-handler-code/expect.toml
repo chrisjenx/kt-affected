@@ -1,0 +1,6 @@
+why = "A template base that calls a routed handler's companion directly runs the edit for every handler built on it: tests publishing any of their events run."
+config = """
+[[dispatch]]
+bases = ["EventHandler"]
+"""
+must = ["demo.PlacedTest@:events:test", "demo.CancelledTest@:events:test"]
