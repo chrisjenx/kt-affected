@@ -176,6 +176,7 @@ fn main() {
                             test_tasks: Default::default(),
                             implicit: false,
                             dep_confidence: Default::default(),
+                            test_filters: Default::default(),
                         })
                         .collect(),
                     included_builds: vec![],

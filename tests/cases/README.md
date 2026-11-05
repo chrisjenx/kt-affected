@@ -44,6 +44,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `compose-resources` | A changed composeResources drawable seeds code naming Res.drawable.<stem>; the type directory `drawable` is not a token, so another drawable's user is not selected. |
 | `convention-plugin-change` | A buildSrc convention plugin change is build logic for every module: one smoke class per test task, everywhere, with a reason. |
 | `cosmetic-edits-select-nothing` | Reformatting, comments, KDoc, a local rename, a trailing comma and @Suppress change no behaviour: nothing is selected. |
+| `custom-test-task-filter` | A registered Test task's `filter` is honoured: a class its includeTestsMatching/excludeTestsMatching leaves out never runs there; a filter set in a loop is not read. |
 | `deleted-kotlin-file` | Deleting a Kotlin file seeds what still writes its names: the dependents' tests run, others don't. |
 | `event-handler-dispatch` | A handler routed by its event type argument, through a generic intermediate base, reaches tests that publish its event and not tests publishing another event through the same bus type. |
 | `event-handler-shared-registry` | One registry constructs every handler: a handler body edit still reaches only tests that publish its event. |

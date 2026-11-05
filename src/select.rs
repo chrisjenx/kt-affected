@@ -184,6 +184,15 @@ struct Index {
     /// Classes from source sets that run under this task alone: the task-specific smoke candidates.
     leaf: BTreeMap<(String, String), BTreeSet<String>>,
     unknown: BTreeSet<String>,
+    /// Tasks whose build script filters the classes they run (`filter.includeTestsMatching`).
+    filters: BTreeMap<(String, String), crate::discover::TestFilter>,
+}
+
+impl Index {
+    /// Can test class `fq` run under the task `key`?
+    fn admits(&self, key: &(String, String), fq: &str) -> bool {
+        self.filters.get(key).map(|f| f.admits(fq)).unwrap_or(true)
+    }
 }
 
 fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
@@ -196,7 +205,14 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         full: Default::default(),
         leaf: Default::default(),
         unknown: Default::default(),
+        filters: Default::default(),
     };
+    for p in &build.projects {
+        for (task, f) in &p.test_filters {
+            idx.filters
+                .insert((p.path.clone(), task.clone()), f.clone());
+        }
+    }
     for f in 0..v.p.n_files() as u32 {
         let path = v.p.file_path(f as usize);
         let Some((m, set)) = mods.source_set_of(path) else {
@@ -215,16 +231,21 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         let alone = tasks.len() == 1;
         for t in tasks {
             let key = (m.id.clone(), t);
-            idx.full
-                .entry(key.clone())
-                .or_default()
-                .extend(classes.iter().map(|s| s.to_string()));
+            let run: Vec<String> = classes
+                .iter()
+                .filter(|c| idx.admits(&key, c))
+                .map(|s| s.to_string())
+                .collect();
+            if run.is_empty() && !classes.is_empty() {
+                continue;
+            }
             if alone {
                 idx.leaf
                     .entry(key.clone())
                     .or_default()
-                    .extend(classes.iter().map(|s| s.to_string()));
+                    .extend(run.iter().cloned());
             }
+            idx.full.entry(key.clone()).or_default().extend(run);
             keys.push(key);
         }
         idx.owner.insert(f, keys);
@@ -1148,6 +1169,9 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 continue;
             };
             for key in idx.owner.get(f).into_iter().flatten() {
+                if !idx.admits(key, fq) {
+                    continue;
+                }
                 if let Some(seeds) = &platform
                     && !compiles_any(build, &key.0, &key.1, seeds)
                 {
@@ -1223,7 +1247,9 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                     let _ = r;
                     if pkg == sc.test_package || pkg.starts_with(&pfx) {
                         for key in idx.owner.get(f).into_iter().flatten() {
-                            picked.entry(key.clone()).or_default().insert(fq.clone());
+                            if idx.admits(key, fq) {
+                                picked.entry(key.clone()).or_default().insert(fq.clone());
+                            }
                         }
                     }
                 }
@@ -1595,6 +1621,7 @@ mod tests {
             test_tasks: Default::default(),
             implicit: false,
             dep_confidence: Default::default(),
+            test_filters: Default::default(),
         };
         let build = Build {
             root_name: "r".into(),

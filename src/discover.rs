@@ -30,6 +30,84 @@ pub struct Project {
     /// (static-exact, static-template, assumed). Literal build-script deps are absent (exact).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub dep_confidence: BTreeMap<String, String>,
+    /// Test task -> the class filter its build script sets (`filter.includeTestsMatching(..)`): a
+    /// class it excludes never runs there. Absent when the task has none, or one not read statically.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub test_filters: BTreeMap<String, TestFilter>,
+}
+
+/// A Test task's `filter { }` patterns, as Gradle's `includeTestsMatching` / `excludeTestsMatching`
+/// read them: `*` matches any run of characters, dots included; a pattern starting with an upper-case
+/// letter matches the simple class name.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TestFilter {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub include: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclude: Vec<String>,
+}
+
+impl TestFilter {
+    /// Can some test of class `fq` run under this filter? A pattern naming a method of `fq`
+    /// (`pkg.Cls.method`, `pkg.Cls.*`) admits the class; only a pattern matching the class itself
+    /// excludes it.
+    pub fn admits(&self, fq: &str) -> bool {
+        let simple = fq.rsplit('.').next().unwrap_or(fq);
+        let target = |p: &str| {
+            if p.starts_with(|c: char| c.is_ascii_uppercase()) {
+                vec![fq, simple]
+            } else {
+                vec![fq]
+            }
+        };
+        let included = self.include.is_empty()
+            || self.include.iter().any(|p| {
+                target(p).into_iter().any(|t| {
+                    let (full, prefix) = glob(p, &format!("{t}."));
+                    prefix || full || glob(p, t).0
+                })
+            });
+        included
+            && !self
+                .exclude
+                .iter()
+                .any(|p| target(p).into_iter().any(|t| glob(p, t).0))
+    }
+}
+
+/// Matches `text` against a `*` glob: (the whole pattern matches all of it, some prefix of the
+/// pattern matches all of it so a longer text starting with `text` may match).
+fn glob(pat: &str, text: &str) -> (bool, bool) {
+    let p: Vec<char> = pat.chars().collect();
+    // Pattern positions reachable after consuming the text so far (a `*` may absorb nothing).
+    let close = |set: &mut Vec<bool>| {
+        for i in 0..p.len() {
+            if set[i] && p[i] == '*' {
+                set[i + 1] = true;
+            }
+        }
+    };
+    let mut at = vec![false; p.len() + 1];
+    at[0] = true;
+    close(&mut at);
+    for c in text.chars() {
+        let mut next = vec![false; p.len() + 1];
+        for i in 0..p.len() {
+            if at[i] {
+                if p[i] == '*' {
+                    next[i] = true;
+                } else if p[i] == c {
+                    next[i + 1] = true;
+                }
+            }
+        }
+        close(&mut next);
+        if !next.iter().any(|&b| b) {
+            return (false, false);
+        }
+        at = next;
+    }
+    (at[p.len()], true)
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -1236,6 +1314,7 @@ pub fn discover(root: &Path) -> Build {
         let host_tests_by_plugin;
         let if_config_exists;
         let custom_tests;
+        let test_filters;
         {
             let fx = conv.effects(
                 path,
@@ -1263,6 +1342,7 @@ pub fn discover(root: &Path) -> Build {
             host_tests_by_plugin = fx.android_host_tests;
             if_config_exists = fx.if_config_exists;
             custom_tests = fx.custom_tests;
+            test_filters = fx.test_filters;
             for w in fx.warnings {
                 conv_warnings.entry(w).or_default().push(path.clone());
             }
@@ -1462,6 +1542,7 @@ pub fn discover(root: &Path) -> Build {
             test_tasks,
             implicit: *implicit,
             dep_confidence,
+            test_filters,
         });
     }
     for (w, ps) in conv_warnings {
@@ -1528,6 +1609,7 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
             test_tasks: tasks,
             implicit: false,
             dep_confidence: BTreeMap::new(),
+            test_filters: Default::default(),
         });
     }
     projects.sort_by(|a, b| a.path.cmp(&b.path));
@@ -1655,6 +1737,54 @@ pub fn compare(stat: &Build, other: &Build, compare_tasks: bool) -> Comparison {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn test_filter_admits_classes_the_patterns_can_run() {
+        let f = TestFilter {
+            include: vec![
+                "demo.screens.*".into(),
+                "demo.one.Cls.method".into(),
+                "demo.other.*UiCheck".into(),
+            ],
+            exclude: vec!["demo.screens.Slow".into(), "demo.screens.Fast.flaky".into()],
+        };
+        assert!(f.admits("demo.screens.HomeTest"));
+        assert!(f.admits("demo.screens.deep.HomeTest"));
+        assert!(
+            f.admits("demo.one.Cls"),
+            "a method pattern admits its class"
+        );
+        assert!(f.admits("demo.other.LoginUiCheck"));
+        assert!(!f.admits("demo.logic.HomeTest"));
+        assert!(!f.admits("demo.one.Other"));
+        assert!(
+            !f.admits("demo.screens.Slow"),
+            "an exclude matching the class removes it"
+        );
+        assert!(
+            f.admits("demo.screens.Fast"),
+            "excluding one method leaves the class"
+        );
+        let simple = TestFilter {
+            include: vec!["Home*".into()],
+            exclude: vec![],
+        };
+        assert!(
+            simple.admits("demo.screens.HomeTest"),
+            "upper-case patterns match the simple name"
+        );
+        assert!(!simple.admits("demo.screens.AwayTest"));
+        assert!(TestFilter::default().admits("anything.AtAll"));
+        let star = TestFilter {
+            include: vec!["*UiCheck".into()],
+            exclude: vec![],
+        };
+        assert!(
+            star.admits("demo.HomeTest"),
+            "a method named `..UiCheck` may run"
+        );
+    }
+
     use super::*;
 
     fn tmp(name: &str) -> PathBuf {
