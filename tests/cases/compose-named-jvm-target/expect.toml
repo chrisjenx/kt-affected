@@ -2,4 +2,3 @@ why = "A JVM target renamed with jvm(\"desktop\") runs desktopMain/desktopTest u
 must = ["demo.WindowTest@:shared:desktopTest"]
 never = ["demo.LabelTest"]
 never_tasks = [":shared:wasmJsBrowserTest"]
-known_gap = "a named JVM target (jvm(\"desktop\")) is not recognised: desktopTest is mapped to jvmTest, and as an unknown source set also runs under wasmJsBrowserTest"

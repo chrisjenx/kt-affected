@@ -40,7 +40,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `classpath-bound` | An impl reached through its interface runs only in tests whose classpath holds its module: :api-only sees the interface but not :impl. |
 | `compose-common-edit` | A commonMain composable edit runs its commonTest class under every target's test task, and reaches app modules through the composable's callers. |
 | `compose-jvm-only-edit` | A jvmMain-only edit runs only JVM tasks: no other target compiles jvmMain. |
-| `compose-named-jvm-target` | A JVM target renamed with jvm("desktop") runs desktopMain/desktopTest under desktopTest, never a wasm task. *Known gap: see its `expect.toml`.* |
+| `compose-named-jvm-target` | A JVM target renamed with jvm("desktop") runs desktopMain/desktopTest under desktopTest, never a wasm task. |
 | `compose-resources` | A changed composeResources drawable seeds code naming Res.drawable.<stem>; the type directory `drawable` is not a token, so another drawable's user is not selected. |
 | `convention-plugin-change` | A buildSrc convention plugin change is build logic for every module: one smoke class per test task, everywhere, with a reason. |
 | `cosmetic-edits-select-nothing` | Reformatting, comments, KDoc, a local rename, a trailing comma and @Suppress change no behaviour: nothing is selected. |
