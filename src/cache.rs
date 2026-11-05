@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 const MAGIC: &[u8; 8] = b"KTAFGRF1";
-const FORMAT: u32 = 5;
+const FORMAT: u32 = 6;
 pub const SKIP_DIRS: &[&str] = &[
     "build",
     ".git",
@@ -299,6 +299,7 @@ fn encode_refs(r: &FileRefs, out: &mut Vec<u32>) {
     encode_rows(&r.refs, out);
     encode_rows(&r.anon, out);
     encode_rows(&r.receiver, out);
+    encode_rows(&r.qualified, out);
     out.push(r.in_code.len() as u32);
     out.extend(&r.in_code);
     out.push(r.koin.len() as u32);
@@ -366,6 +367,7 @@ fn decode_refs(w: &[u32]) -> FileRefs {
     let refs = rows();
     let anon = rows();
     let receiver = rows();
+    let qualified = rows();
     let n = next() as usize;
     let in_code = (0..n).map(|_| next()).collect();
     let vec_of = |next: &mut dyn FnMut() -> u32| -> Vec<u32> {
@@ -422,6 +424,7 @@ fn decode_refs(w: &[u32]) -> FileRefs {
         refs,
         anon,
         receiver,
+        qualified,
         in_code,
         koin,
         builds,
@@ -993,7 +996,9 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
 
     // ---- link
     let graph = {
-        let linker = Linker::new(&sym, &modules.vis, &all_refs, |s| interner.get(s));
+        let linker = Linker::new(&sym, &modules.vis, &all_refs, &interner.strs, |s| {
+            interner.get(s)
+        });
         if prof {
             eprintln!("  linker new: {}ms", t2.elapsed().as_millis());
         }
@@ -1360,7 +1365,7 @@ fn delta(
         }
     }
     lap("symbols", t2);
-    let linker = Linker::new(&sym, &modules.vis, &[], |s| interner.get(s));
+    let linker = Linker::new(&sym, &modules.vis, &[], &interner.strs, |s| interner.get(s));
     lap("linker", t2);
     let mut outs: Vec<(usize, crate::graph::FileOut)> = Vec::with_capacity(fresh.len());
     for (&i, (fp, before)) in &fresh {

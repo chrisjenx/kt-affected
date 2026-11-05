@@ -274,6 +274,8 @@ pub struct Linker<'a> {
     pkg_index: FxHashMap<(u32, u32), Vec<u32>>,
     /// package -> reachable top-level declarations
     pkg_roots: FxHashMap<u32, Vec<u32>>,
+    /// a package's segments -> the package, for fully qualified names written in code
+    pkg_by_segs: FxHashMap<Vec<u32>, u32>,
     /// node -> (name, node) of itself and its reachable descendants, sorted by name
     under: Csr,
     /// node -> number of distinct names under it
@@ -339,6 +341,7 @@ impl<'a> Linker<'a> {
         sym: &'a Symbols,
         vis: &'a Visibility,
         refs: &'a [FileRefs],
+        strs: &[Box<str>],
         interned: impl Fn(&str) -> Option<u32>,
     ) -> Self {
         let n = sym.nodes();
@@ -380,6 +383,14 @@ impl<'a> Linker<'a> {
                 pkg_roots.entry(pkg).or_default().push(i as u32);
             }
         }
+        let pkg_by_segs: FxHashMap<Vec<u32>, u32> = pkg_roots
+            .keys()
+            .filter_map(|&pkg| {
+                let text = strs.get(pkg as usize)?;
+                let segs: Option<Vec<u32>> = text.split('.').map(&interned).collect();
+                Some((segs?, pkg))
+            })
+            .collect();
         // names_under for every node: itself plus reachable descendants.
         let rows: Vec<Vec<u32>> = (0..n)
             .into_par_iter()
@@ -427,6 +438,7 @@ impl<'a> Linker<'a> {
             root,
             pkg_index,
             pkg_roots,
+            pkg_by_segs,
             under,
             under_names,
             operator_ids,
@@ -491,6 +503,33 @@ impl<'a> Linker<'a> {
                     .collect();
                 if next.is_empty() {
                     return cur; // member of a member we cannot see: widen here
+                }
+                cur = next;
+            }
+            return cur;
+        }
+        Vec::new()
+    }
+
+    /// A fully qualified chain (`[demo, model, Money]`): the declarations its longest package
+    /// prefix and the names after it select.
+    fn resolve_qualified(&self, chain: &[u32]) -> Vec<u32> {
+        for split in (1..chain.len()).rev() {
+            let Some(&pkg) = self.pkg_by_segs.get(&chain[..split]) else {
+                continue;
+            };
+            let Some(hit) = self.pkg_index.get(&(pkg, chain[split])) else {
+                continue;
+            };
+            let mut cur: Vec<u32> = hit.clone();
+            for &seg in &chain[split + 1..] {
+                let next: Vec<u32> = cur
+                    .iter()
+                    .flat_map(|&n| self.kids(n).iter().copied())
+                    .filter(|&k| self.sym.name[k as usize] == seg)
+                    .collect();
+                if next.is_empty() {
+                    break;
                 }
                 cur = next;
             }
@@ -589,7 +628,24 @@ impl<'a> Linker<'a> {
             refs.koin.iter().map(|m| (m.decl, m)).collect();
         for n in range.clone() {
             let i = (n - base) as usize;
-            let (near, far) = scope.resolve_split(tokens(n), &enclosing[i]);
+            let (mut near, mut far) = scope.resolve_split(tokens(n), &enclosing[i]);
+            if let Some(q) = refs.qualified.get(i).filter(|q| !q.is_empty()) {
+                let mut hits: Vec<u32> = Vec::new();
+                for chain in q.split(|&x| x == NONE).filter(|c| c.len() >= 2) {
+                    for t in self.resolve_qualified(chain) {
+                        hits.push(t);
+                        if self.under_names[t as usize] > 1 {
+                            for &name in tokens(n) {
+                                hits.extend(self.under_named(t, name));
+                            }
+                        }
+                    }
+                }
+                if !hits.is_empty() {
+                    near.extend(scope.keep(hits));
+                    far.retain(|x| !near.contains(x));
+                }
+            }
             for &t in &near {
                 add(&mut bits, n, t, E_STRONG);
             }
