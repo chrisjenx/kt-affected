@@ -17,6 +17,19 @@ Selection changes from the edge-case corpus (every former known gap now passes):
   through a template-method base and a shared handler registry.
 - The graph cache format is bumped (6): the first run after upgrading rebuilds cold.
 
+Selection changes from a full-history validation on a production app:
+
+- More selected: build logic that sets a Test task's JVM, framework or forking (`jvmArgs`,
+  heap, `systemProperty`, forks, toolchain, test framework) runs every class of the tasks it
+  configures, and a version-catalog bump of a compiler plugin or code generator (new
+  `[selector] codegen_plugins`) runs every task whole; calls on receivers the linker cannot
+  type are followed hop after hop, not only from the edited class.
+- Less selected: an `init {}` block or constructor is never linked as an override of a
+  supertype's; a registered Test task's `filter { includeTestsMatching(..) }` is honoured
+  (discovery records it as `test_filters`); a new or changed abstract accessor on a DI graph
+  reaches only code reading it.
+- Corpus expectations gain `smoke_tasks`: groups that must run some classes but not whole.
+
 ## [0.1.0]
 
 First public release.
