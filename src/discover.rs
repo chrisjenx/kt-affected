@@ -1470,32 +1470,48 @@ pub fn discover(root: &Path) -> Build {
     let mut projects = Vec::new();
     // Warning from a shared plugin -> the projects it applies to.
     let mut conv_warnings: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for (path, (dir, implicit)) in &paths {
-        if !dir.is_empty() && !root.join(dir).is_dir() {
-            warnings.push(format!("{path}: directory {dir} missing"));
-            continue;
-        }
+    // Each project's script and convention plugins are read independently: in parallel.
+    let read_project = |path: &str, dir: &str| {
         let build_file = script_in(root, dir, "build");
         let text = build_file
             .as_deref()
             .and_then(|f| read(root, f))
             .unwrap_or_default();
+        let facts = parse_script(&text, &accessors, path);
+        let fx = conv.effects(
+            path,
+            &facts.plugins,
+            &tokenize(&text),
+            build_file.as_deref().unwrap_or(""),
+        );
+        (build_file, text, facts, fx)
+    };
+    let mut read_projects: Vec<_> = {
+        use rayon::prelude::*;
+        paths
+            .par_iter()
+            .map(|(path, (dir, _))| {
+                (dir.is_empty() || root.join(dir).is_dir()).then(|| read_project(path, dir))
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect()
+    };
+    for (path, (dir, implicit)) in &paths {
+        let Some((build_file, text, mut facts, fx)) = read_projects.pop().flatten() else {
+            warnings.push(format!("{path}: directory {dir} missing"));
+            continue;
+        };
         if let Some(b) = &build_file {
             inputs.push(b.clone());
         }
-        let mut facts = parse_script(&text, &accessors, path);
         let mut dep_confidence = BTreeMap::new();
         let host_tests_by_plugin;
         let if_config_exists;
         let custom_tests;
         let test_filters;
         {
-            let fx = conv.effects(
-                path,
-                &facts.plugins,
-                &tokenize(&text),
-                build_file.as_deref().unwrap_or(""),
-            );
             for ((c, t), conf) in fx.deps {
                 if c == "?" {
                     warnings.push(format!(
