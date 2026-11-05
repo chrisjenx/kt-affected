@@ -138,6 +138,10 @@ pub struct Selector {
     /// Gradle plugin ids and Maven groups (prefixes) of compiler plugins and code generators: a
     /// version-catalog change to one changes the code every module compiles, so it runs every class.
     pub codegen_plugins: Vec<String>,
+    /// Packages of source-scanning test libraries (Konsist): a test file importing one reads the
+    /// project's source text, so any changed `.kt` or `.kts` file, cosmetic edits included, selects
+    /// its classes.
+    pub source_scanner_imports: Vec<String>,
 }
 
 impl Default for Selector {
@@ -172,6 +176,7 @@ impl Default for Selector {
             ]
             .map(String::from)
             .to_vec(),
+            source_scanner_imports: vec!["com.lemonappdev.konsist".into()],
         }
     }
 }

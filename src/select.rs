@@ -1285,6 +1285,25 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 }
             }
         }
+        let scanners = &cfg.selector.source_scanner_imports;
+        if !scanners.is_empty()
+            && changed
+                .iter()
+                .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
+        {
+            for (file, classes) in scanning_tests(&v, scanners, &build_logic, &read) {
+                reasons.push(format!(
+                    "{file}: scans source files — runs on any Kotlin source change"
+                ));
+                for (f, fq) in classes {
+                    for key in idx.owner.get(&f).into_iter().flatten() {
+                        if idx.admits(key, &fq) {
+                            picked.entry(key.clone()).or_default().insert(fq.clone());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     let mut keys: BTreeSet<(String, String)> = picked.keys().cloned().collect();
@@ -1362,6 +1381,55 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         groups: kept,
         explain: explain.map(|e| *e),
     })
+}
+
+/// Test files importing a source-scanning library (`source_scanner_imports`), with their classes.
+/// Only read when some build script or catalog names the library's group, so a build without it
+/// pays nothing.
+fn scanning_tests<'a>(
+    v: &View,
+    scanners: &[String],
+    build_logic: &dyn Fn() -> &'a [String],
+    read: &dyn Fn(&str) -> Option<String>,
+) -> Vec<(String, Vec<(u32, String)>)> {
+    let groups: Vec<&str> = scanners
+        .iter()
+        .map(|s| s.rsplit_once('.').map(|(g, _)| g).unwrap_or(s))
+        .collect();
+    let catalog = read("gradle/libs.versions.toml").unwrap_or_default();
+    if !build_logic()
+        .iter()
+        .chain([&catalog])
+        .any(|t| groups.iter().any(|g| t.contains(g)))
+    {
+        return Vec::new();
+    }
+    let mut by_file: BTreeMap<u32, Vec<String>> = BTreeMap::new();
+    for (f, fq) in v.test_class.values() {
+        by_file.entry(*f).or_default().push(fq.clone());
+    }
+    let mut out = Vec::new();
+    for (f, mut classes) in by_file {
+        let path = v.p.file_path(f as usize);
+        let Some(text) = read(path) else { continue };
+        let imports = text.lines().any(|l| {
+            l.trim_start().strip_prefix("import ").is_some_and(|rest| {
+                let rest = rest.trim_start();
+                scanners.iter().any(|s| {
+                    rest.strip_prefix(s.as_str())
+                        .is_some_and(|r| r.is_empty() || r.starts_with(['.', ' ', ';']))
+                })
+            })
+        });
+        if imports {
+            classes.sort();
+            out.push((
+                path.to_string(),
+                classes.into_iter().map(|c| (f, c)).collect(),
+            ));
+        }
+    }
+    out
 }
 
 /// What `[tasks] only` left out, for modules the plan touches: a source set none of whose tasks it

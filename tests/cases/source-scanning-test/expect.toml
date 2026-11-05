@@ -1,3 +1,2 @@
 why = "A source-scanning test (Konsist, which reads every source file of the project) observes any change in any module, through no declaration it names: a new class elsewhere can break its rule. Seen on a public app's CI, where such rules failed on new code in PRs that touched no module the test depends on."
 must = ["demo.konsist.ArchitectureTest@:konsist:test"]
-known_gap = "a test reaching source files through a scanner, not declarations, is not selected; the fix is to treat tests importing a configured scanner package (com.lemonappdev.konsist by default) as observing every source file, cosmetic changes included (license-header rules)"

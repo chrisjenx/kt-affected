@@ -1,0 +1,2 @@
+why = "A source-scanning test checks text no declaration carries (a license header, a comment rule), so a comment-only edit, which seeds nothing through the graph, still selects it."
+must = ["demo.konsist.ArchitectureTest@:konsist:test"]
