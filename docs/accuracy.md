@@ -1,10 +1,10 @@
 # Accuracy
 
-![kt-affected vs the Python selector over 586 pull requests: real CI failures run, 99 of 103 vs 58 of 103; test time, 15.1% vs 12.4% of running everything](img/accuracy-vs-python.svg)
+![kt-affected vs the Python selector over 586 pull requests: real CI failures run, 99 of 103 vs 58 of 103; test time, 14.4% vs 12.4% of running everything](img/accuracy-vs-python.svg)
 
 **kt-affected would have run 99 of the 103 real test failures that a production app's last 586 pull
 requests caused in CI. The selector it replaced would have run 58.** It costs a little more test
-time to get there: 15.1% of running every test, against 12.4%.
+time to get there: 14.4% of running every test, against 12.4%.
 
 ## Scorecard
 
@@ -16,11 +16,11 @@ same declaration level) and against what actually failed in CI.
 |---|---:|---:|
 | Real CI failures it would have run (out of 103 the diffs caused) | 58 (56%) | **99 (96%)** |
 | Real CI failures missed | 45 | **4** |
-| Test time, share of running every test | **12.4%** | 15.1% |
-| Median test time per pull request | **9.3 min** | 10.7 min |
-| Total test time over the 586 PRs (running everything: 1,541 h) | **191 h** | 233 h |
+| Test time, share of running every test | **12.4%** | 14.4% |
+| Median test time per pull request | **9.3 min** | 10.2 min |
+| Total test time over the 586 PRs (running everything: 1,541 h) | **191 h** | 222 h |
 
-So for about 4 extra minutes of test time per pull request (summed across tasks, not wall clock),
+So for about 3 extra minutes of test time per pull request (summed across tasks, not wall clock),
 kt-affected misses 4 real failures where the previous selector missed 45.
 
 ## Where the difference comes from
@@ -63,7 +63,10 @@ That is strong evidence, not proof: only a sample of the skipped tests was execu
 | Previous selector | 58 / 103 | 12.4% |
 | kt-affected 0.1.0 | 91 / 103 | 13.8% |
 | + test-filter, `init`-block and DI-graph fixes | 91 / 103 | 13.4% |
-| + build-logic and untyped-receiver recall fixes (current) | 99 / 103 | 15.1% |
+| + build-logic and untyped-receiver recall fixes | 99 / 103 | 15.1% |
+| 0.3.1, the app's final config (current) | 99 / 103 | 14.4% |
+
+The last row's saving is configuration, not selection: the earlier runs still listed the old selector's own scripts as "selector changed" triggers, so 11 pull requests that edited them ran everything.
 
 Two failures first counted as diff-caused were hand-checked as flakes and excluded from every row. Every case behind these fixes is pinned in the public edge-case corpus (`tests/cases/`).
 
