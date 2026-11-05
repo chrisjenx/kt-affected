@@ -48,7 +48,9 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `event-handler-dispatch` | A handler routed by its event type argument, through a generic intermediate base, reaches tests that publish its event and not tests publishing another event through the same bus type. |
 | `event-handler-shared-registry` | One registry constructs every handler: a handler body edit still reaches only tests that publish its event. |
 | `event-handler-shared-registry-construction` | A routed handler's init block runs wherever the shared registry builds it: every bus user's test runs, whatever event it publishes. |
-| `event-handler-template-method` | A handler whose generic base is a template method (`handle` calls the abstract `onEvent`) is still routed by its event type: an `onEvent` edit reaches only tests that publish that event. *Known gap: see its `expect.toml`.* |
+| `event-handler-template-base-calls-handler-code` | A template base that calls a routed handler's companion directly runs the edit for every handler built on it: tests publishing any of their events run. |
+| `event-handler-template-method` | A handler whose generic base is a template method (`handle` calls the abstract `onEvent`) is still routed by its event type: an `onEvent` edit reaches only tests that publish that event. |
+| `event-handler-template-method-direct-holder` | A test calling the inherited `handle` on the handler itself, with its event built by a helper elsewhere, still runs an `onEvent` edit; a test publishing another event does not. |
 | `expect-actual-actual-edit` | Editing the jvmMain actual reaches a commonTest caller only under jvmTest: the iOS and wasm binaries link their own actuals. |
 | `expect-actual-expect-edit` | Editing the expect declaration (and its actuals) reaches commonTest callers under every target's task. |
 | `file-move` | A file moved to a new path (content unchanged) still selects the tests of the declarations it held. |

@@ -983,10 +983,28 @@ pub fn symbol_closure(
     };
     let routed = |n: &u32| routes.routes.contains_key(&root[*n as usize]);
     let mut walked = walk_from(&mut origins.iter().copied().filter(|n| routed(n)), true);
-    walked.extend(walk_from(
-        &mut origins.iter().copied().filter(|n| !routed(n)),
-        false,
-    ));
+    let unrouted = walk_from(&mut origins.iter().copied().filter(|n| !routed(n)), false);
+    // Members only a routed handler's supertype walk reaches that implement a dispatch base's
+    // member (a template method's `handle`): code calling them dispatches through the base, by
+    // event, which the route already answers. Reached virtually only, they hand nothing on.
+    let dispatch_entry: FxHashSet<u32> = walked
+        .iter()
+        .copied()
+        .filter(|&n| {
+            let p = parent[n as usize];
+            p >= 0
+                && !unrouted.contains(&n)
+                && !routes.routes.contains_key(&root[n as usize])
+                && v.supertypes(p as u32).iter().any(|&t| {
+                    let tp = parent[t as usize];
+                    tp >= 0
+                        && tp != p
+                        && v.name[t as usize] == v.name[n as usize]
+                        && routes.bases.contains(&root[t as usize])
+                })
+        })
+        .collect();
+    walked.extend(unrouted);
     let mut virtual_: FxHashSet<u32> = walked.difference(&origins).copied().collect();
     // What only the walk from a seed's containers added: gated by `routes.gate` (see container_gate).
     let mut container_only: FxHashSet<u32> = FxHashSet::default();
@@ -1232,6 +1250,9 @@ pub fn symbol_closure(
             && let Some(hs) = handlers_of.get(&n)
         {
             refs.retain(|r| !hs.contains(r));
+        }
+        if sn == 1 && dispatch_entry.contains(&n) {
+            refs.clear();
         }
         let routed = v.fam(Family::KoinRouted, n);
         if !routed.is_empty() && !(edited && seeds.contains(&n)) {

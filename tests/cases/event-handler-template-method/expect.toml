@@ -5,4 +5,3 @@ bases = ["EventHandler"]
 """
 must = ["demo.PlacedTest@:events:test"]
 never = ["demo.CancelledTest"]
-known_gap = "the edit walks up to the base's template method AuditedHandler.handle and on to every EventBus.publish caller, unrouted: CancelledTest is selected"
