@@ -1,0 +1,7 @@
+why = "An edit only an excluded target compiles (iosMain, with `[tasks] only` keeping jvmTest) selects nothing and says so; it does not fail the module open."
+config = '''
+[tasks]
+only = ["jvmTest"]
+'''
+none = true
+reasons = [":core: iosTest not run (excluded by [tasks] only)"]

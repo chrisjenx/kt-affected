@@ -6,6 +6,14 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.2.1]
+
+- `[tasks] only` no longer fails a module open when it removes every task of one of its test
+  source sets (`iosTest` or `jsTest` with only `jvmTest` kept). Such a source set is dropped with a
+  reason, and neither the module nor its dependents run whole; no `*` group is emitted. A source set
+  mapped to no task at all still fails open as before.
+- Tasks `[tasks] only` removes are listed in `reasons` for the modules a plan touches.
+
 ## [0.2.0]
 
 On a replay of 586 pull requests of a production app, this release would have run 99 of the 103
@@ -51,6 +59,7 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/chrisjenx/kt-affected/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/chrisjenx/kt-affected/releases/tag/v0.1.0
