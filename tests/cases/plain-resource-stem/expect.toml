@@ -1,0 +1,3 @@
+why = "A plain resource seeds code writing its file name; its bare stem as an identifier (`index`) is not a read of the file."
+must = ["demo.StaticPageTest@:server:test"]
+never = ["demo.SearchIndexTest"]

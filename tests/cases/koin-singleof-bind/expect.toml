@@ -1,0 +1,3 @@
+why = "Koin `singleOf(::Impl) { bind<Iface>() }`: an impl member edit reaches tests holding the interface by inject()."
+must = ["demo.HorseTest@:app:test"]
+never = ["demo.UserTest", "demo.UserCountTest", "demo.ClockTest", "demo.PlainTest"]

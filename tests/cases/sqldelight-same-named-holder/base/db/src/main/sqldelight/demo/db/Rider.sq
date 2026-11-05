@@ -1,0 +1,7 @@
+CREATE TABLE rider (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+ridersByName:
+SELECT * FROM rider WHERE name = ?;

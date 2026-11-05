@@ -1,0 +1,3 @@
+why = "Deleting a Kotlin file seeds what still writes its names: the dependents' tests run, others don't."
+must = ["demo.CheckoutTest@:app:test"]
+never = ["demo.ReceiptTest"]

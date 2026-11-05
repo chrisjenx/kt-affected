@@ -1,0 +1,3 @@
+why = "Editing a test selects that test class and no other test of the same code."
+must = ["demo.AddTest@:app:test"]
+never = ["demo.OtherAddTest"]

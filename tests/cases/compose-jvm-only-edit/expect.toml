@@ -1,0 +1,7 @@
+why = "A jvmMain-only edit runs only JVM tasks: no other target compiles jvmMain."
+must = [
+    "demo.ui.DesktopWindowTest@:shared:jvmTest",
+    "demo.desktop.TitleTest@:desktopApp:test",
+]
+never = ["demo.ui.GreetingTest", "demo.ui.CounterTest", "demo.desktop.ContentTest", "demo.android.MainActivityTest"]
+never_tasks = [":shared:wasmJsBrowserTest", ":shared:iosSimulatorArm64Test", ":shared:testDebugUnitTest", ":androidApp:testDebugUnitTest"]

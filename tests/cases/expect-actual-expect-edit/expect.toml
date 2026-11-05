@@ -1,0 +1,7 @@
+why = "Editing the expect declaration (and its actuals) reaches commonTest callers under every target's task."
+must = [
+    "demo.DescribeTest@:core:jvmTest",
+    "demo.DescribeTest@:core:iosSimulatorArm64Test",
+    "demo.DescribeTest@:core:wasmJsBrowserTest",
+]
+never = ["demo.VersionTest"]

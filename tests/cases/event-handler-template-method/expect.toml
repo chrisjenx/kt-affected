@@ -1,0 +1,8 @@
+why = "A handler whose generic base is a template method (`handle` calls the abstract `onEvent`) is still routed by its event type: an `onEvent` edit reaches only tests that publish that event."
+config = """
+[[dispatch]]
+bases = ["EventHandler"]
+"""
+must = ["demo.PlacedTest@:events:test"]
+never = ["demo.CancelledTest"]
+known_gap = "the edit walks up to the base's template method AuditedHandler.handle and on to every EventBus.publish caller, unrouted: CancelledTest is selected"

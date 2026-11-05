@@ -1,0 +1,4 @@
+why = "A test graph that `excludes` the edited impl and binds a fake can never run the edit: its test is not selected, the production graph's is."
+must = ["demo.PriceTest@:app:test"]
+never = ["demo.CurrencyTest", "demo.FakePriceTest"]
+known_gap = "exclusion is applied on DI-dispatch rounds only; an edit to the excluded impl itself walks its supertype to HasPricing.pricing and every graph, so FakePriceTest is selected"

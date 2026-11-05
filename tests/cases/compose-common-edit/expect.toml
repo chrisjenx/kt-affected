@@ -1,0 +1,14 @@
+why = "A commonMain composable edit runs its commonTest class under every target's test task, and reaches app modules through the composable's callers."
+must = [
+    "demo.ui.GreetingTest@:shared:jvmTest",
+    "demo.ui.GreetingTest@:shared:wasmJsBrowserTest",
+    "demo.ui.GreetingTest@:shared:iosSimulatorArm64Test",
+    "demo.ui.GreetingTest@:shared:testDebugUnitTest",
+    "demo.desktop.ContentTest@:desktopApp:test",
+]
+never = [
+    "demo.ui.CounterTest",
+    "demo.ui.DesktopWindowTest",
+    "demo.desktop.TitleTest",
+    "demo.android.MainActivityTest",
+]

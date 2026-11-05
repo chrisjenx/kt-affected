@@ -1,0 +1,7 @@
+why = "A handler routed by its event type argument, through a generic intermediate base, reaches tests that publish its event and not tests publishing another event through the same bus type."
+config = """
+[[dispatch]]
+bases = ["EventHandler"]
+"""
+must = ["demo.PlacedTest@:events:test"]
+never = ["demo.CancelledTest"]

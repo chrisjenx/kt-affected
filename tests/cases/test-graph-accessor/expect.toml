@@ -1,0 +1,3 @@
+why = "Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph."
+must = ["demo.OrderTest@:app:test"]
+never = ["demo.InvoiceTest"]

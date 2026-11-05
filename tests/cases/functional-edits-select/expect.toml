@@ -1,0 +1,3 @@
+why = "A literal change, a public parameter rename (named arguments see it) and an inferred-to-explicit return type are functional."
+must = ["demo.LiteralTest", "demo.ParamNameTest", "demo.InferredTypeTest"]
+never = ["demo.UntouchedTest"]

@@ -1,0 +1,3 @@
+why = "A @ContributesBinding impl edit reaches tests calling that interface member through a graph accessor, not tests calling another member."
+must = ["demo.PriceTest@:app:test"]
+never = ["demo.CurrencyTest"]
