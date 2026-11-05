@@ -856,11 +856,20 @@ pub fn container_gate(
         let whole_type = matches!(v.kind[i], KIND_CLASS | KIND_INTERFACE | KIND_OBJECT);
         // An interface member's edit is a contract change every implementer, test fakes included, sees.
         let contract = v.kind[v.parent[i] as usize] == KIND_INTERFACE;
+        // An abstract, unannotated property declared on a graph itself (`val repo: Repo`) is an
+        // accessor: the generated graph only hands a binding out through it, and creates nothing
+        // until it is read, so only code reading its name sees it. Wiring (`@Provides`, `@Binds`,
+        // multibindings, `@Includes`) carries an annotation or a body and stays ungated.
+        let accessor = matches!(v.kind[i], KIND_VAL | KIND_VAR)
+            && v.dflags[i] & (FLAG_INITIALIZED | FLAG_CTOR_PROP) == 0
+            && v.parent[i] as u32 == v.root[i]
+            && is_graph(v.root[i])
+            && v.p.node_annotations(i).is_empty();
         if whole_type
-            || contract
+            || (contract && !accessor)
             || v.rides[i]
             || v.implicit.contains(&v.name[i])
-            || is_graph(v.root[i])
+            || (is_graph(v.root[i]) && !accessor)
         {
             let mut p = v.parent[i];
             while p >= 0 {

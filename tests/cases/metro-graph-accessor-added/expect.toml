@@ -1,0 +1,3 @@
+why = "A new abstract accessor on a @DependencyGraph only hands its binding out: tests reading it run, a test that builds the graph and reads another accessor does not (a hand-written implementer still sees the contract change)."
+must = ["demo.AuditTest@:app:test", "demo.HolderTest@:app:test"]
+never = ["demo.PriceTest", "demo.CurrencyTest"]
