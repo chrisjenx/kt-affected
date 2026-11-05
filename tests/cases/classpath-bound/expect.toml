@@ -1,0 +1,3 @@
+why = "An impl reached through its interface runs only in tests whose classpath holds its module: :api-only sees the interface but not :impl."
+must = ["demo.WiredTest@:wired:test"]
+never = ["demo.ApiOnlyTest"]

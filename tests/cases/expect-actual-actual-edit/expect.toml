@@ -1,0 +1,4 @@
+why = "Editing the jvmMain actual reaches a commonTest caller only under jvmTest: the iOS and wasm binaries link their own actuals."
+must = ["demo.DescribeTest@:core:jvmTest"]
+never = ["demo.DescribeTest@:core:iosSimulatorArm64Test", "demo.DescribeTest@:core:wasmJsBrowserTest", "demo.VersionTest"]
+known_gap = "test tasks are assigned per test file, not per path: a commonTest class reaching a jvmMain actual runs under every target's task"

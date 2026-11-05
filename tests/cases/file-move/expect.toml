@@ -1,0 +1,3 @@
+why = "A file moved to a new path (content unchanged) still selects the tests of the declarations it held."
+must = ["demo.BillingTest@:app:test"]
+never = ["demo.OtherTest"]

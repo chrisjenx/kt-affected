@@ -1,0 +1,3 @@
+why = "Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings."
+must = ["demo.UserTest@:app:test"]
+never = ["demo.UserCountTest", "demo.BookTest", "demo.ClockTest", "demo.PlainTest"]

@@ -1,0 +1,3 @@
+why = "A changed Android res/drawable file seeds code naming R.drawable.<stem>, not every user of R.drawable."
+must = ["demo.app.LogoTest@:app:testDebugUnitTest"]
+never = ["demo.app.BadgeTest"]

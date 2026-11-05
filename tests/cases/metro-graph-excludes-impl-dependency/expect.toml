@@ -1,0 +1,3 @@
+why = "A test graph that `excludes` an impl and binds a fake never runs that impl's dependencies: editing a dependency selects the production graph's test, not the fake graph's."
+must = ["demo.PriceTest@:app:test"]
+never = ["demo.CurrencyTest", "demo.FakePriceTest"]

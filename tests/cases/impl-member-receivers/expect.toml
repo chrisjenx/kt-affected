@@ -1,0 +1,3 @@
+why = "An impl member edit reaches tests that can dispatch to it (held in a property, assigned in setUp, handed out by a graph object), not a fake-only test or one calling another member."
+must = ["p.PropertyHolderTest@:m:test", "p.LateinitTest@:m:test", "p.GraphAccessorTest@:m:test"]
+never = ["p.FakeOnlyTest", "p.BarOnlyTest"]

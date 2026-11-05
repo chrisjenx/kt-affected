@@ -1,0 +1,4 @@
+why = "An accessor declared directly on the @DependencyGraph interface (`val pricing: Pricing`) hands out the bound impl like one inherited from an accessor interface."
+must = ["demo.PriceTest@:app:test"]
+never = ["demo.CurrencyTest"]
+known_gap = "with the accessor declared on the graph itself rather than inherited from an interface, the impl edit reaches nothing: PriceTest is not selected"

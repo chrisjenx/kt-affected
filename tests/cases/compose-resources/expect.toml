@@ -1,0 +1,3 @@
+why = "A changed composeResources drawable seeds code naming Res.drawable.<stem>; the type directory `drawable` is not a token, so another drawable's user is not selected."
+must = ["demo.AppIconTest@:ui:jvmTest"]
+never = ["demo.BannerTest"]

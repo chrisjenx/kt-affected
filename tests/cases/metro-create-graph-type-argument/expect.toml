@@ -1,0 +1,3 @@
+why = "A graph created as `createGraph<AppGraph>()`, its type only in the type argument, reaches the bound impl like an explicitly typed one."
+must = ["demo.PriceTest@:app:test"]
+never = ["demo.CurrencyTest"]

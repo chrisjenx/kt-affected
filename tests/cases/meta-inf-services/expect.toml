@@ -1,0 +1,4 @@
+why = "A META-INF/services change wires code no name reaches: its module and every dependent run whole, with a reason; unrelated modules don't."
+full_tasks = [":core:test", ":feature:test"]
+never_tasks = [":other:test"]
+reasons = ["META-INF/services/demo.core.Plugin: not a Kotlin source"]

@@ -17,13 +17,22 @@ scripts/oss-golden.sh target/release/kt-affected     # static discovery of pinne
 CI runs all of these on Linux, macOS and Windows, plus a `cargo check` on the minimum supported Rust
 version (see `rust-version` in `Cargo.toml`).
 
+## Found a wrong selection? Add a case
+
+`tests/cases/` holds one directory per selection edge case: a tiny Gradle build in `base/`, the
+change in `head/`, and `expect.toml` naming what must and must never be selected. Reduce the build
+that misbehaved to the few files that show it, add it there (format:
+[tests/cases/README.md](tests/cases/README.md)), and run `KT_CASES=<name> cargo test --test cases`.
+If you aren't fixing it in the same change, mark it `known_gap = "what goes wrong"`: the suite
+reports it without failing, and fails once it passes so the mark comes off with the fix.
+
 ## Changes that move results
 
 - **Discovery:** if `oss-golden.sh` reports a diff you intended, run it with `--update` and commit
   the new goldens; the diff is part of the review.
 - **Selection:** a rule that selects *less* must come with evidence that what it drops is safe: an
-  end-to-end test in `tests/` showing the dropped test cannot observe the change, and, for a broad
-  rule, numbers from real pull requests of a real build.
+  end-to-end test in `tests/` (usually a case in `tests/cases/`) showing the dropped test cannot
+  observe the change, and, for a broad rule, numbers from real pull requests of a real build.
   Selecting more needs a test showing the case it now catches.
 - **Speed:** the Benchmark workflow compares your branch with its base on the same runner. Note any
   large change in the pull request.

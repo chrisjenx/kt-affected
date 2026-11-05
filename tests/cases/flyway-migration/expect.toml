@@ -1,0 +1,8 @@
+why = "A Flyway migration seeds Kotlin naming its tables in a string (Table(\"books\")), not code on other tables."
+config = """
+[database]
+migration_dirs = ["server/src/main/resources/db/migration/"]
+"""
+must = ["demo.BookDaoTest@:server:test"]
+never = ["demo.AuthorDaoTest"]
+reasons = ["migration"]
