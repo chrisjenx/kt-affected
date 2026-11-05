@@ -6,7 +6,7 @@ instead of spawning the binary and parsing its JSON.
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.0", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.1", default-features = false }
 ```
 
 `default-features = false` leaves out the `cli` feature, which only builds the binary. The library
@@ -148,6 +148,20 @@ allocator pages the process keeps for reuse. A call that parses (cold, or after 
 pool threads' parser buffers behind as well: on okio about 11 MB of live heap after a cold call,
 the same after the next calls. macOS `leaks` reports no leaked memory after cold, delta or warm
 calls.
+
+## Concurrency
+
+Safe to call from several threads, or several processes, on one cache dir. Updates serialise: each
+takes an exclusive advisory lock on `<cache_dir>/lock` from the file walk through the last rename,
+so a second caller waits, then finds the cache fresh and does no work. The graph a call selects
+with is the one its own update left. Readers that only map `graph.bin` take no lock; it is replaced
+by rename, never written in place. Temp files are unique per writer.
+
+The lock is the OS's (`flock` on Unix, `LockFileEx` on Windows), so it goes with a process that is
+killed and never needs clearing by hand. A call waits at most 5 minutes for it, then returns
+`Error::Graph`. On a file system that cannot lock at all, updates run unlocked, so there only one
+writer at a time is safe. Separately, `graph.bin` records the `parses.bin` it was built with, and a
+mismatched pair (a crash between the two renames, say) is rebuilt cold rather than read.
 
 ## Stability
 

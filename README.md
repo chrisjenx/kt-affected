@@ -49,7 +49,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.3.0
+- uses: chrisjenx/kt-affected@v0.3.1
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}
@@ -78,7 +78,7 @@ The same selector is a Rust library, for tools that want the plan without spawni
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.0", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.1", default-features = false }
 ```
 
 ```rust

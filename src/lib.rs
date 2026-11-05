@@ -409,9 +409,9 @@ fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan
         .clone()
         .unwrap_or_else(|| root.join("build/kt-affected"));
     let build = load_build(&root, &dir, opts.static_discovery);
-    cache::update(&root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
-    let packed = cache::Packed::open(&dir.join("graph.bin"))
-        .ok_or_else(|| Error::Graph("no graph".into()))?;
+    let (_, packed) =
+        cache::update_open(&root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
+    let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
     select::select(&select::Inputs {
         repo: &repo,
         build: &build,
