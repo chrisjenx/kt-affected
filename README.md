@@ -13,7 +13,7 @@ your Gradle build to do so, keeps the graph incremental, and answers in well und
   Formatting, comments and local renames select nothing.
 - **Safe:** replayed over 586 real pull requests of a production app, it would have run 99 of the
   103 test failures those diffs caused in CI. The selector it replaced would have run 58. It costs
-  15% of the full test time, against 12% ([accuracy](docs/accuracy.md)). When it cannot know, it
+  14% of the full test time, against 12% ([accuracy](docs/accuracy.md)). When it cannot know, it
   fails open and says why.
 - **Project-agnostic:** settings includes, `projectDir` overrides, `project(":x")` and typesafe
   `projects.x` deps, version catalogs, convention plugins, the KMP source-set hierarchy and test
@@ -50,7 +50,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.3.1
+- uses: chrisjenx/kt-affected@v0.4.0
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}
@@ -79,7 +79,7 @@ The same selector is a Rust library, for tools that want the plan without spawni
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.3.1", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.4.0", default-features = false }
 ```
 
 ```rust

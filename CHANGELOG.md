@@ -6,6 +6,8 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.4.0]
+
 - Static discovery reads settings scripts that include projects through code (a directory walk, a
   project DSL): every directory holding a build script, outside nested and included builds, is a
   project, named the way the build scripts' own project references resolve (`:a:b` or the leaf
@@ -23,6 +25,8 @@ selection results or the plan format.
   element-x-android and circuit over 90 days, scored against the test failures their CI really
   saw. It found three gaps, recorded as `known_gap` corpus cases: source-scanning tests (Konsist),
   a catalog bump of a library a module declares, and Android `testReleaseUnitTest`.
+- Accuracy page: the production-app replay re-run on 0.3.1 with that app's final config (99 / 103,
+  14.4% of test time).
 
 ## [0.3.1]
 
@@ -118,7 +122,8 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/chrisjenx/kt-affected/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/chrisjenx/kt-affected/compare/v0.2.0...v0.2.1
