@@ -3,7 +3,13 @@
 //! `graph.bin` is one memory-mapped file of little-endian u32 sections (string table, file table,
 //! node table, CSR edges, name -> files index); a warm run stats the tree, maps it and stops.
 //! `parses.bin` is an append-only store of each file's imports and per-declaration refs, read
-//! only for the files an edit dirties.
+//! only for the files an edit dirties. It opens with a lineage id that `graph.bin` records, with the
+//! length it was built against, so a pair from different updates reads as no cache rather than as
+//! wrong records.
+//!
+//! Updates hold an exclusive lock on `<dir>/lock` from the walk to the last rename, so writers in
+//! several processes or threads take turns; readers only map `graph.bin`, which is replaced by
+//! rename, and need no lock.
 
 use crate::discover::{Build, is_test_source_set};
 use crate::graph::{Csr, Linker, Symbols, Visibility};
@@ -13,12 +19,13 @@ use crate::parse::{
 use memmap2::Mmap;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
 
 const MAGIC: &[u8; 8] = b"KTAFGRF1";
-const FORMAT: u32 = 6;
+const FORMAT: u32 = 7;
 pub const SKIP_DIRS: &[&str] = &[
     "build",
     ".git",
@@ -97,7 +104,8 @@ const F_HASH: usize = 10; // 2 words
 const F_REC_OFF: usize = 12; // 2 words
 const F_REC_LEN: usize = 14;
 const F_ERROR: usize = 15;
-// meta (u64): format, discovery stamp, n_files, n_nodes, n_edges, n_strings, parses live bytes
+// meta (u64): format, discovery stamp, n_files, n_nodes, n_edges, n_strings, parses live bytes,
+// parses lineage id, parses length
 const M_FORMAT: usize = 0;
 const M_STAMP: usize = 1;
 const M_FILES: usize = 2;
@@ -105,6 +113,10 @@ const M_NODES: usize = 3;
 const M_EDGES: usize = 4;
 const M_STRINGS: usize = 5;
 const M_LIVE: usize = 6;
+const M_PARSES_ID: usize = 7;
+const M_PARSES_LEN: usize = 8;
+/// `parses.bin` starts with its lineage id; records follow.
+const PARSES_HEAD: u64 = 8;
 
 pub struct Packed {
     mmap: Mmap,
@@ -824,16 +836,135 @@ impl Paths {
     }
 }
 
+/// How long an update waits for another one on the same dir before giving up.
+const LOCK_WAIT: Duration = Duration::from_secs(300);
+
+/// An exclusive lock on `<dir>/lock`, released when dropped (or by the OS when its process dies).
+/// `None` where the file system cannot lock; the update then runs unlocked, as before locking.
+struct DirLock(Option<std::fs::File>);
+
+fn lock_dir(dir: &Path) -> std::io::Result<DirLock> {
+    let f = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(dir.join("lock"))?;
+    let start = Instant::now();
+    let mut nap = Duration::from_millis(2);
+    loop {
+        match f.try_lock() {
+            Ok(()) => return Ok(DirLock(Some(f))),
+            Err(std::fs::TryLockError::WouldBlock) if start.elapsed() < LOCK_WAIT => {
+                std::thread::sleep(nap);
+                nap = (nap * 2).min(Duration::from_millis(50));
+            }
+            Err(std::fs::TryLockError::WouldBlock) => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    format!(
+                        "{} is held by another update for over {}s",
+                        dir.join("lock").display(),
+                        LOCK_WAIT.as_secs()
+                    ),
+                ));
+            }
+            Err(std::fs::TryLockError::Error(_)) => return Ok(DirLock(None)),
+        }
+    }
+}
+
+/// A temp path beside `path`, unique to this writer.
+fn tmp_path(path: &Path) -> PathBuf {
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    path.with_file_name(format!(
+        "{name}.{}.{}.tmp",
+        std::process::id(),
+        SEQ.fetch_add(1, Ordering::Relaxed)
+    ))
+}
+
+/// Temps a killed writer left behind. Only called under the lock, when no other writer has one open.
+fn remove_stale_temps(dir: &Path) {
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for e in rd.flatten() {
+        let name = e.file_name();
+        let name = name.to_string_lossy();
+        if (name.starts_with("graph.bin.") || name.starts_with("parses.bin."))
+            && name.ends_with(".tmp")
+        {
+            let _ = std::fs::remove_file(e.path());
+        }
+    }
+}
+
+/// A new `parses.bin` lineage id, never 0.
+fn parses_id() -> u64 {
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or_default();
+    let seed = format!(
+        "{}-{nanos}-{}",
+        std::process::id(),
+        SEQ.fetch_add(1, Ordering::Relaxed)
+    );
+    hash(seed.as_bytes()) | 1
+}
+
+/// Whether `parses` is the lineage `p` was built with and still holds every record `p` points at.
+fn parses_match(parses: &Path, p: &Packed) -> bool {
+    let Ok(mut f) = std::fs::File::open(parses) else {
+        return false;
+    };
+    let mut head = [0u8; PARSES_HEAD as usize];
+    f.read_exact(&mut head).is_ok()
+        && u64::from_le_bytes(head) == p.meta(M_PARSES_ID)
+        && f.metadata().is_ok_and(|m| m.len() >= p.meta(M_PARSES_LEN))
+}
+
 /// Bring `dir`'s graph up to date with the tree under `root`.
+#[cfg(any(feature = "cli", test))]
 pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::io::Result<Report> {
-    let t0 = Instant::now();
+    update_open(root, build, dir, force_cold).map(|(r, _)| r)
+}
+
+/// [`update`], then map the graph before releasing the lock, so it is the one this update left and
+/// not a later writer's built from other discovery.
+pub fn update_open(
+    root: &Path,
+    build: &Build,
+    dir: &Path,
+    force_cold: bool,
+) -> std::io::Result<(Report, Option<Packed>)> {
     std::fs::create_dir_all(dir)?;
+    let lock = lock_dir(dir)?;
+    if lock.0.is_some() {
+        remove_stale_temps(dir);
+    }
+    let r = update_locked(root, build, dir, force_cold)?;
+    let p = Packed::open(&Paths::new(dir).graph);
+    drop(lock);
+    Ok((r, p))
+}
+
+fn update_locked(
+    root: &Path,
+    build: &Build,
+    dir: &Path,
+    force_cold: bool,
+) -> std::io::Result<Report> {
+    let t0 = Instant::now();
     let paths = Paths::new(dir);
     let stamp = discovery_stamp(root, &build.inputs);
     let old = if force_cold {
         None
     } else {
-        Packed::open(&paths.graph).filter(|p| p.meta(M_STAMP) == stamp)
+        Packed::open(&paths.graph)
+            .filter(|p| p.meta(M_STAMP) == stamp && parses_match(&paths.parses, p))
     };
     let entries = kotlin_files(root);
     let walk_ms = t0.elapsed().as_millis();
@@ -1017,7 +1148,7 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
     let rewrite = old.is_none() || parses_old.is_none() || old_len > 3 * old_live.max(1);
     let mut buf: Vec<u32> = Vec::new();
     let mut live: u64 = 0;
-    let mut base_off = if rewrite { 0 } else { old_len };
+    let mut base_off = if rewrite { PARSES_HEAD } else { old_len };
     if rewrite {
         // Every file's record, carried or fresh, goes into one new file.
         let all: Vec<Vec<u32>> = (0..entries.len())
@@ -1053,16 +1184,28 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
         }
     }
     drop(parses_old);
-    if rewrite {
-        let tmp = paths.parses.with_extension("bin.tmp");
-        std::fs::write(&tmp, bytemuck::cast_slice::<u32, u8>(&buf))?;
+    let bytes: &[u8] = bytemuck::cast_slice(&buf);
+    let (parses_id, parses_len) = if rewrite {
+        let id = parses_id();
+        let tmp = tmp_path(&paths.parses);
+        let mut f = std::fs::File::create(&tmp)?;
+        f.write_all(&id.to_le_bytes())?;
+        f.write_all(bytes)?;
+        drop(f);
         std::fs::rename(&tmp, &paths.parses)?;
-    } else if !buf.is_empty() {
-        let mut f = std::fs::OpenOptions::new()
-            .append(true)
-            .open(&paths.parses)?;
-        f.write_all(bytemuck::cast_slice::<u32, u8>(&buf))?;
-    }
+        (id, PARSES_HEAD + bytes.len() as u64)
+    } else {
+        if !bytes.is_empty() {
+            let mut f = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&paths.parses)?;
+            f.write_all(bytes)?;
+        }
+        (
+            old.as_ref().unwrap().meta(M_PARSES_ID),
+            old_len + bytes.len() as u64,
+        )
+    };
 
     // ---- graph.bin
     let mut files_tab: Vec<u32> = Vec::with_capacity(entries.len() * FILE_W);
@@ -1116,6 +1259,8 @@ pub fn update(root: &Path, build: &Build, dir: &Path, force_cold: bool) -> std::
         n_edges as u64,
         interner.strs.len() as u64,
         live,
+        parses_id,
+        parses_len,
     ];
     let families: [&Csr; N_FAMILIES] = [
         &graph.refby,
@@ -1517,6 +1662,8 @@ fn delta(
         n_edges as u64,
         interner.strs.len() as u64,
         live,
+        p.meta(M_PARSES_ID),
+        old_len + buf.len() as u64 * 4,
     ];
     let patched: [(Family, &Csr); 5] = [
         (Family::RefBy, &p_refby),
@@ -1617,7 +1764,7 @@ fn write_packed(path: &Path, sections: &[&[u8]]) -> std::io::Result<()> {
         table.push((at, s.len() as u64));
         at = (at + s.len() as u64).next_multiple_of(8);
     }
-    let tmp = path.with_extension("bin.tmp");
+    let tmp = tmp_path(path);
     let mut f = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(&tmp)?);
     f.write_all(MAGIC)?;
     f.write_all(&(N_SECTIONS as u64).to_le_bytes())?;
@@ -1999,6 +2146,49 @@ mod tests {
             modes.get("incremental").copied().unwrap_or(0) >= 10,
             "full relink barely exercised: {modes:?}"
         );
+    }
+
+    #[test]
+    fn a_graph_from_another_parses_lineage_rebuilds_cold() {
+        let root = tmp("lineage");
+        let mut clock = 0;
+        let mut files = fixture(&root, &mut clock);
+        let build = discover::discover(&root);
+        let dir = root.join("build/inc");
+        update(&root, &build, &dir, true).unwrap();
+        let stale = std::fs::read(dir.join("graph.bin")).unwrap();
+        // A cold update rewrites parses.bin as a new lineage; put the older graph back beside it,
+        // as an interleaved writer or a crash between the two renames would.
+        update(&root, &build, &dir, true).unwrap();
+        std::fs::write(dir.join("graph.bin"), &stale).unwrap();
+        let mut rng = Rng(7);
+        let kind = mutate(&root, &mut files, &mut rng, &mut clock, 0);
+        let r = update(&root, &build, &dir, false).unwrap();
+        assert_eq!(r.mode, "cold", "after a {kind} edit");
+
+        // A parses.bin cut short of what the graph points at is no cache either.
+        let len = std::fs::metadata(dir.join("parses.bin")).unwrap().len();
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .open(dir.join("parses.bin"))
+            .unwrap();
+        f.set_len(len - 4).unwrap();
+        drop(f);
+        mutate(&root, &mut files, &mut rng, &mut clock, 1);
+        assert_eq!(update(&root, &build, &dir, false).unwrap().mode, "cold");
+    }
+
+    #[test]
+    fn a_stale_temp_is_removed_by_the_next_update() {
+        let root = tmp("temps");
+        let mut clock = 0;
+        fixture(&root, &mut clock);
+        let build = discover::discover(&root);
+        let dir = root.join("build/inc");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("graph.bin.123.0.tmp"), b"torn").unwrap();
+        update(&root, &build, &dir, false).unwrap();
+        assert!(!dir.join("graph.bin.123.0.tmp").exists());
     }
 
     #[test]
