@@ -135,6 +135,9 @@ pub struct Selector {
     /// A test the graph walk reaches is kept only if an edited module is in its module's dependency
     /// closure: code not on a test's classpath never runs in it.
     pub classpath_bound: bool,
+    /// Gradle plugin ids and Maven groups (prefixes) of compiler plugins and code generators: a
+    /// version-catalog change to one changes the code every module compiles, so it runs every class.
+    pub codegen_plugins: Vec<String>,
 }
 
 impl Default for Selector {
@@ -152,6 +155,23 @@ impl Default for Selector {
             module_ignored_basenames: vec!["detekt-baseline.xml".into()],
             build_logic_globs: vec![],
             classpath_bound: true,
+            codegen_plugins: [
+                "org.jetbrains.kotlin",
+                "org.jetbrains.compose",
+                "com.google.devtools.ksp",
+                "dev.zacsweers.metro",
+                "app.cash.sqldelight",
+                "com.squareup.anvil",
+                "com.google.dagger",
+                "androidx.room",
+                "com.apollographql.apollo",
+                "com.squareup.wire",
+                "com.google.protobuf",
+                "org.jetbrains.kotlinx.atomicfu",
+                "dev.drewhamilton.poko",
+            ]
+            .map(String::from)
+            .to_vec(),
         }
     }
 }

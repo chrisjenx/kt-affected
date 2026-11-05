@@ -1,0 +1,3 @@
+why = "A version-catalog bump of a code generator or compiler plugin (here KSP) changes the code every module compiles: every class of every task runs."
+full_tasks = [":core:test", ":feature:test", ":other:test"]
+reasons = ["changes a compiler plugin or code generator (version `ksp` of plugins `ksp`)"]

@@ -874,6 +874,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         full_modules = mods.reverse_closure(&full_modules);
     }
     full_modules.extend(classpath_readers);
+    full_modules.extend(routing.full_modules.iter().cloned());
     reasons.append(&mut routing.reasons);
 
     // Mentions become one-line hunks on the lines that write the name.

@@ -22,6 +22,7 @@ Each directory is one scenario the selector must keep getting right. `tests/case
 | `never` | classes that must not be selected (same `@` form) |
 | `full_tasks` | `:module:task` groups that must run whole |
 | `tasks` | `:module:task` groups that must run at least one class (a smoke class) |
+| `smoke_tasks` | `:module:task` groups that must run some classes but not the whole task |
 | `never_tasks` | `:module:task` groups that must not appear |
 | `none` | `true`: nothing at all is selected |
 | `reasons` | each must be a substring of some reason in the plan |
@@ -36,7 +37,10 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | case | pins |
 |------|------|
 | `android-res` | A changed Android res/drawable file seeds code naming R.drawable.<stem>, not every user of R.drawable. |
+| `build-logic-test-jvm-config` | A convention plugin adding JVM arguments to every Test task runs every class of every task: a smoke class cannot show a JVM-wide effect. |
 | `build-script-change` | A module build script change runs one smoke class per test task of that module and every module depending on it (CI runs every suite), and nothing in unrelated modules. |
+| `catalog-codegen-version` | A version-catalog bump of a compiler plugin or code generator runs every class of every task. |
+| `catalog-library-version` | A version-catalog bump of a plain library is build logic: one smoke class per task, not whole tasks. |
 | `classpath-bound` | An impl reached through its interface runs only in tests whose classpath holds its module: :api-only sees the interface but not :impl. |
 | `compose-common-edit` | A commonMain composable edit runs its commonTest class under every target's test task, and reaches app modules through the composable's callers. |
 | `compose-jvm-only-edit` | A jvmMain-only edit runs only JVM tasks: no other target compiles jvmMain. |
@@ -73,6 +77,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `metro-graph-excludes-edited-impl` | A test graph that `excludes` the edited impl and binds a fake can never run the edit: its test is not selected, the production graph's is. |
 | `metro-graph-excludes-edited-impl-still-named` | A test whose graph excludes the edited impl but that still constructs it, seven helper hops away, runs the edit: it stays selected. |
 | `metro-graph-excludes-impl-dependency` | A test graph that `excludes` an impl and binds a fake never runs that impl's dependencies: editing a dependency selects the production graph's test, not the fake graph's. |
+| `module-script-test-jvm-config` | A module script changing its own Test task's JVM runs that module whole; dependents get a smoke class; unrelated modules nothing. |
 | `plain-resource-stem` | A plain resource seeds code writing its file name; its bare stem as an identifier (`index`) is not a read of the file. |
 | `reflection-class-literal` | A test reflecting over `Repo::class` sees a member added to Repo, though it calls no member. |
 | `shared-test-source-set` | A custom test source set that jvmTest and wasmJsTest both dependOn runs under both tasks, and not under a target that doesn't include it. |

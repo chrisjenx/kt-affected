@@ -85,6 +85,9 @@ pub struct Mention {
 
 #[derive(Default)]
 pub struct Routing {
+    /// Modules every test class of which runs: build logic changed how their tests execute or
+    /// what their code compiles to.
+    pub full_modules: BTreeSet<String>,
     pub smoke_modules: BTreeSet<String>,
     pub db_smoke_modules: BTreeSet<String>,
     pub mentions: Vec<Mention>,
@@ -202,6 +205,145 @@ fn resource_tokens(rel: &str, root: &str) -> Vec<String> {
     out.into_iter().collect()
 }
 
+/// Test-task settings that change how every test of a task executes (its JVM, framework,
+/// forking), not whether a script still configures: a smoke class cannot observe them.
+static TEST_JVM_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?:(\w+)\s*\.\s*)?\b(jvmArgs|jvmArgumentProviders|allJvmArgs|maxHeapSize|minHeapSize|systemPropert(?:y|ies)|environment|forkEvery|maxParallelForks|jvmToolchain|javaLauncher|toolchain|jvmTarget|useJUnitPlatform|useJUnit|useTestNG|testFramework)\b",
+    )
+    .unwrap()
+});
+
+/// Lines of `path` added or removed between base and head, comments dropped.
+fn changed_lines(path: &str, ctx: &Ctx) -> Vec<String> {
+    let head = (ctx.read)(path).unwrap_or_default();
+    let base = (ctx.read_base)(path).unwrap_or_default();
+    let count = |t: &str| {
+        let mut m: BTreeMap<String, i64> = BTreeMap::new();
+        for l in t.lines() {
+            let l = l.trim();
+            if !(l.is_empty()
+                || l.starts_with("//")
+                || l.starts_with('*')
+                || l.starts_with("/*")
+                || l.starts_with('#'))
+            {
+                *m.entry(l.to_string()).or_default() += 1;
+            }
+        }
+        m
+    };
+    let (h, b) = (count(&head), count(&base));
+    let mut out = Vec::new();
+    for l in h.keys().chain(b.keys()) {
+        if h.get(l) != b.get(l) {
+            out.push(l.clone());
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// The test-JVM setting a build-logic edit changes (`jvmArgs`, `maxParallelForks`, ..), if any. A
+/// build logic's own tests (`src/test/`) configure nothing.
+fn test_jvm_setting(path: &str, ctx: &Ctx) -> Option<String> {
+    if path.contains("/src/test/") || path.ends_with(".toml") {
+        return None;
+    }
+    changed_lines(path, ctx).iter().find_map(|l| {
+        TEST_JVM_RE.captures_iter(l).find_map(|c| {
+            let recv = c.get(1).map(|m| m.as_str());
+            // `providers.systemProperty(..)` / `System.getenv` read the build's own environment.
+            (!matches!(recv, Some("providers" | "System" | "gradle"))).then(|| c[2].to_string())
+        })
+    })
+}
+
+/// A version-catalog edit that changes the version of a compiler plugin or code generator
+/// (`codegen_plugins`): a changed `[versions]` key some codegen plugin or library takes its version
+/// from, or a codegen entry whose own text changed.
+fn codegen_version_change(path: &str, cfg: &Config, ctx: &Ctx) -> Option<String> {
+    if !path.ends_with(".versions.toml") {
+        return None;
+    }
+    let head = (ctx.read)(path).unwrap_or_default();
+    let base = (ctx.read_base)(path).unwrap_or_default();
+    static ENTRY_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r#"^\s*([A-Za-z0-9_.-]+)\s*=\s*(.*)$"#).unwrap());
+    static ID_RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r#"\b(?:id|module|group)\s*=\s*"([^"]+)"|^\s*"([^":]+)(?::[^"]*)?""#).unwrap()
+    });
+    static REF_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r#"version\.ref\s*=\s*"([^"]+)""#).unwrap());
+    // (table, key) -> value text
+    let entries = |t: &str| {
+        let mut out: BTreeMap<(String, String), String> = BTreeMap::new();
+        let mut table = String::new();
+        for l in t.lines() {
+            let l = l.split(" #").next().unwrap_or(l);
+            let s = l.trim();
+            if s.starts_with('[') {
+                table = s.trim_matches(|c| c == '[' || c == ']').trim().to_string();
+            } else if let Some(c) = ENTRY_RE.captures(s)
+                && !s.starts_with('#')
+            {
+                out.insert((table.clone(), c[1].to_string()), c[2].trim().to_string());
+            }
+        }
+        out
+    };
+    let (h, b) = (entries(&head), entries(&base));
+    let is_codegen = |v: &str| {
+        ID_RE.captures(v).is_some_and(|c| {
+            let id = c.get(1).or(c.get(2)).map(|m| m.as_str()).unwrap_or("");
+            cfg.selector.codegen_plugins.iter().any(|p| {
+                id == p || id.starts_with(&format!("{p}.")) || id.starts_with(&format!("{p}:"))
+            })
+        })
+    };
+    let changed = |k: &(String, String)| h.get(k) != b.get(k);
+    for side in [&h, &b] {
+        for (k, v) in side {
+            if !matches!(k.0.as_str(), "plugins" | "libraries") || !is_codegen(v) {
+                continue;
+            }
+            if changed(k) {
+                return Some(format!("{} `{}`", k.0, k.1));
+            }
+            if let Some(r) = REF_RE.captures(v) {
+                let key = ("versions".to_string(), r[1].to_string());
+                if changed(&key) {
+                    return Some(format!("version `{}` of {} `{}`", &r[1], k.0, k.1));
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Build logic that changes how tests run or what code compiles to: every class of `scope`'s test
+/// tasks runs, beside the smoke classes the change gets as build logic.
+fn whole_task_effect(
+    path: &str,
+    scope: &BTreeSet<String>,
+    cfg: &Config,
+    ctx: &Ctx,
+    out: &mut Routing,
+) {
+    let why = if let Some(s) = test_jvm_setting(path, ctx) {
+        format!("changes the test JVM or framework (`{s}`)")
+    } else if let Some(s) = codegen_version_change(path, cfg, ctx) {
+        format!("changes a compiler plugin or code generator ({s})")
+    } else {
+        return;
+    };
+    out.full_modules.extend(scope.iter().cloned());
+    out.reasons.push(format!(
+        "{path}: {why} — every class of the test tasks it configures runs"
+    ));
+}
+
 fn build_logic(path: &str, scope: BTreeSet<String>, out: &mut Routing, why: &str) -> bool {
     out.smoke_modules.extend(scope);
     out.reasons.push(format!(
@@ -217,6 +359,7 @@ pub fn route(path: &str, mods: &Modules, cfg: &Config, ctx: &Ctx, out: &mut Rout
     let name = name_of(path);
     let Some(module) = module else {
         if is_build_logic(path) || (ctx.in_plugin_build)(path) {
+            whole_task_effect(path, &everything, cfg, ctx, out);
             return build_logic(path, everything, out, "build logic");
         }
         out.mentions.push(Mention {
@@ -234,6 +377,14 @@ pub fn route(path: &str, mods: &Modules, cfg: &Config, ctx: &Ctx, out: &mut Rout
     };
     let reach = mods.reverse_closure(&[module.id.clone()].into_iter().collect());
     if path.ends_with(".gradle.kts") || path.ends_with(".gradle") {
+        // A module's own script configures its own test tasks only.
+        whole_task_effect(
+            path,
+            &[module.id.clone()].into_iter().collect(),
+            cfg,
+            ctx,
+            out,
+        );
         return build_logic(path, reach, out, "build logic");
     }
     if path.ends_with(".sql")

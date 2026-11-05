@@ -1,0 +1,3 @@
+why = "A version-catalog bump of a plain library is build logic: one smoke class per test task, not whole tasks."
+smoke_tasks = [":core:test", ":feature:test", ":other:test"]
+reasons = ["gradle/libs.versions.toml: build logic"]
