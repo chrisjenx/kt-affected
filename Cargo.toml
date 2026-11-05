@@ -26,6 +26,9 @@ required-features = ["cli"]
 [[example]]
 name = "rss"
 
+[[example]]
+name = "replay"
+
 [features]
 default = ["cli"]
 # The `kt-affected` binary. A library user turns it off: `default-features = false`.

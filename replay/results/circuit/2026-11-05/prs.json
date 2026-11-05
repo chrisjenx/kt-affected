@@ -1,0 +1,3163 @@
+[
+ {
+  "author": "slack-oss-bot",
+  "base": "4ef5c33ceef2a7372ea085ab512cdc9122516c65",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "6fc29eab50de61b233c2eb902c928d9ac0219758",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-07T16:13:37Z",
+  "pr": 2834,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "6fc29eab50de61b233c2eb902c928d9ac0219758",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "4db67fea490c04d8f7e9e7b620d7f9ec653b6e3c",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-07T16:19:08Z",
+  "pr": 2835,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "4db67fea490c04d8f7e9e7b620d7f9ec653b6e3c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "63694d076f612d0f53ca012006f03ef1099b41d0",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-07T16:26:57Z",
+  "pr": 2836,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.3111111111111111,
+    "timeShare": 0.20989337432443972
+   },
+   "module-level": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "63694d076f612d0f53ca012006f03ef1099b41d0",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "8ccb0e4080ffcc7e2520f911262290c4749c9169",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-07T16:29:30Z",
+  "pr": 2837,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.3111111111111111,
+    "timeShare": 0.20989337432443972
+   },
+   "module-level": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "ZacSweers",
+  "base": "8ccb0e4080ffcc7e2520f911262290c4749c9169",
+  "changedFiles": 5,
+  "errors": {},
+  "head": "895dd6223211013c5e8cb7724b03fd82a497e64d",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-11T16:41:37Z",
+  "pr": 2839,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 30,
+    "share": 0.2222222222222222,
+    "timeShare": 0.12237362600495309
+   },
+   "module-level": {
+    "classes": 37,
+    "share": 0.2740740740740741,
+    "timeShare": 0.35969047749759053
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "ZacSweers",
+  "base": "895dd6223211013c5e8cb7724b03fd82a497e64d",
+  "changedFiles": 4,
+  "errors": {},
+  "head": "6417d24450c42935156b47b6e77e51e75aec7cd2",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-11T20:47:48Z",
+  "pr": 2840,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 3,
+    "share": 0.022222222222222223,
+    "timeShare": 0.034457386328978025
+   },
+   "module-level": {
+    "classes": 15,
+    "share": 0.1111111111111111,
+    "timeShare": 0.06108940575095463
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "344e6d6f478e6d85ff11fbf6a1a8bc6a215f3d95",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "330ddfdc470e507a89a0531b4f6f498f0fa1292f",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-11T22:05:53Z",
+  "pr": 2830,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 135,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 135
+ },
+ {
+  "author": "ZacSweers",
+  "base": "330ddfdc470e507a89a0531b4f6f498f0fa1292f",
+  "changedFiles": 6,
+  "errors": {},
+  "head": "84a4c7fa181f087a4c4abe59c479903e0804fedd",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-12T18:50:46Z",
+  "pr": 2841,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 14,
+    "share": 0.10071942446043165,
+    "timeShare": 0.04110235459652101
+   },
+   "module-level": {
+    "classes": 19,
+    "share": 0.1366906474820144,
+    "timeShare": 0.07766224904396363
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "ZacSweers",
+  "base": "84a4c7fa181f087a4c4abe59c479903e0804fedd",
+  "changedFiles": 4,
+  "errors": {},
+  "head": "0e27566fdd02657f51631867d9dc72f2c72071c6",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-13T17:14:33Z",
+  "pr": 2843,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 19,
+    "share": 0.1366906474820144,
+    "timeShare": 0.07766224904396363
+   },
+   "module-level": {
+    "classes": 19,
+    "share": 0.1366906474820144,
+    "timeShare": 0.07766224904396363
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "0e27566fdd02657f51631867d9dc72f2c72071c6",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "e2c328a50257c2d58c1498f0179308d8a5f49994",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-13T19:23:56Z",
+  "pr": 2847,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.302158273381295,
+    "timeShare": 0.2166726151709705
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "e2c328a50257c2d58c1498f0179308d8a5f49994",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "e96e09ac3ff910462b8de04d34b0229818677fa2",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-13T19:28:23Z",
+  "pr": 2848,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "e96e09ac3ff910462b8de04d34b0229818677fa2",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "09be036ea01388d51cb94c571bfd53c3798a610c",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-14T00:30:19Z",
+  "pr": 2844,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.302158273381295,
+    "timeShare": 0.2166726151709705
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "09be036ea01388d51cb94c571bfd53c3798a610c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "fcff40c80ad4c8b83c0ba161f0ed778424727126",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-14T19:36:51Z",
+  "pr": 2851,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.302158273381295,
+    "timeShare": 0.2166726151709705
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "fcff40c80ad4c8b83c0ba161f0ed778424727126",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "35233095695eec09d0a97a5d29b96fe7d8ef5aaf",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-14T19:53:36Z",
+  "pr": 2850,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "35233095695eec09d0a97a5d29b96fe7d8ef5aaf",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "d0fbc5ea8b2a87d2cdf24e5ea8d21aed303b3a6c",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-17T22:59:21Z",
+  "pr": 2852,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "d0fbc5ea8b2a87d2cdf24e5ea8d21aed303b3a6c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "bbc46b51e05418bd1985d76451e9bc82f39ef458",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-18T08:32:35Z",
+  "pr": 2853,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.302158273381295,
+    "timeShare": 0.2166726151709705
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 139,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 139
+ },
+ {
+  "author": "ZacSweers",
+  "base": "bbc46b51e05418bd1985d76451e9bc82f39ef458",
+  "changedFiles": 15,
+  "errors": {},
+  "head": "b06c4f2e390dc975faa41ce975fd2836abf50d5f",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-18T17:16:21Z",
+  "pr": 2854,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 32,
+    "share": 0.22695035460992907,
+    "timeShare": 0.1570432219378198
+   },
+   "module-level": {
+    "classes": 120,
+    "share": 0.851063829787234,
+    "timeShare": 0.7758771919985463
+   },
+   "run-everything": {
+    "classes": 141,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 141
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b06c4f2e390dc975faa41ce975fd2836abf50d5f",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "6c5b1530be946344de88d82a7a01a305c4e9f44f",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-19T18:47:01Z",
+  "pr": 2855,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.2978723404255319,
+    "timeShare": 0.2163100918487677
+   },
+   "module-level": {
+    "classes": 141,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 141,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 141
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "6c5b1530be946344de88d82a7a01a305c4e9f44f",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "5d58ca9b718fb540904eb97b1001b2491cddeeb3",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-21T08:15:24Z",
+  "pr": 2856,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.2978723404255319,
+    "timeShare": 0.2163100918487677
+   },
+   "module-level": {
+    "classes": 141,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 141,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 141
+ },
+ {
+  "author": "ZacSweers",
+  "base": "5d58ca9b718fb540904eb97b1001b2491cddeeb3",
+  "changedFiles": 24,
+  "errors": {},
+  "head": "c9c3abdc945579f807209f4d37bae14cb00ab808",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-22T03:44:51Z",
+  "pr": 2842,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 66,
+    "share": 0.46153846153846156,
+    "timeShare": 0.5669342583292573
+   },
+   "module-level": {
+    "classes": 122,
+    "share": 0.8531468531468531,
+    "timeShare": 0.7761781189675193
+   },
+   "run-everything": {
+    "classes": 143,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 143
+ },
+ {
+  "author": "ZacSweers",
+  "base": "c9c3abdc945579f807209f4d37bae14cb00ab808",
+  "changedFiles": 4,
+  "errors": {},
+  "head": "35c1c9aa3441a0dcbe02148c57863b6edd4cb42f",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-22T12:49:04Z",
+  "pr": 2857,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 3,
+    "share": 0.02097902097902098,
+    "timeShare": 0.021294446664003198
+   },
+   "module-level": {
+    "classes": 122,
+    "share": 0.8531468531468531,
+    "timeShare": 0.7761781189675193
+   },
+   "run-everything": {
+    "classes": 143,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 143
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "d4d88f205aeaca9c9ab6dcd3e9fadf2394bdd830",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "442532817c0284cafb1d4dfee4cd1addf5f8d482",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-24T08:18:56Z",
+  "pr": 2858,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 143,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 143
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "442532817c0284cafb1d4dfee4cd1addf5f8d482",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "36caef26d26cc6c295d0b3d1af3475d3b55ee3ee",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-24T14:39:53Z",
+  "pr": 2859,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 42,
+    "share": 0.2937062937062937,
+    "timeShare": 0.2159830633146766
+   },
+   "module-level": {
+    "classes": 143,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 143,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 143
+ },
+ {
+  "author": "ZacSweers",
+  "base": "36caef26d26cc6c295d0b3d1af3475d3b55ee3ee",
+  "changedFiles": 147,
+  "errors": {},
+  "head": "02f514c6b63f96c9b4112f8604db929dc5941a63",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-25T17:51:17Z",
+  "pr": 2849,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 129,
+    "share": 0.8835616438356164,
+    "timeShare": 0.9924751881019996
+   },
+   "module-level": {
+    "classes": 139,
+    "share": 0.952054794520548,
+    "timeShare": 0.9938639956670667
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "02f514c6b63f96c9b4112f8604db929dc5941a63",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "864c6adc163baa48b7f6a4ee50220ac63459c34a",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-25T21:53:20Z",
+  "pr": 2862,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "864c6adc163baa48b7f6a4ee50220ac63459c34a",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "a4a322907999d8f9c3cea625aef1470ccf7ec90a",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-25T21:57:14Z",
+  "pr": 2861,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "ZacSweers",
+  "base": "a4a322907999d8f9c3cea625aef1470ccf7ec90a",
+  "changedFiles": 15,
+  "errors": {},
+  "head": "fcf2002324e22c488867b75411983f7947173329",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-26T17:02:47Z",
+  "pr": 2863,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 41,
+    "share": 0.2808219178082192,
+    "timeShare": 0.36251793190268466
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "721eb098de75c91c9d2875cd99e821a1fabb61dc",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "750a4dde15a94a58356c60e30a33c0dc24cd5f56",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-26T17:43:01Z",
+  "pr": 2864,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "stagg",
+  "base": "750a4dde15a94a58356c60e30a33c0dc24cd5f56",
+  "changedFiles": 50,
+  "errors": {},
+  "head": "d9e0c52364347e846a0ed9c817ba70890ce60775",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-26T22:26:45Z",
+  "pr": 2722,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "d9e0c52364347e846a0ed9c817ba70890ce60775",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "6daee2801ee701ca528b0f759ca36aa8e5775e28",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-27T14:31:41Z",
+  "pr": 2868,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "6daee2801ee701ca528b0f759ca36aa8e5775e28",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "74b0c67cf3707673873e0b9c0dda849dab298088",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-27T14:35:25Z",
+  "pr": 2867,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "74b0c67cf3707673873e0b9c0dda849dab298088",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "30e4886a89026f0b04cebc21dc58647304cc825d",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-27T22:54:02Z",
+  "pr": 2865,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "30e4886a89026f0b04cebc21dc58647304cc825d",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "596a2a532e78d3652e958f108581f69d5667d178",
+  "mergeKind": "squash",
+  "mergedAt": "2026-08-27T23:16:44Z",
+  "pr": 2866,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "596a2a532e78d3652e958f108581f69d5667d178",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "0d75a83722137517b9a9df908c6014d53364bca0",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-28T18:23:46Z",
+  "pr": 2870,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "0d75a83722137517b9a9df908c6014d53364bca0",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "20d321dee988fb1c2b564be1a3b5e37d895660b5",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-08-28T18:23:46Z",
+  "pr": 2869,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "20d321dee988fb1c2b564be1a3b5e37d895660b5",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "afe6107a36491a2b13f44f3f326ffceeeb1f9979",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-02T08:18:19Z",
+  "pr": 2871,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "afe6107a36491a2b13f44f3f326ffceeeb1f9979",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "4bf1e1ce7a318f4588335ffdb87107e1041ef643",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-03T08:18:16Z",
+  "pr": 2872,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "4bf1e1ce7a318f4588335ffdb87107e1041ef643",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "10eeae0f3c8dd0f8bd4981325354b6cd2cc8ac4e",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-06T08:16:00Z",
+  "pr": 2873,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "10eeae0f3c8dd0f8bd4981325354b6cd2cc8ac4e",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "6ac51740b4bdfc7aef9d713403e772e300be6847",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-06T21:06:20Z",
+  "pr": 2875,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "6ac51740b4bdfc7aef9d713403e772e300be6847",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "822514135427bcb0a8ee310236876d2549e4d564",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-06T21:07:13Z",
+  "pr": 2874,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "822514135427bcb0a8ee310236876d2549e4d564",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "b2c06c4891a114645e39c02c1fa852d7db62d827",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-06T21:11:06Z",
+  "pr": 2876,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b2c06c4891a114645e39c02c1fa852d7db62d827",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "bca9db6d40e097e5e611387aa3ba31f4786d7228",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-09T01:33:52Z",
+  "pr": 2881,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "bca9db6d40e097e5e611387aa3ba31f4786d7228",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "b38d8c3abdab8b56fd38f04602b3821ed32743ab",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-09T01:37:08Z",
+  "pr": 2880,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b38d8c3abdab8b56fd38f04602b3821ed32743ab",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "7a5ac1e3d32927f7de3a376e7bd76895ec11346b",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-09T04:57:57Z",
+  "pr": 2877,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "7a5ac1e3d32927f7de3a376e7bd76895ec11346b",
+  "changedFiles": 24,
+  "errors": {},
+  "head": "eab5f5badf33e7a7400dc6aec084e651cb3d3bad",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-09T05:24:13Z",
+  "pr": 2878,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "ZacSweers",
+  "base": "eab5f5badf33e7a7400dc6aec084e651cb3d3bad",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "e4689143a008d05b17873dcfac7ba1ec05641756",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-09T15:12:13Z",
+  "pr": 2767,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "e4689143a008d05b17873dcfac7ba1ec05641756",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "0f44ff47dd97e1adc6c75a597060e1dffbb8c5e7",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-10T00:30:32Z",
+  "pr": 2883,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "7da221973d733d6ce779aafec8a86b5c9d414f95",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "7f9c5b1dc8df3df8fde82120c36e7b40e92b010e",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-10T17:59:01Z",
+  "pr": 2885,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "0f44ff47dd97e1adc6c75a597060e1dffbb8c5e7",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "7da221973d733d6ce779aafec8a86b5c9d414f95",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-10T17:59:01Z",
+  "pr": 2884,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "7f9c5b1dc8df3df8fde82120c36e7b40e92b010e",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "fca4f4ec99e3f4f31c13fe06be68215d630c65ea",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-10T18:06:53Z",
+  "pr": 2886,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "stagg",
+  "base": "fca4f4ec99e3f4f31c13fe06be68215d630c65ea",
+  "changedFiles": 13,
+  "errors": {},
+  "head": "2bc5c1634401ab76b82ef34d3e2b08a6f36d071d",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-15T16:40:48Z",
+  "pr": 2891,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 69,
+    "share": 0.4726027397260274,
+    "timeShare": 0.5507128846210148
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b81a363eb420ab1b91b7bd79de0dc6da971ef679",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "117e0f5a115ddf2f93ea6937c7b8baa7fba3a7dd",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-16T17:41:53Z",
+  "pr": 2895,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "117e0f5a115ddf2f93ea6937c7b8baa7fba3a7dd",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "995ee07ae976b6a27467d790cf7cb927746e28a9",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-16T17:47:05Z",
+  "pr": 2894,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "d14e38cf28e15cbebec783852dac5b7bf8160d26",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "5a1427aceea8c4a2ebf84f6a081299c84141cabe",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-16T17:47:44Z",
+  "pr": 2892,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "995ee07ae976b6a27467d790cf7cb927746e28a9",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "d14e38cf28e15cbebec783852dac5b7bf8160d26",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-16T17:47:44Z",
+  "pr": 2893,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "5a1427aceea8c4a2ebf84f6a081299c84141cabe",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "a60a938f34a3f72c528afcd394941d196860f39c",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-16T22:25:28Z",
+  "pr": 2889,
+  "rows": 44,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "a60a938f34a3f72c528afcd394941d196860f39c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "38fcaacaa404b554fc12df0c15f8d1abffd5aabd",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-18T08:17:33Z",
+  "pr": 2896,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "38fcaacaa404b554fc12df0c15f8d1abffd5aabd",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "36600eb5fcae13bb804843349f6b61962239bb18",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-19T08:16:12Z",
+  "pr": 2898,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "36600eb5fcae13bb804843349f6b61962239bb18",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "38aa9a48369f5353bf1bf07a2bfd3c7e7466e73f",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-20T08:16:32Z",
+  "pr": 2900,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "38aa9a48369f5353bf1bf07a2bfd3c7e7466e73f",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "51d60f1fdab59175fe3013acbf4da18a4ec0400a",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-21T08:20:22Z",
+  "pr": 2901,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "51d60f1fdab59175fe3013acbf4da18a4ec0400a",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "da8b6137dbdeee30b7c0fee355465f168f897c59",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-22T00:08:25Z",
+  "pr": 2899,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "da8b6137dbdeee30b7c0fee355465f168f897c59",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "3c6441db99b70aec8e1cc574d37fd2b4479135d6",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-22T00:23:43Z",
+  "pr": 2897,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "3c6441db99b70aec8e1cc574d37fd2b4479135d6",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "44c63d0e28ae2cdf432932730c4c17387d5c66df",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-22T00:23:43Z",
+  "pr": 2888,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "44c63d0e28ae2cdf432932730c4c17387d5c66df",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "78b99b88695bd83a304ebcc21e5d478f52dc2cab",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-22T01:26:17Z",
+  "pr": 2887,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "78b99b88695bd83a304ebcc21e5d478f52dc2cab",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "5d6658175af66e83730cfc5c405ec2e341e74951",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-22T09:06:09Z",
+  "pr": 2902,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 43,
+    "share": 0.2945205479452055,
+    "timeShare": 0.21182407705594752
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "5d6658175af66e83730cfc5c405ec2e341e74951",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "003d6d82632880ba204b4f927cfadd2450546696",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-22T16:03:19Z",
+  "pr": 2903,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 146,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 146
+ },
+ {
+  "author": "ZacSweers",
+  "base": "003d6d82632880ba204b4f927cfadd2450546696",
+  "changedFiles": 21,
+  "errors": {},
+  "head": "9e973d6c1171edc18068ee44a633c13ac47a13fd",
+  "mergeKind": "squash",
+  "mergedAt": "2026-09-24T03:59:28Z",
+  "pr": 2906,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 45,
+    "share": 0.30612244897959184,
+    "timeShare": 0.21849989545702703
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "9e973d6c1171edc18068ee44a633c13ac47a13fd",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "f8c3a089bbd5af863fd29937ed9cbf8229b84d3d",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-24T22:07:31Z",
+  "pr": 2905,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "f8c3a089bbd5af863fd29937ed9cbf8229b84d3d",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "ba1664cdd01611db2b532583a4769da49cd90e0e",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-24T22:09:53Z",
+  "pr": 2907,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "ba1664cdd01611db2b532583a4769da49cd90e0e",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "f385dbec9b2e8db5b1d99a551b1d72440daf7636",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-24T22:12:08Z",
+  "pr": 2904,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "f385dbec9b2e8db5b1d99a551b1d72440daf7636",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "4a53c491d1efd3dc482fd7a2e209490ecb8d5e91",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-25T22:18:19Z",
+  "pr": 2908,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "4a53c491d1efd3dc482fd7a2e209490ecb8d5e91",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "57f72144834f1d7139f0ace6d837c37443619867",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-25T22:26:23Z",
+  "pr": 2909,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "57f72144834f1d7139f0ace6d837c37443619867",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "8f232d564f68f2bffd2839c35d7f2e90dddd92e0",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-27T08:16:56Z",
+  "pr": 2910,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "8f232d564f68f2bffd2839c35d7f2e90dddd92e0",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "ad65934a84fb9bb0bb86ded38220e83c6f0263d0",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-09-30T08:18:56Z",
+  "pr": 2911,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "ad65934a84fb9bb0bb86ded38220e83c6f0263d0",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "194c583a304292f1943f0d1e195c6ed4d48a5030",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-01T08:19:36Z",
+  "pr": 2912,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "194c583a304292f1943f0d1e195c6ed4d48a5030",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "f4de6d0bb5f0c334c60800d69418304de2606e5f",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-04T10:11:27Z",
+  "pr": 2915,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "f4de6d0bb5f0c334c60800d69418304de2606e5f",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "25a1d91f887a28e931e2db9d6f1cec5a69b945be",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-08T00:41:11Z",
+  "pr": 2918,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "25a1d91f887a28e931e2db9d6f1cec5a69b945be",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "030a6e90c37bfc2b86e5dc96375d4619d7b39929",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-08T00:41:11Z",
+  "pr": 2917,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "030a6e90c37bfc2b86e5dc96375d4619d7b39929",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "f539f627f69327fa462b8600fe84df3310f57287",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-08T18:29:58Z",
+  "pr": 2920,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "f539f627f69327fa462b8600fe84df3310f57287",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "363b75a02bf1f3fd19ce389f42ade2de336fa3b7",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-08T18:29:58Z",
+  "pr": 2921,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "363b75a02bf1f3fd19ce389f42ade2de336fa3b7",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "1322ad7267c66643319f9fd6cf4f45c7b06c07ec",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-10T08:17:04Z",
+  "pr": 2919,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "1322ad7267c66643319f9fd6cf4f45c7b06c07ec",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "653b4dee03f881b12cb76c69261516968b94093a",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-12T08:32:37Z",
+  "pr": 2922,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "653b4dee03f881b12cb76c69261516968b94093a",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "fbc652e26b5f600678f07600240764d32a7117cd",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-13T08:24:04Z",
+  "pr": 2923,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "fbc652e26b5f600678f07600240764d32a7117cd",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "756712c9611904e16155c8d3bca67a8869f9e19b",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-14T17:15:31Z",
+  "pr": 2926,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.29931972789115646,
+    "timeShare": 0.2182585028284682
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "756712c9611904e16155c8d3bca67a8869f9e19b",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "b0a7295780375a4266bf2e487f5ffb22505c57e3",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-14T17:15:31Z",
+  "pr": 2925,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b0a7295780375a4266bf2e487f5ffb22505c57e3",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "7db7317186e20a19db1b0a08642d3c9e0ddb4ed7",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-15T21:18:34Z",
+  "pr": 2928,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "7db7317186e20a19db1b0a08642d3c9e0ddb4ed7",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "434373d889f444d46c1d6f6f4bc9ef445d55fda9",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-17T00:17:03Z",
+  "pr": 2929,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 147,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 147
+ },
+ {
+  "author": "shayann07",
+  "base": "434373d889f444d46c1d6f6f4bc9ef445d55fda9",
+  "changedFiles": 2,
+  "errors": {},
+  "head": "5f1f98bd70b78e631293d28ce069e7ffa0b1e6d2",
+  "mergeKind": "squash",
+  "mergedAt": "2026-10-19T14:42:49Z",
+  "pr": 2914,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 53,
+    "share": 0.35570469798657717,
+    "timeShare": 0.49633403472121085
+   },
+   "module-level": {
+    "classes": 121,
+    "share": 0.8120805369127517,
+    "timeShare": 0.7738519107857577
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "5f1f98bd70b78e631293d28ce069e7ffa0b1e6d2",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "9879c791eef9189bd296dc3e1a387501f61a52fa",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-21T08:17:13Z",
+  "pr": 2930,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "9879c791eef9189bd296dc3e1a387501f61a52fa",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "2fe2a9b60d3ff8d52b8a1ca371c47ed025af9f3c",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-22T08:18:17Z",
+  "pr": 2932,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "2fe2a9b60d3ff8d52b8a1ca371c47ed025af9f3c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "d9022cdfff2dc45b3b4a418c09a9690684777c75",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-22T18:04:47Z",
+  "pr": 2934,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "d9022cdfff2dc45b3b4a418c09a9690684777c75",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "3d661ef72d5bd454ab02e047d5b5942fc7da59ab",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T16:31:25Z",
+  "pr": 2938,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "3d661ef72d5bd454ab02e047d5b5942fc7da59ab",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "a8c5dfd674836ea1f7600efb6f9bed85049e5577",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T16:40:49Z",
+  "pr": 2936,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "a8c5dfd674836ea1f7600efb6f9bed85049e5577",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "aa2c2f86316585a8a804d5be706ec2c8e3f9689b",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T16:46:58Z",
+  "pr": 2931,
+  "rows": 1,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "aa2c2f86316585a8a804d5be706ec2c8e3f9689b",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "4340c41bf4de092dfd41690962e8718d68749240",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T16:53:04Z",
+  "pr": 2933,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "4340c41bf4de092dfd41690962e8718d68749240",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "7453600d6d181e348915bddafd414b8efeb6ed8c",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T16:54:42Z",
+  "pr": 2937,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "7453600d6d181e348915bddafd414b8efeb6ed8c",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "3bab54a477f30cb63a15a397543871dd6508fe22",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T17:03:26Z",
+  "pr": 2935,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "3bab54a477f30cb63a15a397543871dd6508fe22",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "b453a0fdec54b7b0f075e84e7ff819c4780af8c9",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-23T19:45:30Z",
+  "pr": 2939,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b453a0fdec54b7b0f075e84e7ff819c4780af8c9",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "66b08097933cc302a9f92c87fe4892ef16e99399",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-26T08:23:46Z",
+  "pr": 2941,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "66b08097933cc302a9f92c87fe4892ef16e99399",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "af74616f1c27660ae514cfd31b142fda7026f6a1",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-27T08:18:24Z",
+  "pr": 2942,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "af74616f1c27660ae514cfd31b142fda7026f6a1",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "1ed840beb78efcf181378c127ee8b1c12b5b5ff0",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-28T08:14:08Z",
+  "pr": 2943,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "davidmreed",
+  "base": "1ed840beb78efcf181378c127ee8b1c12b5b5ff0",
+  "changedFiles": 3,
+  "errors": {},
+  "head": "19f7856ef2b50ac0efc34d78b34e17b02d7cd882",
+  "mergeKind": "squash",
+  "mergedAt": "2026-10-28T21:22:44Z",
+  "pr": 2940,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "19f7856ef2b50ac0efc34d78b34e17b02d7cd882",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "e00ecf3ddf16e1fcb3b13a7dc232e10f79bd5e34",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-29T22:57:50Z",
+  "pr": 2944,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "e00ecf3ddf16e1fcb3b13a7dc232e10f79bd5e34",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "9ae7fcbedf09c1bee8b34ee2d3b7642d1a26e68e",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-30T19:05:37Z",
+  "pr": 2946,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 44,
+    "share": 0.2953020134228188,
+    "timeShare": 0.21567820716362615
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "9ae7fcbedf09c1bee8b34ee2d3b7642d1a26e68e",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "6d6efdd228363131faf89bd07f0a28ae260b03ec",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-10-30T19:06:49Z",
+  "pr": 2945,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "6d6efdd228363131faf89bd07f0a28ae260b03ec",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "cb965fa3d859b2dc896d924e3636ac2f5bbd6201",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-11-01T09:10:30Z",
+  "pr": 2947,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "cb965fa3d859b2dc896d924e3636ac2f5bbd6201",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "ccb95c0b7a876a07969a90d6534a05da7e16d50a",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-11-02T08:13:21Z",
+  "pr": 2948,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "module-level": {
+    "classes": 0,
+    "share": 0.0,
+    "timeShare": 0.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "adewan-slack",
+  "base": "ccb95c0b7a876a07969a90d6534a05da7e16d50a",
+  "changedFiles": 4,
+  "errors": {},
+  "head": "b156aad7940932fb72fffe7b69e5d23b3a1129b5",
+  "mergeKind": "squash",
+  "mergedAt": "2026-11-03T17:20:04Z",
+  "pr": 2950,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 30,
+    "share": 0.20134228187919462,
+    "timeShare": 0.3681909716816737
+   },
+   "module-level": {
+    "classes": 121,
+    "share": 0.8120805369127517,
+    "timeShare": 0.7738519107857577
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ },
+ {
+  "author": "slack-oss-bot",
+  "base": "b156aad7940932fb72fffe7b69e5d23b3a1129b5",
+  "changedFiles": 1,
+  "errors": {},
+  "head": "fd0bd2dcafe567d1ac3f7d66c6b269bc69068475",
+  "mergeKind": "squash-or-rebase-1",
+  "mergedAt": "2026-11-05T08:12:30Z",
+  "pr": 2952,
+  "rows": 0,
+  "strategies": {
+   "kt-affected": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "module-level": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   },
+   "run-everything": {
+    "classes": 149,
+    "share": 1.0,
+    "timeShare": 1.0
+   }
+  },
+  "totalClasses": 149
+ }
+]

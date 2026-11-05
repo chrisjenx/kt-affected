@@ -1,0 +1,86 @@
+{
+ "generated": "2026-11-05T20:07:04+00:00",
+ "ktAffected": "0.3.0 (94ce6780b6)",
+ "meanTotalClasses": 145.26605504587155,
+ "mergeKinds": {
+  "squash": 18,
+  "squash-or-rebase-1": 91
+ },
+ "oracle": {
+  "artifactsExpired": 0,
+  "artifactsRead": 61,
+  "byAttribution": {
+   "a": 1,
+   "b-build": 44,
+   "c": 10
+  },
+  "byBestSource": {
+   "html-report": 55
+  },
+  "classRows": 55,
+  "jobsFailed": 162,
+  "logsExpired": 20,
+  "logsRead": 142,
+  "pricedClasses": 127,
+  "rows": 55,
+  "runs": 481,
+  "runsInspected": 75,
+  "runsListed": 481
+ },
+ "prsReplayed": 109,
+ "prsWithDiffCausedFailures": 2,
+ "prsWithErrors": 0,
+ "recall": {
+  "kt-affected": {
+   "hit": 44,
+   "of": 45,
+   "prsFullyRun": 1,
+   "prsWithFailures": 2,
+   "recall": 0.9777777777777777
+  },
+  "module-level": {
+   "hit": 45,
+   "of": 45,
+   "prsFullyRun": 2,
+   "prsWithFailures": 2,
+   "recall": 1.0
+  },
+  "run-everything": {
+   "hit": 45,
+   "of": 45,
+   "prsFullyRun": 2,
+   "prsWithFailures": 2,
+   "recall": 1.0
+  }
+ },
+ "repo": "slackhq/circuit",
+ "selection": {
+  "kt-affected": {
+   "meanClasses": 48.28440366972477,
+   "meanShare": 0.33245901762118013,
+   "meanTimeShare": 0.2982000418818647,
+   "medianShare": 0.2945205479452055,
+   "pooledShare": 0.3323860047997979
+  },
+  "module-level": {
+   "meanClasses": 111.74311926605505,
+   "meanShare": 0.7687352282988643,
+   "meanTimeShare": 0.7655587672340242,
+   "medianShare": 1.0,
+   "pooledShare": 0.7692307692307693
+  },
+  "run-everything": {
+   "meanClasses": 145.26605504587155,
+   "meanShare": 1.0,
+   "meanTimeShare": 1.0,
+   "medianShare": 1.0,
+   "pooledShare": 1.0
+  }
+ },
+ "target": "circuit",
+ "window": {
+  "runsSince": "2026-07-24",
+  "since": "2026-08-07",
+  "until": "2026-11-05"
+ }
+}
