@@ -69,7 +69,7 @@ jobs:
           fi
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}
+          name: bin-${{ matrix.target }}
           path: ${{ env.ASSET }}
 
   publish:
@@ -77,8 +77,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Only the binaries: the replay job's shard and result artifacts belong to the run, not the release.
       - uses: actions/download-artifact@v4
         with:
+          pattern: bin-*
           path: dist
           merge-multiple: true
       - name: Checksums
