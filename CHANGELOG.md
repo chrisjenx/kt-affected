@@ -6,8 +6,7 @@ selection results or the plan format.
 
 ## [Unreleased]
 
-- `Explanation::inventory`: every test task with all its classes, as whole groups (not in the
-  `explain` JSON). The public replay uses it instead of a second selection from an empty tree: a PR
+- `Explanation::inventory`: every test task with all its classes, as whole groups. The public replay uses it instead of a second selection from an empty tree: a PR
   costs one selection, about 10x faster.
 - Public replay in CI: `replay.py check` on every pull request (the PRs with real failures caught,
   none may be lost, and a committed sample of selections), and the full replay, sharded, after every

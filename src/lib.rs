@@ -202,8 +202,8 @@ pub struct Explanation {
     /// none.
     pub paths: Vec<TestPath>,
     /// Every test task with all its classes (manual modules left out), as whole groups: what a
-    /// change touching everything would run. Not part of the `explain` JSON.
-    #[serde(skip)]
+    /// change touching everything would run.
+    #[serde(default)]
     pub inventory: Vec<Group>,
 }
 

@@ -36,8 +36,8 @@ fn main() {
     let err = |e: kt_affected::Error| serde_json::json!({"error": e.to_string()});
     let (explanation, inventory) =
         match kt_affected::explain(&root, &opts(flag("--base").expect("--base"))) {
-            Ok(e) => {
-                let inventory = serde_json::json!({ "groups": e.inventory });
+            Ok(mut e) => {
+                let inventory = serde_json::json!({ "groups": std::mem::take(&mut e.inventory) });
                 (serde_json::to_value(e).unwrap(), inventory)
             }
             Err(e) => (err(e), serde_json::Value::Null),
