@@ -321,6 +321,8 @@
   "included_builds": [],
   "inputs": [
     "settings.gradle.kts",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "app/adminApp/build.gradle.kts",
     "app/androidApp/build.gradle.kts",

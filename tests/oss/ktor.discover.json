@@ -12864,6 +12864,8 @@
     "ktor-test-server/src/main/kotlin/test/server/tests/Upload.kt",
     "ktor-test-server/src/main/kotlin/test/server/tests/WebSockets.kt",
     "ktor-test-server/src/main/kotlin/test-server.gradle.kts",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "ktor-bom/build.gradle.kts",
     "ktor-shared/ktor-call-id/build.gradle.kts",

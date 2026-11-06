@@ -14191,6 +14191,8 @@
     "plugins/src/main/kotlin/io.element.android-library.gradle.kts",
     "plugins/src/main/kotlin/io.element.android-root.gradle.kts",
     "plugins/src/main/kotlin/io.element.jvm-library.gradle.kts",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "annotations/build.gradle.kts",
     "app/build.gradle.kts",

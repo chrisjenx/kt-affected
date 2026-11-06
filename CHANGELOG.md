@@ -6,6 +6,20 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- A test file that imports a source-scanning library (Konsist) is seeded whole on any Kotlin source
+  change, comment-only included: it reads source text, not declarations. Tests reaching it through
+  a base class or helper in another file follow through the graph. It is found by its import,
+  flagged when the file is parsed, so a fork published under another Maven group counts and
+  selection reads no extra files. The graph cache format is bumped (one cold rebuild).
+- An Android module that sets `testBuildType` runs its unit tests under that build type
+  (`testReleaseUnitTest`). On AGP 9, which creates unit tests for the tested build type only, that is
+  the only task; on AGP 8, with `android.onlyEnableUnitTestForTheTestedBuildType=false`, or when the
+  AGP version cannot be read from the catalog or root build script, `testDebugUnitTest` runs too.
+  `gradle.properties` and `gradle/libs.versions.toml` are now discovery inputs.
+- Public replay re-run: element-x-android 47 / 52 (was 39), circuit 45 / 45 (was 44). A third fix
+  (whole tasks for modules declaring a bumped catalog library) was replayed and reverted as too costly.
+- Replay harness: selections are cached per binary hash, so a rebuilt binary never reuses another's.
+
 ## [0.4.0]
 
 - Static discovery reads settings scripts that include projects through code (a directory walk, a

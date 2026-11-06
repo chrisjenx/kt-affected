@@ -1744,6 +1744,8 @@
     "buildLogic/toolchain-convention/build.gradle",
     "buildLogic/toolchain-convention/src/main/kotlin/app/cash/sqldelight/toolchain/PluginVersion.kt",
     "buildLogic/toolchain-convention/src/main/kotlin/app/cash/sqldelight/toolchain/ToolchainConventions.kt",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle",
     "adapters/primitive-adapters/build.gradle",
     "dialects/hsql/build.gradle",

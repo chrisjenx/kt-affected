@@ -2,6 +2,7 @@
 configures one), a module-level baseline, and the full inventory every share is measured against."""
 
 import gzip
+import hashlib
 import json
 import os
 import queue
@@ -151,18 +152,35 @@ def select_pr(cfg, paths, pr, empty):
     return res
 
 
+def binaries_key(*binaries):
+    """Selections depend on the binaries that made them (a rebuild, another commit, a dirty tree)."""
+    h = hashlib.sha256()
+    for b in binaries:
+        with open(b, "rb") as fh:
+            h.update(hashlib.file_digest(fh, "sha256").digest())
+    return h.hexdigest()[:12]
+
+
 def select_all(cfg, paths, prs, empty, workers, log):
     """`select_pr` for every PR, `workers` at a time. Worker 0 uses the clone itself; the others get
-    their own work tree and graph cache, so no two selections share a checkout."""
+    their own work tree and graph cache, so no two selections share a checkout. Cached selections
+    are keyed by the binaries, so a rebuilt binary never reads another's."""
+    if not prs:
+        return {}
+    key = binaries_key(paths["cli"], paths["replay_bin"])
+    # The graph cache holds discovery too, so it is per binary like the selections.
+    paths = {**paths, "select": os.path.join(paths["select"], key), "kta": os.path.join(paths["kta"], key)}
+    # Work trees are added one at a time: concurrent `git worktree add` on one clone races on its lock.
+    trees = [paths["repo"]] + [git.ensure_worktree(paths["repo"], f"{paths['repo']}.w{w}", prs[0]["head"])
+                               for w in range(1, max(1, workers))]
     todo = queue.Queue()
     for pr in prs:
         todo.put(pr)
     sel, lock, done = {}, threading.Lock(), [0]
 
     def worker(w):
-        mine = dict(paths)
+        mine = dict(paths, repo=trees[w])
         if w:
-            mine["repo"] = git.ensure_worktree(paths["repo"], f"{paths['repo']}.w{w}", prs[0]["head"])
             mine["kta"] = os.path.join(paths["kta"], f"w{w}")
         while True:
             try:

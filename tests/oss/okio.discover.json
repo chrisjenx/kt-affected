@@ -600,6 +600,8 @@
     "build-support/src/main/kotlin/jvm.kt",
     "build-support/src/main/kotlin/kmp.kt",
     "build-support/src/main/kotlin/platforms.kt",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "android-test/build.gradle.kts",
     "okio/build.gradle.kts",

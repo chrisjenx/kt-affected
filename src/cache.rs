@@ -25,7 +25,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 const MAGIC: &[u8; 8] = b"KTAFGRF1";
-const FORMAT: u32 = 7;
+const FORMAT: u32 = 8;
 pub const SKIP_DIRS: &[&str] = &[
     "build",
     ".git",
@@ -103,7 +103,13 @@ const F_SIZE: usize = 8; // 2 words
 const F_HASH: usize = 10; // 2 words
 const F_REC_OFF: usize = 12; // 2 words
 const F_REC_LEN: usize = 14;
-const F_ERROR: usize = 15;
+const F_FLAGS: usize = 15;
+const FF_ERROR: u32 = 1; // parse errors
+const FF_SCANS_SOURCE: u32 = 2; // imports a source-scanning library
+
+fn file_flags(fp: &FileParse) -> u32 {
+    (if fp.error { FF_ERROR } else { 0 }) | (if fp.scans_source { FF_SCANS_SOURCE } else { 0 })
+}
 // meta (u64): format, discovery stamp, n_files, n_nodes, n_edges, n_strings, parses live bytes,
 // parses lineage id, parses length
 const M_FORMAT: usize = 0;
@@ -252,7 +258,11 @@ impl Packed {
 
     /// Whether kt-syntax reported errors for the file. Read by selection.
     pub fn file_error(&self, f: usize) -> bool {
-        self.file(f)[F_ERROR] != 0
+        self.file(f)[F_FLAGS] & FF_ERROR != 0
+    }
+
+    pub fn file_scans_source(&self, f: usize) -> bool {
+        self.file(f)[F_FLAGS] & FF_SCANS_SOURCE != 0
     }
 
     fn decls_of(&self, f: usize) -> Vec<Decl> {
@@ -1069,7 +1079,7 @@ fn update_locked(
     // ---- symbol table and every file's tokens
     let t2 = Instant::now();
     let mut sym = Symbols::default();
-    let mut file_meta: Vec<(u64, u64, u64, bool)> = Vec::with_capacity(entries.len()); // mtime, size, hash, error
+    let mut file_meta: Vec<(u64, u64, u64, u32)> = Vec::with_capacity(entries.len()); // mtime, size, hash, flags
     for (i, (e, st)) in entries.iter().zip(&statuses).enumerate() {
         interner.intern(&e.path);
         let (m, test) = modules.locate(&e.path);
@@ -1077,17 +1087,12 @@ fn update_locked(
             Status::Clean(o) | Status::Restat(o) => {
                 let p = old.as_ref().unwrap();
                 push_carried(&mut sym, p, *o, m, test);
-                file_meta.push((
-                    e.mtime,
-                    e.size,
-                    p.file_u64(*o, F_HASH),
-                    p.file(*o)[F_ERROR] != 0,
-                ));
+                file_meta.push((e.mtime, e.size, p.file_u64(*o, F_HASH), p.file(*o)[F_FLAGS]));
             }
             Status::Changed(_, t) | Status::New(t) => {
                 let fp = &fresh[&i];
                 sym.push_file(fp.package, m, test, &fp.decls);
-                file_meta.push((e.mtime, e.size, hash(t.as_bytes()), fp.error));
+                file_meta.push((e.mtime, e.size, hash(t.as_bytes()), file_flags(fp)));
             }
         }
     }
@@ -1232,7 +1237,7 @@ fn update_locked(
             rec[i].0 as u32,
             (rec[i].0 >> 32) as u32,
             rec[i].1,
-            err as u32,
+            err,
         ]);
     }
     let mut nodes_tab: Vec<u32> = Vec::with_capacity(n_nodes * NODE_W);
@@ -1447,7 +1452,7 @@ fn delta(
         let fp = interner.intern_file(raw);
         let old_decls = p.decls_of(i);
         let same_shape = fp.package == p.file(i)[F_PKG]
-            && fp.error == (p.file(i)[F_ERROR] != 0)
+            && file_flags(&fp) == p.file(i)[F_FLAGS]
             && fp.decls.len() == old_decls.len()
             && fp.decls.iter().zip(&old_decls).all(|(a, b)| {
                 a.name == b.name

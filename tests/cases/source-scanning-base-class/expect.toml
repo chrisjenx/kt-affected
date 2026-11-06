@@ -1,0 +1,2 @@
+why = "A test that reaches a source scanner through a shared base class or helper in another file reads source text as much as one importing it directly. Rule helpers and base classes are a common way to share Konsist scopes."
+must = ["demo.konsist.ArchitectureTest@:konsist:test"]

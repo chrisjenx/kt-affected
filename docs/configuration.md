@@ -32,7 +32,8 @@ only = []                                 # drop every other task, with a reason
 [tasks.source_sets]
 uiTest = ["jvmTest", "wasmJsBrowserTest"] # override discovery for a source set
 
-[[source_scanner]]                        # tests that read sources as text
+[[source_scanner]]                        # in-house tests that read sources as text (Konsist tests
+                                          # are found by their import, no config needed)
 changed_path = '^app/src/main/.+\.kt$'
 test_package = "com.example.guards"
 
