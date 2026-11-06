@@ -96,19 +96,18 @@ against reviewed goldens (`tests/oss/`).
 
 The numbers above come from an app that cannot be named. [replay.md](replay.md) asks the same
 question of public repositories, using only their CI history, and anyone with `gh` can rerun it.
-Run 2026-11-05, over every pull request merged in 90 days:
+Run 2026-11-06, over every pull request merged in 90 days:
 
 | Repository | PRs | Diff-caused failures | kt-affected ran | Module-level ran | kt-affected share of test classes | Module-level share |
 |---|---:|---:|---:|---:|---:|---:|
-| element-x-android | 501 | 52 | 39 (75%) | 51 (98%) | 18.5% | 63.3% |
-| circuit | 109 | 45 | 44 (98%) | 45 (100%) | 33.2% | 76.9% |
+| element-x-android | 501 | 52 | 47 (90%) | 51 (98%) | 19.9% | 63.3% |
+| circuit | 109 | 45 | 45 (100%) | 45 (100%) | 33.2% | 76.9% |
 
 Module-level is what affected-module Gradle plugins do: run every test task of each changed module
 and its dependents. kt-affected selects about a quarter to a half of what module-level does.
 
-Every failure a changed declaration reached through code was run. Of the 14 misses, 8 are
-source-scanning (Konsist) tests, 4 are tests in a private submodule, 1 is a catalog bump of a
-runtime library, and 1 is an Android release-variant unit test task. Each is described in
-[replay.md](replay.md) and, except the submodule rows, recorded as a `known_gap` corpus case to
-fix next.
+Every failure a changed declaration reached through code was run. The first run missed 14 rows;
+fixes for source-scanning (Konsist) tests and Android release-variant unit tests caught 9 of them.
+The 5 left are 4 tests in a private submodule and 1 catalog bump of a runtime library, whose fix
+cost too much test time and was reverted. Details in [replay.md](replay.md).
 

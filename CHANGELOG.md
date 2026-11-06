@@ -6,6 +6,15 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- A test that imports a source-scanning library (`[selector] source_scanner_imports`, default
+  Konsist) runs on any Kotlin source change, comment-only included: it reads source text, not
+  declarations. Found by its import, so a fork published under another Maven group counts.
+- An Android module's unit tests run under its `testBuildType` (`testReleaseUnitTest` when it sets
+  `release`); before, kt-affected named `testDebugUnitTest`, which such a module does not have.
+- Public replay re-run: element-x-android 47 / 52 (was 39), circuit 45 / 45 (was 44). A third fix
+  (whole tasks for modules declaring a bumped catalog library) was replayed and reverted as too costly.
+- Replay harness: selections are cached per binary hash, so a rebuilt binary never reuses another's.
+
 ## [0.4.0]
 
 - Static discovery reads settings scripts that include projects through code (a directory walk, a

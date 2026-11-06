@@ -86,10 +86,9 @@ was rewritten once to remove such material; keep it clean.
   the event's companion constants, and the graph does not mark companion-only references.
 - A test method with the same name as the member it calls (`fun lines()` calling `x.lines()`) is not
   picked up through an untyped receiver.
-- The public replay (`docs/replay.md`) found tests that observe a change without a declaration
-  path. These are source scanners (Konsist), a catalog bump of a library a module declares, and
-  Android `testReleaseUnitTest`. Each is a `known_gap` case; fixing them widens selection, so
-  re-run the replay to price the fix.
+- A catalog bump of a library a module declares runs one smoke class per task, which missed one
+  public-replay failure. Running whole tasks of the declaring modules was replayed and reverted as too
+  costly (`catalog-used-library-version`, `docs/replay.md`); a narrower rule needs new evidence.
 - Accuracy beyond recall is not yet measured; mutation testing (break each changed declaration, see
   which tests catch it, score selectors) is the planned measure.
 

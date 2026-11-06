@@ -11,26 +11,29 @@ because of a pull request's diff?** Anyone with `gh` access can rerun it and get
 
 | Repository | PRs | Diff-caused failures | kt-affected | kt-affected+assist | Module-level | kt-affected mean share | Module-level mean share | Results |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
-| [slackhq/circuit](https://github.com/slackhq/circuit) | 109 | 45 | 44 / 45 | - | 45 / 45 | 33.2% | 76.9% | [2026-11-05](../replay/results/circuit/2026-11-05/report.md) |
-| [element-hq/element-x-android](https://github.com/element-hq/element-x-android) | 501 | 52 | 39 / 52 | 39 / 52 | 51 / 52 | 18.5% | 63.3% | [2026-11-05](../replay/results/element-x-android/2026-11-05/report.md) |
+| [slackhq/circuit](https://github.com/slackhq/circuit) | 109 | 45 | 45 / 45 | - | 45 / 45 | 33.2% | 76.9% | [2026-11-06](../replay/results/circuit/2026-11-06/report.md) |
+| [element-hq/element-x-android](https://github.com/element-hq/element-x-android) | 501 | 52 | 47 / 52 | 47 / 52 | 51 / 52 | 19.9% | 63.3% | [2026-11-06](../replay/results/element-x-android/2026-11-06/report.md) |
 
 <!-- replay-results:end -->
 
-Run 2026-11-05 with kt-affected 0.3.1 plus the unreleased discovery fixes. Since those fixes,
-static discovery reads element-x-android's settings loop, so the assist row matches the plain one.
+Run 2026-11-06 with kt-affected 0.4.0 plus two unreleased fixes from the first run's gaps (below).
+Static discovery reads element-x-android's settings loop, so the assist row matches the plain one.
 
-**What the misses were.** Every miss is listed in the report with its evidence; grouped:
+**What the misses were, and what was done.** The first run (2026-11-05, 0.4.0) missed 14 rows.
+None was a graph miss: every failure a changed declaration reached through code was run. They were
+tests that observe a change some other way. Each gap got a corpus case, a fix was tried, and the
+fix was kept only if the replay showed it cheap for what it catches:
 
-| Gap | Rows | Corpus case |
-|---|---:|---|
-| Source-scanning tests (Konsist rules over every source file: license headers, preview naming, `@Immutable`) failing on a PR's new code | 8 | `source-scanning-test` |
-| Tests inside a private git submodule whose pointer the PR moved; no sources in a public checkout | 4 | none: not reproducible without the submodule |
-| A catalog bump of a runtime library (androidx core) made a host-test call throw; one smoke class per task did not cover it | 1 | `catalog-used-library-version` |
-| An Android module's `testReleaseUnitTest` (kt-affected maps the `test` source set to `testDebugUnitTest` only) | 1 | `android-release-unit-tests` |
+| Gap | Rows | Corpus case | Outcome |
+|---|---:|---|---|
+| Source-scanning tests (Konsist rules over every source file: license headers, preview naming, `@Immutable`) failing on a PR's new code | 8 | `source-scanning-test`, `source-scanning-fork` | fixed: a test importing a scanner runs on any Kotlin source change; all 8 caught |
+| An Android module's `testReleaseUnitTest` (`testBuildType = "release"`) | 1 | `android-release-unit-tests` | fixed: unit tests run under the module's `testBuildType`; caught |
+| A catalog bump of a runtime library (androidx core) made a host-test call throw; one smoke class per task did not cover it | 1 | `catalog-used-library-version` (`known_gap`) | tried and reverted: running whole tasks of the modules declaring a bumped library caught it for +3.5 points of test time on element-x-android and +9.6 on circuit |
+| Tests inside a private git submodule whose pointer the PR moved; no sources in a public checkout | 4 | none: not reproducible without the submodule | not fixable from a public checkout |
 
-None of these is a graph miss. Every failure a changed declaration reached through code was run,
-on both repositories. The misses are tests that observe a change some other way: through source
-text, through a submodule, through a dependency version, or through a second build type.
+The two kept fixes cost element-x-android 4.1 points of test time (17.7% to 21.8%) for 8 more
+caught failures, and circuit 0.9 points (29.8% to 30.7%) for 1. The production app's replay is
+unchanged by them (it uses neither).
 
 Each repository's `report.md` has the per-PR table, every failure row with its provenance and
 attribution, and every row a selector missed with the evidence for it.
