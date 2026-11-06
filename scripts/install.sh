@@ -3,7 +3,7 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/chrisjenx/kt-affected/main/scripts/install.sh | sh
 #
-# Environment: KT_AFFECTED_VERSION (a tag like v0.4.0; default: the latest release),
+# Environment: KT_AFFECTED_VERSION (a tag like v0.5.0; default: the latest release),
 # KT_AFFECTED_INSTALL_DIR (default: ~/.local/bin). Verifies the archive against the release's SHA256SUMS.
 set -eu
 

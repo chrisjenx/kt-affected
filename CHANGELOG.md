@@ -6,12 +6,14 @@ selection results or the plan format.
 
 ## [Unreleased]
 
-- `Explanation::inventory`: every test task with all its classes, as whole groups. The public replay uses it instead of a second selection from an empty tree: a PR
-  costs one selection, about 10x faster.
+## [0.5.0]
+
+- `Explanation::inventory`: every test task with all its classes, as whole groups. The public
+  replay uses it instead of a second selection from an empty tree: a PR costs one selection, about
+  10x faster.
 - Public replay in CI: `replay.py check` on every pull request (the PRs with real failures caught,
   none may be lost, and a committed sample of selections), and the full replay, sharded, after every
   merge and before a release; both on a committed frozen window, with no GitHub API.
-
 - A test file that imports a source-scanning library (Konsist) is seeded whole on any Kotlin source
   change, comment-only included: it reads source text, not declarations. Tests reaching it through
   a base class or helper in another file follow through the graph. It is found by its import,
@@ -142,7 +144,8 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/chrisjenx/kt-affected/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/chrisjenx/kt-affected/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/chrisjenx/kt-affected/compare/v0.2.1...v0.3.0
