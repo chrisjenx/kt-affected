@@ -1292,7 +1292,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 .iter()
                 .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
         {
-            for (file, classes) in scanning_tests(&v, scanners, &build_logic, &read) {
+            for (file, classes) in scanning_tests(&v, scanners, &read) {
                 reasons.push(format!(
                     "{file}: scans source files — runs on any Kotlin source change"
                 ));
@@ -1387,24 +1387,11 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
 /// Test files importing a source-scanning library (`source_scanner_imports`), with their classes.
 /// Only read when some build script or catalog names the library's group, so a build without it
 /// pays nothing.
-fn scanning_tests<'a>(
+fn scanning_tests(
     v: &View,
     scanners: &[String],
-    build_logic: &dyn Fn() -> &'a [String],
     read: &dyn Fn(&str) -> Option<String>,
 ) -> Vec<(String, Vec<(u32, String)>)> {
-    let groups: Vec<&str> = scanners
-        .iter()
-        .map(|s| s.rsplit_once('.').map(|(g, _)| g).unwrap_or(s))
-        .collect();
-    let catalog = read("gradle/libs.versions.toml").unwrap_or_default();
-    if !build_logic()
-        .iter()
-        .chain([&catalog])
-        .any(|t| groups.iter().any(|g| t.contains(g)))
-    {
-        return Vec::new();
-    }
     let mut by_file: BTreeMap<u32, Vec<String>> = BTreeMap::new();
     for (f, fq) in v.test_class.values() {
         by_file.entry(*f).or_default().push(fq.clone());
@@ -1413,6 +1400,9 @@ fn scanning_tests<'a>(
     for (f, mut classes) in by_file {
         let path = v.p.file_path(f as usize);
         let Some(text) = read(path) else { continue };
+        if !scanners.iter().any(|s| text.contains(s.as_str())) {
+            continue;
+        }
         let imports = text.lines().any(|l| {
             l.trim_start().strip_prefix("import ").is_some_and(|rest| {
                 let rest = rest.trim_start();

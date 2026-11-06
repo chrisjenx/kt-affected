@@ -1,0 +1,2 @@
+why = "A source-scanning library consumed through a fork published under another Maven group keeps its package, so the test's import, not the dependency's coordinates, is what marks it. Seen on a public app's CI, which depends on such a fork."
+must = ["demo.konsist.ArchitectureTest@:konsist:test"]

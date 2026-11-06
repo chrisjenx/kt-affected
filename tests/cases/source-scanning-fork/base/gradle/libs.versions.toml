@@ -1,0 +1,2 @@
+[libraries]
+test-konsist = "com.github.example:konsist:0.18.0"

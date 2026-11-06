@@ -14,6 +14,7 @@ import argparse
 import datetime
 import glob
 import gzip
+import hashlib
 import json
 import os
 import re
@@ -46,6 +47,14 @@ def build_binaries():
                    cwd=ROOT, check=True)
     rel = os.path.join(ROOT, "target", "release")
     return os.path.join(rel, "kt-affected"), os.path.join(rel, "examples", "replay")
+
+
+def binary_fingerprint(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()[:12]
 
 
 def kta_version():
@@ -89,6 +98,11 @@ def run(args, name, cfg, offline):
     runs_since = (datetime.date.fromisoformat(since) - datetime.timedelta(days=14)).isoformat()
 
     paths["cli"], paths["replay_bin"] = build_binaries()
+    # Selections depend on the binary, so a rebuilt one (another commit, a dirty tree) never reads
+    # the selections an older one cached.
+    fingerprint = binary_fingerprint(paths["replay_bin"])
+    paths["select"] = os.path.join(paths["select"], fingerprint)
+    paths["kta"] = os.path.join(paths["kta"], fingerprint)
     if not offline:
         git.ensure_clone(f"https://github.com/{cfg['repo']}.git", paths["repo"])
 
