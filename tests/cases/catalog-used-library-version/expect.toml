@@ -1,3 +1,3 @@
 why = "A catalog bump of a library a module declares can change what its tests observe (a public app's CI: a runtime-library bump made a host-test call throw, failing a class the one smoke class did not cover). The module declaring the library, and its dependents, are where that shows."
 must = ["demo.text.AuthorTest@:text:test", "demo.text.AuthorNameTest@:text:test"]
-known_gap = "a catalog version bump runs one smoke class per task everywhere (catalog-library-version); running whole tasks of the modules that declare the bumped library needs a replay to price it against the measured smoke policy"
+known_gap = "a catalog version bump runs one smoke class per task everywhere (catalog-library-version). Running whole tasks of the modules that declare the bumped library was tried and replayed: +1 caught failure on element-x-android for +3.5 points of test time there and +9.6 on circuit, so it was reverted"
