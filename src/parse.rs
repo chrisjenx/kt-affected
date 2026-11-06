@@ -231,6 +231,21 @@ pub struct FileParse {
     pub decls: Vec<Decl>,
     pub refs: FileRefs,
     pub error: bool,
+    /// Imports a source-scanning library (`SOURCE_SCANNERS`).
+    pub scans_source: bool,
+}
+
+/// Packages of test libraries that read the project's source text (Konsist): a test importing one
+/// observes any Kotlin source change, cosmetic edits included.
+pub const SOURCE_SCANNERS: &[&str] = &["com.lemonappdev.konsist"];
+
+fn imports_source_scanner(segs: &[String]) -> bool {
+    let joined = segs.join(".");
+    SOURCE_SCANNERS.iter().any(|s| {
+        joined
+            .strip_prefix(s)
+            .is_some_and(|r| r.is_empty() || r.starts_with('.'))
+    })
 }
 
 #[derive(Default)]
@@ -266,6 +281,10 @@ impl Interner {
 
     pub fn intern_file(&mut self, raw: RawFile) -> FileParse {
         let package = self.intern(&raw.package);
+        let scans_source = raw
+            .imports
+            .iter()
+            .any(|im| imports_source_scanner(&im.segs));
         let imports = raw
             .imports
             .into_iter()
@@ -355,6 +374,7 @@ impl Interner {
                 params,
             },
             error: raw.error,
+            scans_source,
         }
     }
 

@@ -6,9 +6,10 @@ selection results or the plan format.
 
 ## [Unreleased]
 
-- A test that imports a source-scanning library (`[selector] source_scanner_imports`, default
-  Konsist) runs on any Kotlin source change, comment-only included: it reads source text, not
-  declarations. Found by its import, so a fork published under another Maven group counts.
+- A test that imports a source-scanning library (Konsist) runs on any Kotlin source change,
+  comment-only included: it reads source text, not declarations. It is found by its import, flagged
+  when the file is parsed, so a fork published under another Maven group counts and selection reads
+  no extra files. The graph cache format is bumped (one cold rebuild).
 - An Android module's unit tests run under its `testBuildType` (`testReleaseUnitTest` when it sets
   `release`); before, kt-affected named `testDebugUnitTest`, which such a module does not have.
 - Public replay re-run: element-x-android 47 / 52 (was 39), circuit 45 / 45 (was 44). A third fix

@@ -1268,40 +1268,40 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 }
             }
         }
+        let mut pick = |f: &u32, fq: &String| {
+            for key in idx.owner.get(f).into_iter().flatten() {
+                if idx.admits(key, fq) {
+                    picked.entry(key.clone()).or_default().insert(fq.clone());
+                }
+            }
+        };
         for sc in &cfg.source_scanners {
             let re = Regex::new(&sc.changed_path).map_err(|e| e.to_string())?;
             if changed.iter().any(|p| re.is_match(p)) {
                 let pfx = format!("{}.", sc.test_package);
-                for (&r, (f, fq)) in &v.test_class {
+                for (f, fq) in v.test_class.values() {
                     let pkg = v.p.file_package(*f as usize);
-                    let _ = r;
                     if pkg == sc.test_package || pkg.starts_with(&pfx) {
-                        for key in idx.owner.get(f).into_iter().flatten() {
-                            if idx.admits(key, fq) {
-                                picked.entry(key.clone()).or_default().insert(fq.clone());
-                            }
-                        }
+                        pick(f, fq);
                     }
                 }
             }
         }
-        let scanners = &cfg.selector.source_scanner_imports;
-        if !scanners.is_empty()
-            && changed
-                .iter()
-                .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
+        if changed
+            .iter()
+            .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
         {
-            for (file, classes) in scanning_tests(&v, scanners, &read) {
+            let mut scanners: BTreeSet<&str> = BTreeSet::new();
+            for (f, fq) in v.test_class.values() {
+                if v.p.file_scans_source(*f as usize) {
+                    scanners.insert(v.p.file_path(*f as usize));
+                    pick(f, fq);
+                }
+            }
+            for file in scanners {
                 reasons.push(format!(
                     "{file}: scans source files — runs on any Kotlin source change"
                 ));
-                for (f, fq) in classes {
-                    for key in idx.owner.get(&f).into_iter().flatten() {
-                        if idx.admits(key, &fq) {
-                            picked.entry(key.clone()).or_default().insert(fq.clone());
-                        }
-                    }
-                }
             }
         }
     }
@@ -1381,45 +1381,6 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         groups: kept,
         explain: explain.map(|e| *e),
     })
-}
-
-/// Test files importing a source-scanning library (`source_scanner_imports`), with their classes.
-/// Only read when some build script or catalog names the library's group, so a build without it
-/// pays nothing.
-fn scanning_tests(
-    v: &View,
-    scanners: &[String],
-    read: &dyn Fn(&str) -> Option<String>,
-) -> Vec<(String, Vec<(u32, String)>)> {
-    let mut by_file: BTreeMap<u32, Vec<String>> = BTreeMap::new();
-    for (f, fq) in v.test_class.values() {
-        by_file.entry(*f).or_default().push(fq.clone());
-    }
-    let mut out = Vec::new();
-    for (f, mut classes) in by_file {
-        let path = v.p.file_path(f as usize);
-        let Some(text) = read(path) else { continue };
-        if !scanners.iter().any(|s| text.contains(s.as_str())) {
-            continue;
-        }
-        let imports = text.lines().any(|l| {
-            l.trim_start().strip_prefix("import ").is_some_and(|rest| {
-                let rest = rest.trim_start();
-                scanners.iter().any(|s| {
-                    rest.strip_prefix(s.as_str())
-                        .is_some_and(|r| r.is_empty() || r.starts_with(['.', ' ', ';']))
-                })
-            })
-        });
-        if imports {
-            classes.sort();
-            out.push((
-                path.to_string(),
-                classes.into_iter().map(|c| (f, c)).collect(),
-            ));
-        }
-    }
-    out
 }
 
 /// What `[tasks] only` left out, for modules the plan touches: a source set none of whose tasks it

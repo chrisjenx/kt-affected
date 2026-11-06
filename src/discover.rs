@@ -7,11 +7,9 @@
 //! Anything computed at configuration time (convention plugins, loops over
 //! directories) is invisible statically; `--gradle-export` asks Gradle itself.
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
-use std::sync::LazyLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
@@ -271,7 +269,7 @@ fn leaf_of_task(task: &str) -> Option<&'static str> {
     Some(match task {
         "jvmTest" => "jvmTest",
         "testAndroidHostTest" => "androidHostTest",
-        "testDebugUnitTest" => "androidUnitTest",
+        "testDebugUnitTest" | "testReleaseUnitTest" => "androidUnitTest",
         "jsBrowserTest" | "jsNodeTest" => "jsTest",
         "wasmJsBrowserTest" | "wasmJsNodeTest" | "wasmJsD8Test" => "wasmJsTest",
         "wasmWasiNodeTest" => "wasmWasiTest",
@@ -1243,7 +1241,7 @@ fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
         "jvm" => vec![format!("{target}Test")],
         "android" | "androidTarget" | "androidLibrary" => {
             // Only what the build or the layout states: a guessed task name fails the Gradle invocation.
-            let unit = format!("test{}UnitTest", project.test_build_type);
+            let unit = android_task(UNIT, None, &project.test_build_type);
             if project.android_target_call {
                 vec![unit]
             } else if project.android_host_tests
@@ -1320,36 +1318,37 @@ fn test_tasks_for(
                 .iter()
                 .find(|f| name.strip_prefix(prefix) == Some(capitalize(f).as_str()))
         };
-        if name == "test" && shape.android && !shape.flavors.is_empty() {
-            for f in &shape.flavors {
-                out.insert(format!("test{}{bt}UnitTest", capitalize(f)));
-            }
-        } else if name == "test" {
-            out.insert(if shape.android {
-                format!("test{bt}UnitTest")
+        let per_flavor = |kind: (&str, &str)| -> Vec<String> {
+            if shape.flavors.is_empty() {
+                vec![android_task(kind, None, bt)]
             } else {
-                "test".into()
-            });
-        } else if name == "androidTest" && !shape.flavors.is_empty() {
-            for f in &shape.flavors {
-                out.insert(format!("connected{}{bt}AndroidTest", capitalize(f)));
+                shape
+                    .flavors
+                    .iter()
+                    .map(|f| android_task(kind, Some(f), bt))
+                    .collect()
             }
+        };
+        if name == "test" && shape.android {
+            out.extend(per_flavor(UNIT));
+        } else if name == "test" {
+            out.insert("test".into());
         } else if name == "androidTest" {
-            out.insert(format!("connected{bt}AndroidTest"));
+            out.extend(per_flavor(CONNECTED));
         } else if let Some(f) = flavor_of("test").filter(|_| shape.android) {
-            out.insert(format!("test{}{bt}UnitTest", capitalize(f)));
+            out.insert(android_task(UNIT, Some(f), bt));
         } else if let Some(f) = flavor_of("androidTest").filter(|_| shape.android) {
-            out.insert(format!("connected{}{bt}AndroidTest", capitalize(f)));
+            out.insert(android_task(CONNECTED, Some(f), bt));
         } else if let Some(build_type) = name
             .strip_prefix("test")
             .filter(|r| shape.android && r.starts_with(|c: char| c.is_ascii_uppercase()))
         {
             // A build type's own unit tests (`testRelease`), under each flavor when there are some.
             if shape.flavors.is_empty() {
-                out.insert(format!("test{build_type}UnitTest"));
+                out.insert(android_task(UNIT, None, build_type));
             }
             for f in &shape.flavors {
-                out.insert(format!("test{}{build_type}UnitTest", capitalize(f)));
+                out.insert(android_task(UNIT, Some(f), build_type));
             }
         } else {
             // A custom JVM test suite (`integrationTest`) gets a task of the same name.
@@ -1385,12 +1384,33 @@ fn test_tasks_for(
     out
 }
 
-/// `testBuildType = "release"` (Groovy: `testBuildType "release"`), capitalised.
-fn test_build_type(text: &str) -> Option<String> {
-    static RE: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r#"(?m)^[^/\n]*\btestBuildType\s*=?\s*["']([A-Za-z][A-Za-z0-9_]*)["']"#).unwrap()
-    });
-    RE.captures(text).map(|c| capitalize(&c[1]))
+const UNIT: (&str, &str) = ("test", "UnitTest");
+const CONNECTED: (&str, &str) = ("connected", "AndroidTest");
+
+/// An Android variant's test task: `test<Flavor><BuildType>UnitTest`, `connected<…>AndroidTest`.
+fn android_task((prefix, suffix): (&str, &str), flavor: Option<&str>, build_type: &str) -> String {
+    let flavor = flavor.map(capitalize).unwrap_or_default();
+    format!("{prefix}{flavor}{build_type}{suffix}")
+}
+
+/// The build type unit and connected tests run under: `testBuildType = "release"` (Groovy:
+/// `testBuildType "release"`), capitalised; `Debug` when unset.
+fn test_build_type(toks: &[Tok]) -> String {
+    toks.iter()
+        .enumerate()
+        .filter(|(_, t)| ident(t) == Some("testBuildType"))
+        .find_map(|(i, _)| {
+            let at = if is_p(toks.get(i + 1), '=') {
+                i + 2
+            } else {
+                i + 1
+            };
+            match toks.get(at) {
+                Some(Tok::Str(b, false)) => Some(capitalize(b)),
+                _ => None,
+            }
+        })
+        .unwrap_or_else(|| "Debug".into())
 }
 
 /// The flavors a `productFlavors { create("x") }` (or `register`, `maybeCreate`, Groovy `x { }`) block
@@ -1782,6 +1802,12 @@ pub fn discover(root: &Path) -> Build {
                     });
             }
         }
+        let (flavors, test_build_type) = if android {
+            let toks = tokenize(&text);
+            (product_flavors(&toks), test_build_type(&toks))
+        } else {
+            (vec![], "Debug".into())
+        };
         let shape = ProjectShape {
             kmp,
             android,
@@ -1791,15 +1817,8 @@ pub fn discover(root: &Path) -> Build {
             android_unit_dir: source_sets.contains_key("androidUnitTest"),
             js_envs: facts.js_envs.clone(),
             target_kinds: kinds.clone(),
-            flavors: if android {
-                product_flavors(&tokenize(&text))
-            } else {
-                vec![]
-            },
-            test_build_type: android
-                .then(|| test_build_type(&text))
-                .flatten()
-                .unwrap_or_else(|| "Debug".into()),
+            flavors,
+            test_build_type,
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.

@@ -14,8 +14,6 @@ build_logic_globs = ["gradle/plugins/src/main"]  # extra sources whose text deci
 classpath_bound = true                    # a test runs edited code only with an edited module on its classpath
 codegen_plugins = ["dev.zacsweers.metro"] # a version-catalog bump of one of these runs every test task whole
                                           # (default: Kotlin, Compose, KSP, Metro, SQLDelight, Anvil, Dagger, Room, ...)
-source_scanner_imports = ["com.lemonappdev.konsist"]  # a test importing one reads source text: any .kt/.kts
-                                          # change, comment-only included, selects it (the default)
 
 [database]
 migration_dirs = ["app/src/main/resources/db/migration/"]  # Flyway: seed Kotlin naming the tables
@@ -34,7 +32,8 @@ only = []                                 # drop every other task, with a reason
 [tasks.source_sets]
 uiTest = ["jvmTest", "wasmJsBrowserTest"] # override discovery for a source set
 
-[[source_scanner]]                        # tests that read sources as text
+[[source_scanner]]                        # in-house tests that read sources as text (Konsist tests
+                                          # are found by their import, no config needed)
 changed_path = '^app/src/main/.+\.kt$'
 test_package = "com.example.guards"
 
