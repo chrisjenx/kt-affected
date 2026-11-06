@@ -69,6 +69,9 @@ compares every pull request with its base on the same runner (the builds in `tes
   the improvement table in `docs/accuracy.md` in step.
 - `tests/cases/` is the public, permanent record of every edge case learned. Every selection fix adds
   a case; a gap found but not yet fixed is added with `known_gap` (the harness fails once it passes).
+- The public replay is the second record (`docs/replay.md`, "In CI"): `replay.py check` runs on every
+  pull request, the full replay after merge and before a release, both on a frozen window. A change
+  in selection shows as a `check` diff; accept it with `--update` only with the reason in the commit.
 
 ## Privacy rule
 

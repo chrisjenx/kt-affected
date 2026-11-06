@@ -50,10 +50,9 @@ def checkout(work, sha):
     git.run(work, "checkout", "-q", "-f", "--detach", sha)
 
 
-def run_replay_bin(binary, work, base, head, cache_dir, inventory_base):
+def run_replay_bin(binary, work, base, head, cache_dir):
     p = subprocess.run(
-        [binary, work, "--base", base, "--head", head, "--cache-dir", cache_dir,
-         "--static-discovery", "--inventory-base", inventory_base],
+        [binary, work, "--base", base, "--head", head, "--cache-dir", cache_dir, "--static-discovery"],
         capture_output=True, text=True,
     )
     if p.returncode != 0:
@@ -113,7 +112,7 @@ def module_level(discovery, changed, inventory):
     return hit, False
 
 
-def select_pr(cfg, paths, pr, empty):
+def select_pr(cfg, paths, pr):
     """Selections for one PR, cached at `paths["select"]/<n>.json.gz`."""
     out_file = os.path.join(paths["select"], f"{pr['number']}.json.gz")
     if os.path.exists(out_file):
@@ -130,7 +129,7 @@ def select_pr(cfg, paths, pr, empty):
         if assist:
             res["assistedProjects"] = len(assist_settings(work, assist))
         cache = os.path.join(paths["kta"], name)
-        r = run_replay_bin(paths["replay_bin"], work, pr["base"], pr["head"], cache, empty)
+        r = run_replay_bin(paths["replay_bin"], work, pr["base"], pr["head"], cache)
         exp = r.get("explanation") or {}
         inv = r.get("inventory") or {}
         sel = exp.get("selection") or {}
@@ -161,7 +160,7 @@ def binaries_key(*binaries):
     return h.hexdigest()[:12]
 
 
-def select_all(cfg, paths, prs, empty, workers, log):
+def select_all(cfg, paths, prs, workers, log):
     """`select_pr` for every PR, `workers` at a time. Worker 0 uses the clone itself; the others get
     their own work tree and graph cache, so no two selections share a checkout. Cached selections
     are keyed by the binaries, so a rebuilt binary never reads another's."""
@@ -187,7 +186,7 @@ def select_all(cfg, paths, prs, empty, workers, log):
                 pr = todo.get_nowait()
             except queue.Empty:
                 return
-            res = select_pr(cfg, mine, pr, empty)
+            res = select_pr(cfg, mine, pr)
             with lock:
                 sel[pr["number"]] = res
                 done[0] += 1

@@ -33,19 +33,6 @@ def fetch_commit(repo_dir, sha):
     return run(repo_dir, "fetch", "-q", "--filter=blob:none", "origin", sha, check=False).returncode == 0
 
 
-def empty_commit(repo_dir):
-    """A commit with an empty tree: selecting from it to a commit lists every test class."""
-    tree = run(repo_dir, "hash-object", "-t", "tree", "-w", "--stdin", input="").stdout.strip()
-    env_date = "2000-01-01T00:00:00Z"
-    p = subprocess.run(
-        ["git", "-C", repo_dir, "-c", "user.name=replay", "-c", "user.email=replay@localhost",
-         "commit-tree", tree, "-m", "empty"],
-        capture_output=True, text=True, check=True,
-        env={**os.environ, "GIT_AUTHOR_DATE": env_date, "GIT_COMMITTER_DATE": env_date},
-    )
-    return p.stdout.strip()
-
-
 def changed_files(repo_dir, base, head):
     return [l for l in out(repo_dir, "diff", "--name-only", "--no-renames", base, head).splitlines() if l]
 

@@ -63,6 +63,9 @@ pub struct Explain {
     pub verdicts: Vec<(String, String, u32, bool, String)>,
     /// (test class, steps from the test back to a seed: (declaration, how it was reached))
     pub paths: Vec<(String, Vec<(String, String)>)>,
+    /// Every test task with all its classes (manual modules left out): what a change touching
+    /// everything would run, the denominator replays measure selections against.
+    pub inventory: Vec<Group>,
 }
 
 pub fn modules_of(
@@ -1333,6 +1336,20 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         groups.push(group(m, UNMAPPED_TASK, vec![], 0, true, cfg, &dirs));
     }
     groups.retain(|g| !g.classes.is_empty() || g.full);
+    if let Some(e) = explain.as_mut() {
+        e.inventory = idx
+            .full
+            .iter()
+            .filter(|((m, _), _)| !cfg.modules.manual.contains(m))
+            .map(|((m, t), c)| group(m, t, c.iter().cloned().collect(), c.len(), true, cfg, &dirs))
+            .chain(
+                idx.unknown
+                    .iter()
+                    .filter(|m| !cfg.modules.manual.contains(*m))
+                    .map(|m| group(m, UNMAPPED_TASK, vec![], 0, true, cfg, &dirs)),
+            )
+            .collect();
+    }
 
     // Module policy: manual never runs; direct-only runs only for a change under its directory.
     let mut kept = Vec::new();

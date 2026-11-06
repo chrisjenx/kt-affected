@@ -25,8 +25,14 @@ jobs:
       - name: CHANGELOG has the version
         run: grep -q "^## \[${GITHUB_REF_NAME#v}\]" CHANGELOG.md || { echo "::error::no CHANGELOG.md section for ${GITHUB_REF_NAME#v}"; exit 1; }
 
-  build:
+  # The full public accuracy replay: a release never ships catching fewer real failures than the
+  # committed results.
+  replay:
     needs: check
+    uses: ./.github/workflows/replay.yml
+
+  build:
+    needs: [check, replay]
     strategy:
       fail-fast: false
       matrix:

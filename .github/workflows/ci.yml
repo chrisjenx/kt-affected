@@ -62,3 +62,24 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked --release
       - run: scripts/oss-golden.sh target/release/kt-affected
+
+  # The per-change accuracy gate: re-select the public replay's PRs whose real CI failures
+  # kt-affected catches (none may be lost) and a committed sample of selections (a change shows as a
+  # diff to review). Frozen CI evidence in replay/frozen/, no GitHub API; the projects' Gradle is
+  # never run. The full window runs in the Replay workflow after merge and before a release.
+  replay-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [circuit, element-x-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/cache@v4
+        with:
+          path: .replay/repos/${{ matrix.target }}
+          key: replay-repo-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: replay-repo-${{ matrix.target }}-
+      - run: python3 replay/replay.py check ${{ matrix.target }} --workers 3
