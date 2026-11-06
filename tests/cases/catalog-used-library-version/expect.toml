@@ -1,5 +1,3 @@
 why = "A catalog bump of a library a module declares can change what its tests observe (a public app's CI: a runtime-library bump made a host-test call throw, failing a class the one smoke class did not cover). The module declaring the library, and its dependents, are where that shows."
 must = ["demo.text.AuthorTest@:text:test", "demo.text.AuthorNameTest@:text:test"]
-full_tasks = [":text:test"]
-smoke_tasks = [":other:test"]
-reasons = ["changes the version of libs.okio — declared by :text"]
+known_gap = "a catalog version bump runs one smoke class per task everywhere (catalog-library-version); running whole tasks of the modules that declare the bumped library needs a replay to price it against the measured smoke policy"

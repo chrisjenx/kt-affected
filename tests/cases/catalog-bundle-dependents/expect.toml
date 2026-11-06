@@ -1,4 +1,0 @@
-why = "A catalog bump reaches modules declaring the library through a bundle, and their dependents, whose test runtime classpath carries the new version; a module declaring only a longer accessor that shares the name's prefix keeps the build-logic smoke class."
-full_tasks = [":store:test", ":shop:test"]
-smoke_tasks = [":other:test"]
-reasons = ["libs.bundles.io"]
