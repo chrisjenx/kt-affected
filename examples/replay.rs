@@ -1,11 +1,11 @@
 //! One pull request's selection for the public accuracy replay (`replay/`), as JSON on stdout.
 //!
 //!   cargo run --release --example replay -- <root> --base REF --head REF [--cache-dir DIR]
-//!       [--static-discovery] [--inventory-base REF]
+//!       [--static-discovery]
 //!
 //! Prints `{"explanation": …, "inventory": …}`: `explanation` is `kt_affected::explain` for
-//! base..head (the selection plus verdicts and paths); `inventory`, when `--inventory-base` names a
-//! commit with an empty tree, is the selection from it, which lists every test class of every task.
+//! base..head (the selection plus verdicts and paths); `inventory` lists every test class of every
+//! task at head, as whole groups.
 //! A failed call prints `{"error": "<message>"}` in its place.
 
 use std::path::PathBuf;
@@ -34,17 +34,14 @@ fn main() {
         o
     };
     let err = |e: kt_affected::Error| serde_json::json!({"error": e.to_string()});
-    let explanation = match kt_affected::explain(&root, &opts(flag("--base").expect("--base"))) {
-        Ok(e) => serde_json::to_value(e).unwrap(),
-        Err(e) => err(e),
-    };
-    let inventory = match flag("--inventory-base") {
-        Some(b) => match kt_affected::select(&root, &opts(b)) {
-            Ok(s) => serde_json::to_value(s).unwrap(),
-            Err(e) => err(e),
-        },
-        None => serde_json::Value::Null,
-    };
+    let (explanation, inventory) =
+        match kt_affected::explain(&root, &opts(flag("--base").expect("--base"))) {
+            Ok(e) => {
+                let inventory = serde_json::json!({ "groups": e.inventory });
+                (serde_json::to_value(e).unwrap(), inventory)
+            }
+            Err(e) => (err(e), serde_json::Value::Null),
+        };
     println!(
         "{}",
         serde_json::json!({"explanation": explanation, "inventory": inventory})

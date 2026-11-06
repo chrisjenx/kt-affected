@@ -112,3 +112,32 @@ a rerun only fetches what is new. Results go to `replay/results/<target>/<date>/
 
 Adding a repository is one table in `replay/targets.toml`: its workflows, the test tasks CI runs,
 and the artifact names that hold test reports.
+
+## In CI
+
+A full replay is too slow to run on every change, so it runs in three layers, cheapest first:
+
+1. **Corpus cases** (`tests/cases/`, every change, seconds): one small fixture per edge case.
+2. **`replay.py check <target>`** (every change, a few minutes): re-selects only the PRs whose real
+   CI failures kt-affected catches, and fails if one is lost; and a fixed sample of 40 PRs whose
+   selections are committed in `replay/check/<target>.json`, so any change in what is selected shows
+   as a per-PR diff of test classes. Accept a reviewed diff with `check <target> --update`.
+3. **The full replay** (the `Replay` workflow, after every merge to main and before a release):
+   every PR of the window, sharded across runners, scored against the CI failures and compared with
+   the committed results. A release does not build if it catches fewer real failures.
+
+All three use the window frozen in `replay/frozen/<target>.json.gz` (PRs, CI runs, failure events,
+test reports): no GitHub API, and the same answer every time. A maintainer moves the window with
+`run <target> --freeze` (needs `gh`), commits the new frozen file and results, and refreshes the
+check with `check <target> --update`.
+
+```bash
+python3 replay/replay.py check circuit --workers 4          # the per-change gate
+python3 replay/replay.py run circuit --frozen               # the full replay of the frozen window
+python3 replay/replay.py run element-x-android --frozen --shard 1/4 --shard-out shards   # one shard
+python3 replay/replay.py run element-x-android --frozen --shards-from shards --out-date ci
+python3 replay/replay.py compare element-x-android --out-date ci   # vs the committed results
+```
+
+Each PR's inventory (every test class per task, the denominator of every share) comes from the
+selector's own index (`Explanation::inventory`), so a PR costs one selection, about 2 s.

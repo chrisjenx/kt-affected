@@ -57,7 +57,7 @@ def kta_version():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "report", "docs"])
+    ap.add_argument("cmd", choices=["run", "report", "docs", "check", "compare"])
     ap.add_argument("target", nargs="?")
     ap.add_argument("--days", type=int, default=90)
     ap.add_argument("--until", default=datetime.date.today().isoformat())
@@ -65,14 +65,26 @@ def main():
     ap.add_argument("--flake-days", type=int, default=7)
     ap.add_argument("--workers", type=int, default=1, help="PRs selected in parallel, one work tree each")
     ap.add_argument("--out-date", default=None, help="results directory date (default: --until)")
+    ap.add_argument("--freeze", action="store_true", help="write the window's PRs and CI evidence to replay/frozen/")
+    ap.add_argument("--frozen", action="store_true", help="replay the committed window in replay/frozen/: no GitHub API")
+    ap.add_argument("--shard", help="I/N: select only every N-th PR from the I-th, and write the selections")
+    ap.add_argument("--shard-out", help="directory for --shard output (default .replay/shards)")
+    ap.add_argument("--shards-from", help="score the window from the shard files in this directory")
+    ap.add_argument("--update", action="store_true", help="check: rewrite replay/check/<target>.json")
     args = ap.parse_args()
     if args.cmd == "docs":
         report.refresh_docs(ROOT)
+        return
+    if args.cmd == "compare":
+        compare(args.target, args.out_date or "ci")
         return
     targets = load_targets()
     if args.target not in targets:
         sys.exit(f"unknown target {args.target!r}; known: {', '.join(targets)}")
     cfg = targets[args.target]
+    if args.cmd == "check":
+        check(args, args.target, cfg)
+        return
     run(args, args.target, cfg, offline=args.cmd == "report")
 
 
@@ -92,26 +104,70 @@ def run(args, name, cfg, offline):
     if not offline:
         git.ensure_clone(f"https://github.com/{cfg['repo']}.git", paths["repo"])
 
-    log(f"[{name}] merged PRs {since}..{until}")
-    prs = prmod.merged_prs(gh, since, until, args.limit)
-    for pr in prs:
-        if not git.has_commit(paths["repo"], pr["merge"]):
-            git.fetch_commit(paths["repo"], pr["merge"])
-        prmod.resolve_range(gh, paths["repo"], pr)
+    frozen_file = os.path.join(HERE, "frozen", f"{name}.json.gz")
+    if args.frozen:
+        # The committed window: PRs, runs and failure evidence as fetched, no GitHub API calls.
+        with gzip.open(frozen_file, "rt") as fh:
+            frozen = json.load(fh)
+        since, until, runs_since = frozen["window"]["since"], frozen["window"]["until"], frozen["window"]["runsSince"]
+        prs = frozen["prs"]
+        for pr in prs:
+            for sha in (pr["base"], pr["head"]):
+                if not git.has_commit(paths["repo"], sha):
+                    git.fetch_commit(paths["repo"], sha)
+    else:
+        log(f"[{name}] merged PRs {since}..{until}")
+        prs = prmod.merged_prs(gh, since, until, args.limit)
+        for pr in prs:
+            if not git.has_commit(paths["repo"], pr["merge"]):
+                git.fetch_commit(paths["repo"], pr["merge"])
+            prmod.resolve_range(gh, paths["repo"], pr)
+    if args.shard:
+        i, n = (int(x) for x in args.shard.split("/"))
+        mine = prs[i - 1::n]
     prs_by_number = {p["number"]: p for p in prs}
     prs_by_branch = {}
     for p in prs:
         prs_by_branch.setdefault((p["headOwner"], p["headRef"]), []).append(p)
     log(f"[{name}] {len(prs)} PRs; listing runs of {', '.join(cfg['workflows'])} since {runs_since}")
 
-    runs = oracle.list_runs(gh, cfg["workflows"], runs_since, until)
+    if args.frozen:
+        runs, events, ostats = frozen["runs"], frozen["events"], frozen["oracleStats"]
+        reports = [(rid, {(d, t): c for d, t, c in parsed}) for rid, parsed in frozen["reports"]]
+    else:
+        runs = oracle.list_runs(gh, cfg["workflows"], runs_since, until)
+        log(f"[{name}] {len(runs)} runs; reading failures")
+        events, reports, ostats = oracle.collect(gh, cfg, runs, cache, log=log)
+        log(f"[{name}] {len(events)} failure events ({gh.calls} API calls)")
+    if args.freeze:
+        os.makedirs(os.path.dirname(frozen_file), exist_ok=True)
+        with gzip.open(frozen_file, "wt", compresslevel=9) as fh:
+            json.dump({"window": {"since": since, "until": until, "runsSince": runs_since}, "prs": prs,
+                       "runs": runs, "events": events, "oracleStats": ostats,
+                       "reports": [(rid, [[d, t, c] for (d, t), c in parsed.items()]) for rid, parsed in reports]},
+                      fh, sort_keys=True, separators=(",", ":"))
+        log(f"[{name}] froze {os.path.relpath(frozen_file, ROOT)}")
     identity = {r["id"]: analyze.run_identity(r, prs_by_number, prs_by_branch) for r in runs}
-    log(f"[{name}] {len(runs)} runs; reading failures")
-    events, reports, ostats = oracle.collect(gh, cfg, runs, cache, log=log)
-    log(f"[{name}] {len(events)} failure events ({gh.calls} API calls); selecting")
 
-    empty = git.empty_commit(paths["repo"])
-    sel = select.select_all(cfg, paths, prs, empty, args.workers, log)
+    if args.shard:
+        # One shard's selections only; `replay.py merge` scores the whole window from all shards.
+        sel = select.select_all(cfg, paths, mine, args.workers, log)
+        out = os.path.join(args.shard_out or os.path.join(STATE, "shards"), f"{name}-{args.shard.replace('/', 'of')}.json.gz")
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with gzip.open(out, "wt") as fh:
+            json.dump({str(k): v for k, v in sel.items()}, fh)
+        log(f"[{name}] shard {args.shard}: {len(mine)} PRs -> {out}")
+        return
+    if args.shards_from:
+        sel = {}
+        for f in sorted(glob.glob(os.path.join(args.shards_from, f"{name}-*.json.gz"))):
+            with gzip.open(f, "rt") as fh:
+                sel.update({int(k): v for k, v in json.load(fh).items()})
+        missing = [p["number"] for p in prs if p["number"] not in sel]
+        if missing:
+            sys.exit(f"[{name}] shards miss {len(missing)} PRs, e.g. {missing[:5]}")
+    else:
+        sel = select.select_all(cfg, paths, prs, args.workers, log)
 
     results = analyse(args, name, cfg, prs, runs, identity, events, reports, sel, paths)
     results["oracleStats"] = ostats
@@ -119,6 +175,119 @@ def run(args, name, cfg, offline):
     out_dir = os.path.join(HERE, "results", name, args.out_date or until)
     report.write(out_dir, name, cfg, results)
     log(f"[{name}] wrote {os.path.relpath(out_dir, ROOT)}")
+
+
+def check(args, name, cfg):
+    """The per-change gate: re-select the committed window's PRs with real failures kt-affected
+    catches (none may be lost) and a fixed sample whose selections are committed (any change is a
+    diff to review and `--update`). Frozen evidence only: no GitHub API, minutes not hours."""
+    cache = os.path.join(STATE, "cache", name)
+    paths = {"repo": os.path.join(STATE, "repos", name), "select": os.path.join(cache, "select"),
+             "kta": os.path.join(cache, "kta")}
+    paths["cli"], paths["replay_bin"] = build_binaries()
+    git.ensure_clone(f"https://github.com/{cfg['repo']}.git", paths["repo"])
+    with gzip.open(os.path.join(HERE, "frozen", f"{name}.json.gz"), "rt") as fh:
+        prs = json.load(fh)["prs"]
+    by_n = {p["number"]: p for p in prs}
+    expect_file = os.path.join(HERE, "check", f"{name}.json")
+    if args.update or not os.path.exists(expect_file):
+        latest = sorted(glob.glob(os.path.join(HERE, "results", name, "*", "rows.json")))[-1]
+        with open(latest) as fh:
+            rows = json.load(fh)
+        caught = sorted({(r["pr"], r["module"], r["task"], r["class"]) for r in rows
+                         if r["attribution"][:1] in "ab" and r["selected"].get("kt-affected") and r["pr"] in by_n},
+                        key=lambda k: (k[0], k[1], k[2], k[3] or ""))
+        sample = check_sample(prs, paths["repo"])
+    else:
+        with open(expect_file) as fh:
+            expect = json.load(fh)
+        caught = [tuple(f) for f in expect["caught"]]
+        sample = [int(n) for n in expect["sample"]]
+    needed = sorted({k[0] for k in caught} | set(sample))
+    for n in needed:
+        for sha in (by_n[n]["base"], by_n[n]["head"]):
+            if not git.has_commit(paths["repo"], sha):
+                git.fetch_commit(paths["repo"], sha)
+    log(f"[{name}] check: {len(caught)} caught failures over {len({k[0] for k in caught})} PRs, {len(sample)} sampled PRs")
+    sel = select.select_all(cfg, paths, [by_n[n] for n in needed], args.workers, log)
+
+    def groups(n):
+        return ci_groups(cfg, sel[n]["kt-affected"]["groups"])
+
+    def snapshot(n):
+        return sorted(f"{g['module']}:{g['task']}:{c}" for g in groups(n)
+                      for c in (["*"] if g["full"] else g["classes"]))
+
+    lost = [k for k in caught if not analyze.selected(groups(k[0]), k[1], k[2], k[3])]
+    snaps = {str(n): snapshot(n) for n in sample}
+    if args.update or not os.path.exists(expect_file):
+        os.makedirs(os.path.dirname(expect_file), exist_ok=True)
+        with open(expect_file, "w") as fh:
+            json.dump({"caught": [list(k) for k in caught], "sample": snaps}, fh, indent=1, sort_keys=True)
+            fh.write("\n")
+        log(f"[{name}] wrote {os.path.relpath(expect_file, ROOT)}" + (f"; {len(lost)} caught failures now lost" if lost else ""))
+        sys.exit(1 if lost else 0)
+    failed = False
+    for k in lost:
+        failed = True
+        print(f"::error::{name}: PR #{k[0]} {k[3] or '(task)'} in {k[1]}:{k[2]} failed in CI because of the diff and is no longer selected")
+    for n, want in expect["sample"].items():
+        got = snaps[n]
+        added, dropped = sorted(set(got) - set(want)), sorted(set(want) - set(got))
+        if added or dropped:
+            failed = True
+            print(f"{name} PR #{n}: +{len(added)} -{len(dropped)} selected")
+            for x in added[:10]:
+                print(f"  + {x}")
+            for x in dropped[:10]:
+                print(f"  - {x}")
+    if failed and not lost:
+        print(f"::error::{name}: selections changed; review the diff above and run `python3 replay/replay.py check {name} --update`")
+    elif not failed:
+        log(f"[{name}] check passed")
+    sys.exit(1 if failed else 0)
+
+
+def compare(name, new_date):
+    """Markdown: a fresh replay of the window against its committed results. Exit 1 when a real
+    failure the committed results catch is missed now."""
+    root = os.path.join(HERE, "results", name)
+    committed = sorted(d for d in os.listdir(root) if d != new_date and os.path.isdir(os.path.join(root, d)))[-1]
+
+    def load(d, f):
+        with open(os.path.join(root, d, f)) as fh:
+            return json.load(fh)
+
+    old_s, new_s = load(committed, "summary.json"), load(new_date, "summary.json")
+    key = lambda r: (r["pr"], r["module"], r["task"], r["class"])  # noqa: E731
+    caught = lambda rows: {key(r) for r in rows if r["attribution"][:1] in "ab" and r["selected"].get("kt-affected")}  # noqa: E731
+    lost = sorted(caught(load(committed, "rows.json")) - caught(load(new_date, "rows.json")),
+                  key=lambda k: (k[0], k[1], k[2], k[3] or ""))
+    o, n = old_s["recall"]["kt-affected"], new_s["recall"]["kt-affected"]
+    ot, nt = old_s["selection"]["kt-affected"]["meanTimeShare"], new_s["selection"]["kt-affected"]["meanTimeShare"]
+    print(f"### {name}\n")
+    print(f"| | committed ({committed}) | this build |\n|---|---:|---:|")
+    print(f"| diff-caused failures run | {o['hit']} / {o['of']} | {n['hit']} / {n['of']} |")
+    print(f"| test time vs everything | {100 * ot:.1f}% | {100 * nt:.1f}% |\n")
+    for k in lost:
+        print(f"- lost: PR #{k[0]} `{k[3] or '(task)'}` in `{k[1]}:{k[2]}`")
+    if lost:
+        print(f"::error::{name}: {len(lost)} real failures the committed results catch are missed", file=sys.stderr)
+        sys.exit(1)
+
+
+def check_sample(prs, repo, size=40):
+    """A fixed, varied sample: PRs touching build logic or the catalog, the largest diffs, and an
+    even spread of the rest."""
+    changed = {p["number"]: git.changed_files(repo, p["base"], p["head"]) for p in prs}
+    build = [n for n, fs in changed.items()
+             if any(f.endswith((".gradle.kts", ".gradle", ".toml", ".properties")) for f in fs)]
+    largest = sorted(changed, key=lambda n: -len(changed[n]))
+    picked = list(dict.fromkeys(sorted(build)[:10] + largest[:5]))
+    rest = [p["number"] for p in prs if p["number"] not in picked]
+    step = max(1, len(rest) // max(1, size - len(picked)))
+    picked += rest[::step][: size - len(picked)]
+    return sorted(picked)
 
 
 def reference(cfg, res):

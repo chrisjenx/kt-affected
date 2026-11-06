@@ -201,6 +201,10 @@ pub struct Explanation {
     /// Per test class the graph reached. Classes selected by a path, scanner or smoke rule have
     /// none.
     pub paths: Vec<TestPath>,
+    /// Every test task with all its classes (manual modules left out), as whole groups: what a
+    /// change touching everything would run. Not part of the `explain` JSON.
+    #[serde(skip)]
+    pub inventory: Vec<Group>,
 }
 
 impl Explanation {
@@ -341,6 +345,7 @@ pub fn explain(root: &Path, opts: &SelectOptions) -> Result<Explanation, Error> 
         let e = e.unwrap_or_default();
         Explanation {
             selection,
+            inventory: e.inventory,
             verdicts: e
                 .verdicts
                 .into_iter()

@@ -6,6 +6,13 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- `Explanation::inventory`: every test task with all its classes, as whole groups (not in the
+  `explain` JSON). The public replay uses it instead of a second selection from an empty tree: a PR
+  costs one selection, about 10x faster.
+- Public replay in CI: `replay.py check` on every pull request (the PRs with real failures caught,
+  none may be lost, and a committed sample of selections), and the full replay, sharded, after every
+  merge and before a release; both on a committed frozen window, with no GitHub API.
+
 - A test file that imports a source-scanning library (Konsist) is seeded whole on any Kotlin source
   change, comment-only included: it reads source text, not declarations. Tests reaching it through
   a base class or helper in another file follow through the graph. It is found by its import,
