@@ -86,6 +86,8 @@ was rewritten once to remove such material; keep it clean.
   the event's companion constants, and the graph does not mark companion-only references.
 - A test method with the same name as the member it calls (`fun lines()` calling `x.lines()`) is not
   picked up through an untyped receiver.
+- `testBuildType` and product flavors are read from a module's own build script only; set in a
+  convention plugin, they are not seen.
 - A catalog bump of a library a module declares runs one smoke class per task, which missed one
   public-replay failure. Running whole tasks of the declaring modules was replayed and reverted as too
   costly (`catalog-used-library-version`, `docs/replay.md`); a narrower rule needs new evidence.

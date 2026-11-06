@@ -938,6 +938,24 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         }
     }
 
+    // A test reading source text (Konsist) observes any Kotlin change; seeding its file whole also
+    // reaches tests that use it through a helper or base class elsewhere.
+    if changed
+        .iter()
+        .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
+    {
+        for f in 0..v.p.n_files() {
+            if v.p.file_scans_source(f) {
+                let path = v.p.file_path(f).to_string();
+                reasons.push(format!(
+                    "{path}: scans source files — seeded on any Kotlin source change"
+                ));
+                hunks.remove(&path);
+                seed_files.insert(path);
+            }
+        }
+    }
+
     // Node seeds.
     let mut node_seeds: FxHashSet<u32> = FxHashSet::default();
     let mut tests_in: FxHashMap<u32, Vec<u32>> = FxHashMap::default();
@@ -1268,13 +1286,6 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 }
             }
         }
-        let mut pick = |f: &u32, fq: &String| {
-            for key in idx.owner.get(f).into_iter().flatten() {
-                if idx.admits(key, fq) {
-                    picked.entry(key.clone()).or_default().insert(fq.clone());
-                }
-            }
-        };
         for sc in &cfg.source_scanners {
             let re = Regex::new(&sc.changed_path).map_err(|e| e.to_string())?;
             if changed.iter().any(|p| re.is_match(p)) {
@@ -1282,26 +1293,13 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 for (f, fq) in v.test_class.values() {
                     let pkg = v.p.file_package(*f as usize);
                     if pkg == sc.test_package || pkg.starts_with(&pfx) {
-                        pick(f, fq);
+                        for key in idx.owner.get(f).into_iter().flatten() {
+                            if idx.admits(key, fq) {
+                                picked.entry(key.clone()).or_default().insert(fq.clone());
+                            }
+                        }
                     }
                 }
-            }
-        }
-        if changed
-            .iter()
-            .any(|p| p.ends_with(".kt") || p.ends_with(".kts"))
-        {
-            let mut scanners: BTreeSet<&str> = BTreeSet::new();
-            for (f, fq) in v.test_class.values() {
-                if v.p.file_scans_source(*f as usize) {
-                    scanners.insert(v.p.file_path(*f as usize));
-                    pick(f, fq);
-                }
-            }
-            for file in scanners {
-                reasons.push(format!(
-                    "{file}: scans source files — runs on any Kotlin source change"
-                ));
             }
         }
     }

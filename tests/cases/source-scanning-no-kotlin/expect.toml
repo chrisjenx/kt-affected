@@ -1,0 +1,2 @@
+why = "A source scanner reads Kotlin sources: a change touching no .kt or .kts file does not select it."
+never = ["demo.konsist.ArchitectureTest@:konsist:test"]

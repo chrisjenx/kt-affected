@@ -165,7 +165,11 @@ def select_all(cfg, paths, prs, empty, workers, log):
     """`select_pr` for every PR, `workers` at a time. Worker 0 uses the clone itself; the others get
     their own work tree and graph cache, so no two selections share a checkout. Cached selections
     are keyed by the binaries, so a rebuilt binary never reads another's."""
-    paths = {**paths, "select": os.path.join(paths["select"], binaries_key(paths["cli"], paths["replay_bin"]))}
+    if not prs:
+        return {}
+    key = binaries_key(paths["cli"], paths["replay_bin"])
+    # The graph cache holds discovery too, so it is per binary like the selections.
+    paths = {**paths, "select": os.path.join(paths["select"], key), "kta": os.path.join(paths["kta"], key)}
     # Work trees are added one at a time: concurrent `git worktree add` on one clone races on its lock.
     trees = [paths["repo"]] + [git.ensure_worktree(paths["repo"], f"{paths['repo']}.w{w}", prs[0]["head"])
                                for w in range(1, max(1, workers))]

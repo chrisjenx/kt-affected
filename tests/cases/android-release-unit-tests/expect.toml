@@ -1,3 +1,3 @@
-why = "A module that sets `testBuildType = \"release\"` runs its unit tests under testReleaseUnitTest (AGP 9 creates unit tests for the tested build type only, so testDebugUnitTest does not exist there). Seen on a public library's CI: a sample app's Robolectric test failed under testReleaseUnitTest, the only unit-test task that module has."
+why = "On AGP 9 a module that sets `testBuildType = \"release\"` runs its unit tests under testReleaseUnitTest (AGP 9 creates unit tests for the tested build type only, so testDebugUnitTest does not exist there). Seen on a public library's CI: a sample app's Robolectric test failed under testReleaseUnitTest, the only unit-test task that module has."
 must = ["demo.app.InvoiceTest@:app:testReleaseUnitTest"]
 never_tasks = [":app:testDebugUnitTest"]

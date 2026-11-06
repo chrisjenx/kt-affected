@@ -1,0 +1,2 @@
+why = "On AGP 8 every build type has unit tests, so a module with `testBuildType = \"release\"` still has testDebugUnitTest, and CI's `test` runs both. A failure only one build type shows (a debug-only source set, a BuildConfig.DEBUG branch) is caught only if both run."
+must = ["demo.app.InvoiceTest@:app:testReleaseUnitTest", "demo.app.InvoiceTest@:app:testDebugUnitTest"]

@@ -429,6 +429,8 @@
     "build-logic/src/main/kotlin/deploy.kt",
     "build-logic/src/main/kotlin/options.kt",
     "build-logic/src/main/kotlin/website.kt",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "androidApp/build.gradle.kts",
     "androidBenchmark/build.gradle.kts",

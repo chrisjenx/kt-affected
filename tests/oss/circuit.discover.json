@@ -2364,6 +2364,8 @@
     "build-logic/src/main/kotlin/circuit.android.gradle.kts",
     "build-logic/src/main/kotlin/circuit.base.gradle.kts",
     "build-logic/src/main/kotlin/circuit.publish.gradle.kts",
+    "gradle.properties",
+    "gradle/libs.versions.toml",
     "build.gradle.kts",
     "backstack/build.gradle.kts",
     "circuit-codegen/build.gradle.kts",

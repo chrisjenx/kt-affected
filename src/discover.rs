@@ -269,7 +269,7 @@ fn leaf_of_task(task: &str) -> Option<&'static str> {
     Some(match task {
         "jvmTest" => "jvmTest",
         "testAndroidHostTest" => "androidHostTest",
-        "testDebugUnitTest" | "testReleaseUnitTest" => "androidUnitTest",
+        "testDebugUnitTest" => "androidUnitTest",
         "jsBrowserTest" | "jsNodeTest" => "jsTest",
         "wasmJsBrowserTest" | "wasmJsNodeTest" | "wasmJsD8Test" => "wasmJsTest",
         "wasmWasiNodeTest" => "wasmWasiTest",
@@ -1241,15 +1241,19 @@ fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
         "jvm" => vec![format!("{target}Test")],
         "android" | "androidTarget" | "androidLibrary" => {
             // Only what the build or the layout states: a guessed task name fails the Gradle invocation.
-            let unit = android_task(UNIT, None, &project.test_build_type);
+            let unit: Vec<String> = project
+                .unit_build_types()
+                .into_iter()
+                .map(|bt| android_task(UNIT, None, bt))
+                .collect();
             if project.android_target_call {
-                vec![unit]
+                unit
             } else if project.android_host_tests
                 && (project.kmp_android_library || !project.android_unit_dir)
             {
                 vec!["testAndroidHostTest".into()]
             } else if project.android_unit_dir {
-                vec![unit]
+                unit
             } else {
                 vec![]
             }
@@ -1289,12 +1293,26 @@ struct ProjectShape {
     target_kinds: BTreeMap<String, String>,
     /// Android product flavors (one dimension): unit tests run per flavor, `test<Flavor>DebugUnitTest`.
     flavors: Vec<String>,
-    /// The build type unit and connected tests run under (`testBuildType`, capitalised): `Debug`
-    /// unless the script sets another. AGP 9 creates unit tests for this build type only.
+    /// The build type connected tests run under (`testBuildType`, capitalised): `Debug` unless the
+    /// script sets another.
     test_build_type: String,
+    /// AGP 9 without `android.onlyEnableUnitTestForTheTestedBuildType=false`: unit tests exist for
+    /// the tested build type only. Otherwise (older or unknown AGP) every build type has them.
+    tested_only: bool,
 }
 
 impl ProjectShape {
+    /// Build types whose unit tests run a module's `test` sources: the tested one, plus `Debug`
+    /// where every build type has unit tests (the task CI's `test` and `check` run either way).
+    fn unit_build_types(&self) -> Vec<&str> {
+        let bt = self.test_build_type.as_str();
+        if self.tested_only || bt == "Debug" {
+            vec![bt]
+        } else {
+            vec!["Debug", bt]
+        }
+    }
+
     fn kind_of<'s>(&'s self, target: &'s str) -> &'s str {
         self.target_kinds
             .get(target)
@@ -1318,37 +1336,36 @@ fn test_tasks_for(
                 .iter()
                 .find(|f| name.strip_prefix(prefix) == Some(capitalize(f).as_str()))
         };
-        let per_flavor = |kind: (&str, &str)| -> Vec<String> {
-            if shape.flavors.is_empty() {
-                vec![android_task(kind, None, bt)]
-            } else {
-                shape
-                    .flavors
-                    .iter()
-                    .map(|f| android_task(kind, Some(f), bt))
-                    .collect()
-            }
+        let flavors: Vec<Option<&str>> = if shape.flavors.is_empty() {
+            vec![None]
+        } else {
+            shape.flavors.iter().map(|f| Some(f.as_str())).collect()
+        };
+        let units = |flavor: Option<&str>| -> Vec<String> {
+            shape
+                .unit_build_types()
+                .into_iter()
+                .map(|b| android_task(UNIT, flavor, b))
+                .collect()
         };
         if name == "test" && shape.android {
-            out.extend(per_flavor(UNIT));
+            out.extend(flavors.iter().flat_map(|f| units(*f)));
         } else if name == "test" {
             out.insert("test".into());
         } else if name == "androidTest" {
-            out.extend(per_flavor(CONNECTED));
+            out.extend(flavors.iter().map(|f| android_task(CONNECTED, *f, bt)));
         } else if let Some(f) = flavor_of("test").filter(|_| shape.android) {
-            out.insert(android_task(UNIT, Some(f), bt));
+            out.extend(units(Some(f)));
         } else if let Some(f) = flavor_of("androidTest").filter(|_| shape.android) {
             out.insert(android_task(CONNECTED, Some(f), bt));
         } else if let Some(build_type) = name
             .strip_prefix("test")
             .filter(|r| shape.android && r.starts_with(|c: char| c.is_ascii_uppercase()))
         {
-            // A build type's own unit tests (`testRelease`), under each flavor when there are some.
-            if shape.flavors.is_empty() {
-                out.insert(android_task(UNIT, None, build_type));
-            }
-            for f in &shape.flavors {
-                out.insert(android_task(UNIT, Some(f), build_type));
+            // A build type's own unit tests (`testRelease`), under each flavor when there are some;
+            // none when only the tested build type has unit tests and this is another.
+            if !shape.tested_only || build_type == bt {
+                out.extend(flavors.iter().map(|f| android_task(UNIT, *f, build_type)));
             }
         } else {
             // A custom JVM test suite (`integrationTest`) gets a task of the same name.
@@ -1384,6 +1401,70 @@ fn test_tasks_for(
     out
 }
 
+/// AGP 9 (from the version catalog or the root build script) without the opt-out property: AGP 9
+/// creates unit tests for the tested build type only, AGP 8 for every build type. Unknown reads as
+/// every build type: it selects more, and never misses a unit-test task AGP 8 runs.
+fn unit_tests_for_tested_build_type_only(root: &Path, inputs: &mut Vec<String>) -> bool {
+    let props = "gradle.properties";
+    if let Some(t) = read(root, props) {
+        inputs.push(props.into());
+        let opted_out = t.lines().any(|l| {
+            let l: String = l.chars().filter(|c| !c.is_whitespace()).collect();
+            l == "android.onlyEnableUnitTestForTheTestedBuildType=false"
+        });
+        if opted_out {
+            return false;
+        }
+    }
+    agp_major(root, inputs).is_some_and(|m| m >= 9)
+}
+
+fn agp_major(root: &Path, inputs: &mut Vec<String>) -> Option<u32> {
+    let major = |v: &str| v.split('.').next()?.trim().parse::<u32>().ok();
+    let catalog = "gradle/libs.versions.toml";
+    if let Some(t) = read(root, catalog) {
+        inputs.push(catalog.into());
+        if let Ok(doc) = t.parse::<toml::Table>() {
+            let versions = doc.get("versions").and_then(|v| v.as_table());
+            let version_of = |e: &toml::Value| -> Option<String> {
+                match e.get("version")? {
+                    toml::Value::String(s) => Some(s.clone()),
+                    v => {
+                        let r = v.get("ref")?.as_str()?;
+                        Some(versions?.get(r)?.as_str()?.to_string())
+                    }
+                }
+            };
+            let is_agp = |e: &toml::Value| {
+                let s = |k: &str| e.get(k).and_then(|v| v.as_str());
+                s("id").is_some_and(|i| i.starts_with("com.android."))
+                    || s("module") == Some("com.android.tools.build:gradle")
+                    || (s("group") == Some("com.android.tools.build")
+                        && s("name") == Some("gradle"))
+            };
+            let found = ["plugins", "libraries"]
+                .iter()
+                .filter_map(|k| doc.get(*k).and_then(|t| t.as_table()))
+                .flat_map(|t| t.values())
+                .filter(|e| is_agp(e))
+                .find_map(|e| version_of(e).and_then(|v| major(&v)));
+            if found.is_some() {
+                return found;
+            }
+        }
+    }
+    // `id("com.android.application") version "9.0.0"` in the root build script.
+    let toks = tokenize(&read(root, &script_in(root, "", "build")?)?);
+    (0..toks.len()).find_map(|i| match (&toks[i], toks.get(i + 2), toks.get(i + 3)) {
+        (Tok::Str(id, false), Some(t), Some(Tok::Str(v, false)))
+            if id.starts_with("com.android.") && ident(t) == Some("version") =>
+        {
+            major(v)
+        }
+        _ => None,
+    })
+}
+
 const UNIT: (&str, &str) = ("test", "UnitTest");
 const CONNECTED: (&str, &str) = ("connected", "AndroidTest");
 
@@ -1406,7 +1487,7 @@ fn test_build_type(toks: &[Tok]) -> String {
                 i + 1
             };
             match toks.get(at) {
-                Some(Tok::Str(b, false)) => Some(capitalize(b)),
+                Some(Tok::Str(b, false)) if !b.is_empty() => Some(capitalize(b)),
                 _ => None,
             }
         })
@@ -1637,6 +1718,7 @@ pub fn discover(root: &Path) -> Build {
     let conv = crate::conventions::Conventions::load(root, &settings.included_builds);
     inputs.extend(conv.inputs.iter().cloned());
     warnings.extend(conv.warnings.iter().cloned());
+    let tested_only = unit_tests_for_tested_build_type_only(root, &mut inputs);
     let mut projects = Vec::new();
     // Warning from a shared plugin -> the projects it applies to.
     let mut conv_warnings: BTreeMap<String, Vec<String>> = BTreeMap::new();
@@ -1819,6 +1901,7 @@ pub fn discover(root: &Path) -> Build {
             target_kinds: kinds.clone(),
             flavors,
             test_build_type,
+            tested_only,
         };
         // Custom hierarchy-template groups: members gain the group as a parent; members without a
         // directory still route through it, so a virtual hierarchy carries them.
@@ -2176,6 +2259,16 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn test_build_type_reads_kotlin_and_groovy_forms() {
+        let bt = |t: &str| test_build_type(&tokenize(t));
+        assert_eq!(bt(r#"android { testBuildType = "release" }"#), "Release");
+        assert_eq!(bt("android {\n  testBuildType 'staging'\n}"), "Staging");
+        assert_eq!(bt(r#"android { testBuildType = "" }"#), "Debug");
+        assert_eq!(bt("// testBuildType = \"release\"\nandroid { }"), "Debug");
+        assert_eq!(bt("android { }"), "Debug");
+    }
 
     fn tmp(name: &str) -> std::path::PathBuf {
         let d =

@@ -1,0 +1,2 @@
+why = "AGP 9 with `android.onlyEnableUnitTestForTheTestedBuildType=false` keeps unit tests for every build type, as AGP 8 does: both unit-test tasks exist and run."
+must = ["demo.app.InvoiceTest@:app:testReleaseUnitTest", "demo.app.InvoiceTest@:app:testDebugUnitTest"]

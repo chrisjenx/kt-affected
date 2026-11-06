@@ -240,11 +240,9 @@ pub struct FileParse {
 pub const SOURCE_SCANNERS: &[&str] = &["com.lemonappdev.konsist"];
 
 fn imports_source_scanner(segs: &[String]) -> bool {
-    let joined = segs.join(".");
     SOURCE_SCANNERS.iter().any(|s| {
-        joined
-            .strip_prefix(s)
-            .is_some_and(|r| r.is_empty() || r.starts_with('.'))
+        let pkg = s.split('.');
+        pkg.clone().count() <= segs.len() && pkg.zip(segs).all(|(a, b)| a == b)
     })
 }
 
