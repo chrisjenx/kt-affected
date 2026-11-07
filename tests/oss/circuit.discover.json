@@ -289,6 +289,7 @@
         "androidHostTest": {
           "test": true,
           "depends_on": [
+            "commonJvmTest",
             "commonTest"
           ]
         },
@@ -829,6 +830,7 @@
         "androidHostTest": {
           "test": true,
           "depends_on": [
+            "commonJvmTest",
             "commonTest"
           ]
         },
@@ -902,6 +904,7 @@
         "androidHostTest": {
           "test": true,
           "depends_on": [
+            "commonJvmTest",
             "commonTest"
           ]
         },
@@ -993,6 +996,7 @@
         "androidHostTest": {
           "test": true,
           "depends_on": [
+            "commonJvmTest",
             "commonTest"
           ]
         },
@@ -2052,7 +2056,8 @@
         "androidHostTest": {
           "test": true,
           "depends_on": [
-            "commonTest"
+            "commonTest",
+            "jvmCommonTest"
           ]
         },
         "androidMain": {

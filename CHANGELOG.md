@@ -6,6 +6,10 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- Android unit tests follow their own source set's `dependsOn` edges (`androidHostTest`, or
+  `androidUnitTest` under `androidTarget()`): `androidUnitTest { dependsOn(sharedJvmTest) }` now
+  runs `sharedJvmTest` under `testDebugUnitTest`, which it missed.
+
 ## [0.5.0]
 
 - `Explanation::inventory`: every test task with all its classes, as whole groups. The public

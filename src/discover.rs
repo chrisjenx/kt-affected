@@ -1248,9 +1248,7 @@ fn leaf_test_tasks(target: &str, project: &ProjectShape) -> Vec<String> {
                 .collect();
             if project.android_target_call {
                 unit
-            } else if project.android_host_tests
-                && (project.kmp_android_library || !project.android_unit_dir)
-            {
+            } else if project.android_host_test_task() {
                 vec!["testAndroidHostTest".into()]
             } else if project.android_unit_dir {
                 unit
@@ -1310,6 +1308,24 @@ impl ProjectShape {
             vec![bt]
         } else {
             vec!["Debug", bt]
+        }
+    }
+
+    /// Do the Android unit tests run under `testAndroidHostTest` (the KMP Android library plugin's
+    /// host tests) rather than AGP's `test<Variant>UnitTest`?
+    fn android_host_test_task(&self) -> bool {
+        !self.android_target_call
+            && self.android_host_tests
+            && (self.kmp_android_library || !self.android_unit_dir)
+    }
+
+    /// The source set Android unit tests compile from: `androidHostTest` or `androidUnitTest`.
+    /// Its own `dependsOn` edges decide which shared test source sets run there.
+    fn android_test_set(&self) -> &'static str {
+        if self.android_host_test_task() {
+            "androidHostTest"
+        } else {
+            "androidUnitTest"
         }
     }
 
@@ -1385,12 +1401,14 @@ fn test_tasks_for(
     // Every leaf test source set that (transitively) depends on `name` runs it.
     let mut leaves = BTreeSet::new();
     for t in targets {
-        let stem = if matches!(shape.kind_of(t), "androidTarget" | "androidLibrary") {
-            "android"
+        let leaf = if matches!(
+            shape.kind_of(t),
+            "android" | "androidTarget" | "androidLibrary"
+        ) {
+            shape.android_test_set().to_string()
         } else {
-            t.as_str()
+            format!("{t}Test")
         };
-        let leaf = format!("{stem}Test");
         if depends_transitively(&leaf, name, sets) || leaf == name {
             leaves.insert(t.clone());
         }
@@ -1930,8 +1948,15 @@ pub fn discover(root: &Path) -> Build {
                 members.extend(named);
                 for suf in ["Main", "Test"] {
                     for m in &members {
-                        let child = format!("{m}{suf}");
-                        let parent = template_parent(&kind_of(m)).map(|p| format!("{p}{suf}"));
+                        // An Android member joins its unit-test compilation's source set; device
+                        // tests are outside the template's source set trees.
+                        let child = match (m.as_str(), suf) {
+                            ("android", "Test") => shape.android_test_set().to_string(),
+                            _ => format!("{m}{suf}"),
+                        };
+                        let parent = split_stem(&child)
+                            .and_then(|(stem, _)| template_parent(&kind_of(stem)))
+                            .map(|p| format!("{p}{suf}"));
                         for sets in [&mut source_sets, &mut hier] {
                             if let Some(ss) = sets.get_mut(&child) {
                                 ss.depends_on.insert(format!("{group}{suf}"));
