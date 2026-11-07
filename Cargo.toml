@@ -1,6 +1,6 @@
 [package]
 name = "kt-affected"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2024"
 description = "Which tests can a change to a Kotlin/Gradle project affect? A declaration-level test differ built on kt-syntax."
 license = "MIT OR Apache-2.0"
