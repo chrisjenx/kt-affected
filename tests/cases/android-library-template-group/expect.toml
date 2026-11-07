@@ -1,0 +1,16 @@
+why = "Under the KMP Android library plugin, a hierarchy template group's tests run under testAndroidHostTest when the group takes AGP's withAndroid() or the build adds androidHostTest.dependsOn(group), never through withAndroidTarget(), which matches only androidTarget(); commonTest runs there either way."
+must = [
+    "demo.orders.OrderStoreTest@:orders:jvmTest",
+    "demo.orders.OrderTest@:orders:testAndroidHostTest",
+    "demo.invoices.InvoiceStoreTest@:invoices:jvmTest",
+    "demo.invoices.InvoiceStoreTest@:invoices:testAndroidHostTest",
+    "demo.invoices.InvoiceTest@:invoices:testAndroidHostTest",
+    "demo.payments.PaymentStoreTest@:payments:jvmTest",
+    "demo.payments.PaymentStoreTest@:payments:testAndroidHostTest",
+]
+never = [
+    "demo.orders.OrderStoreTest@:orders:testAndroidHostTest",
+    "demo.orders.OrderStoreTest@:orders:wasmJsBrowserTest",
+    "demo.invoices.InvoiceStoreTest@:invoices:wasmJsBrowserTest",
+    "demo.payments.PaymentStoreTest@:payments:wasmJsBrowserTest",
+]

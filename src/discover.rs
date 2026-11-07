@@ -1182,7 +1182,9 @@ fn template_groups(toks: &[Tok]) -> Vec<(String, Vec<String>)> {
                 .filter(|m| !m.is_empty())
                 .map(|m| {
                     let m = m[..1].to_lowercase() + &m[1..];
-                    if m == "androidTarget" || m == "androidLibrary" {
+                    // AGP's `withAndroid()` takes the KMP Android library target; `withAndroidTarget()`
+                    // stays apart: it takes only `androidTarget()`.
+                    if m == "androidLibrary" {
                         "android".to_string()
                     } else {
                         m
@@ -1317,6 +1319,12 @@ impl ProjectShape {
         !self.android_target_call
             && self.android_host_tests
             && (self.kmp_android_library || !self.android_unit_dir)
+    }
+
+    /// Is the Android target the KMP Android library plugin's rather than `androidTarget()`? A
+    /// hierarchy template's `withAndroidTarget()` matches only `androidTarget()`'s compilations.
+    fn android_library_target(&self) -> bool {
+        !self.android_target_call && (self.kmp_android_library || self.android_host_test_task())
     }
 
     /// The source set Android unit tests compile from: `androidHostTest` or `androidUnitTest`.
@@ -1942,16 +1950,21 @@ pub fn discover(root: &Path) -> Build {
                 // `withJvm()` takes every target of that kind, `jvm("desktop")` included.
                 let named: Vec<String> = kinds
                     .iter()
-                    .filter(|(_, k)| members.contains(k))
+                    .filter(|(_, k)| *k != "androidTarget" && members.contains(k))
                     .map(|(n, _)| n.clone())
                     .collect();
                 members.extend(named);
                 for suf in ["Main", "Test"] {
                     for m in &members {
-                        // An Android member joins its unit-test compilation's source set; device
-                        // tests are outside the template's source set trees.
+                        // Each matches one plugin's target, and only its main and unit-test
+                        // compilations: device tests are outside the template's source set trees.
                         let child = match (m.as_str(), suf) {
-                            ("android", "Test") => shape.android_test_set().to_string(),
+                            ("androidTarget", _) if shape.android_library_target() => continue,
+                            ("android", _) if shape.android_target_call => continue,
+                            ("androidTarget" | "android", "Main") => "androidMain".to_string(),
+                            ("androidTarget" | "android", _) => {
+                                shape.android_test_set().to_string()
+                            }
                             _ => format!("{m}{suf}"),
                         };
                         let parent = split_stem(&child)

@@ -6,6 +6,12 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+- A hierarchy template group's Android membership follows the plugin: `withAndroidTarget()` takes
+  only `androidTarget()` (its main and unit-test compilations), AGP's `withAndroid()` only the KMP
+  Android library plugin's target. Before, either put the group's tests under the module's Android
+  unit-test task, so a KMP library module grouping `withAndroidTarget()` sent them to
+  `testAndroidHostTest`, which does not compile them (Gradle reports `NO-SOURCE`; a runner checking
+  for results fails).
 - Android unit tests follow their own source set's `dependsOn` edges (`androidHostTest`, or
   `androidUnitTest` under `androidTarget()`): `androidUnitTest { dependsOn(sharedJvmTest) }` now
   runs `sharedJvmTest` under `testDebugUnitTest`, which it missed.

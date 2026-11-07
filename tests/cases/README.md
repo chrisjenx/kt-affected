@@ -36,6 +36,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 
 | case | pins |
 |------|------|
+| `android-library-template-group` | Under the KMP Android library plugin, a hierarchy template group's tests run under testAndroidHostTest when the group takes AGP's withAndroid() or the build adds androidHostTest.dependsOn(group), never through withAndroidTarget(), which matches only androidTarget(). |
 | `android-product-flavors` | An Android module with product flavors has no testDebugUnitTest: the shared test source set runs under every flavor's test<Flavor>DebugUnitTest, a flavor's own test source set only under that flavor's. |
 | `android-res` | A changed Android res/drawable file seeds code naming R.drawable.<stem>, not every user of R.drawable. |
 | `android-target-template-group` | With androidTarget(), a withAndroidTarget() template group and an explicit androidUnitTest.dependsOn both put that source set's tests under testDebugUnitTest. |
