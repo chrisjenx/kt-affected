@@ -1,0 +1,11 @@
+why = "With androidTarget(), a hierarchy template's withAndroidTarget() group and an explicit androidUnitTest.dependsOn both put that source set's tests under the Android unit-test task, never a web one."
+must = [
+    "demo.books.BookShelfTest@:books:jvmTest",
+    "demo.books.BookShelfTest@:books:testDebugUnitTest",
+    "demo.authors.AuthorIndexTest@:authors:jvmTest",
+    "demo.authors.AuthorIndexTest@:authors:testDebugUnitTest",
+]
+never = [
+    "demo.books.BookShelfTest@:books:wasmJsBrowserTest",
+    "demo.authors.AuthorIndexTest@:authors:wasmJsBrowserTest",
+]
