@@ -6,7 +6,7 @@ instead of spawning the binary and parsing its JSON.
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.5.0", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.5.1", default-features = false }
 ```
 
 `default-features = false` leaves out the `cli` feature, which only builds the binary. The library

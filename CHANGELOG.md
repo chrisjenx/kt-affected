@@ -6,6 +6,8 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.5.1]
+
 - A hierarchy template group's Android membership follows the plugin: `withAndroidTarget()` takes
   only `androidTarget()` (its main and unit-test compilations), AGP's `withAndroid()` only the KMP
   Android library plugin's target. Before, either put the group's tests under the module's Android
@@ -154,7 +156,8 @@ First public release.
 - `--base` defaults to the merge-base with `origin/HEAD` (else `origin/main`, else `origin/master`).
 - GitHub Action, install script, release archives for Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/chrisjenx/kt-affected/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/chrisjenx/kt-affected/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/chrisjenx/kt-affected/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/chrisjenx/kt-affected/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/chrisjenx/kt-affected/compare/v0.3.0...v0.3.1
