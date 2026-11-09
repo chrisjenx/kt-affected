@@ -33,7 +33,13 @@ four steps, each cached so the next run only redoes what changed.
   whose compilation includes it. A member change also reaches code reflecting over its class through
   a class literal (`X::class`). A file outside the Kotlin sources (resources, SQL, SQLDelight, docs)
   seeds the lines that name it; build logic costs one smoke class per test task in reach; wiring no
-  name reaches (`META-INF/services`, `.conf`) fails its module open.
+  name reaches (`META-INF/services`, `.conf`) fails its module open. An included build's test
+  source sets are test tasks too, keyed by their composite path (`:plugins:test`), and run when a
+  seed reaches them, a file they name changes, or the included build's own sources change
+  (`docs/configuration.md`, "Included builds").
+- **Answers two questions from the same graph**: `unreferenced` lists declarations nothing
+  references, and `test-reach` lists tests that reach no production code and production code no
+  test reaches (`docs/analysis.md`).
 
 
 ## Incremental updates
