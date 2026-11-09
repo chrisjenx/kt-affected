@@ -114,6 +114,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |
 | `unreferenced-di-entry` | unreferenced: a DI-bound implementation is reached through the interface it binds, and a @Provides function is an entry point; an implementation nothing binds or builds is reported. |
 | `unreferenced-framework-entries` | unreferenced keeps what a framework reaches without an edge (aliased test annotation, @MethodSource, @EnumSource, inherited tests, companion as a value, build-script names) and skips code in no source set. |
+| `unreferenced-deep-entry-supertype` | unreferenced: a type whose supertypes reach an `entry_supertypes` name two levels up the in-repo chain is not reported; an unrelated unused type is. |
 | `unreferenced-max-inbound` | unreferenced --max-inbound 1 also reports prod declarations with a single prod referrer, listed in `referrers`; one with two referrers is not. |
 | `unreferenced-member-name-gate` | unreferenced: a member called through an untyped receiver is kept by its name, written in a module that can see it; one only an unrelated module names, and an uncalled private member, are reported. |
 | `unreferenced-orphan-base` | unreferenced --base: a refactor's orphan is reported as orphaned, new unreferenced code as added; code unreferenced before the change is not reported. |

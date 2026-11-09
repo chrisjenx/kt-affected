@@ -653,14 +653,14 @@ pub fn unreferenced(inp: &Inputs, max_inbound: u32) -> Result<Unreferenced, Stri
         w.rsplit('.').next().unwrap_or(w)
     };
     let has_entry_super = |t: u32| -> bool {
+        // Every in-repo supertype, at any depth, and the type itself: a raw name among their
+        // supertypes may be the framework's entry type.
         !entry_supers.is_empty()
-            && std::iter::once(t)
-                .chain(v.declares(t).iter().copied())
-                .any(|x| {
-                    v.p.node_supers(x as usize)
-                        .iter()
-                        .any(|&s| entry_supers.contains(simple(s)))
-                })
+            && v.supertypes(t).into_iter().any(|x| {
+                v.p.node_supers(x as usize)
+                    .iter()
+                    .any(|&s| entry_supers.contains(simple(s)))
+            })
     };
     let entry = |n: u32| -> bool {
         let i = n as usize;

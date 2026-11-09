@@ -1,0 +1,4 @@
+why = "A type whose supertypes reach an `entry_supertypes` name two levels up the in-repo chain is instantiated by the framework: not reported. An unrelated type nothing uses still is."
+command = "unreferenced"
+reported = ["demo.jobs.InvoiceFormatter"]
+not_reported = ["demo.jobs.OrderSync", "demo.jobs.SyncWorker", "demo.jobs.BaseWorker"]
