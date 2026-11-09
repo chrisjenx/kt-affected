@@ -22,7 +22,7 @@ kt-syntax is, depend on a tag as above (`publish = false` in `Cargo.toml`).
 pub fn select(root: &Path, opts: &SelectOptions) -> Result<Selection, Error>
 pub fn explain(root: &Path, opts: &SelectOptions) -> Result<Explanation, Error>
 pub fn default_base(git_dir: &Path, head: Option<&str>) -> Result<String, Error>
-pub fn unreferenced(root: &Path, opts: &SelectOptions) -> Result<Unreferenced, Error>
+pub fn unreferenced(root: &Path, opts: &SelectOptions, max_inbound: u32) -> Result<Unreferenced, Error>
 pub fn test_reach(root: &Path, opts: &SelectOptions, kover: Option<&Path>) -> Result<TestReach, Error>
 ```
 

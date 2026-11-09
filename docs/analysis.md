@@ -66,6 +66,11 @@ declaration only Java calls is reported.
 
 Removing a reported declaration can leave others unreferenced: run again.
 
+`--max-inbound N` also reports prod declarations with at most `N` prod referrers (and test or
+fixture declarations with at most `N` referrers in all), as long as no other code writes the name
+without an edge. Each record lists its prod referrers in `referrers` (fully qualified name, file,
+first line), so `--max-inbound 1` finds single-use helpers and their one caller.
+
 ### `--base REF`
 
 Only two kinds of declaration are reported, each with `change` set:
@@ -150,7 +155,8 @@ Fields may be added without a bump.
       "operator": false,
       "inbound": { "prod": 0, "test": 2, "fixture": 0 },
       "namedIn": ["test"],
-      "change": "orphaned"
+      "change": "orphaned",
+      "referrers": []
     }
   ],
   "unparsed": ["app/src/main/kotlin/demo/app/Broken.kt"]
@@ -171,6 +177,7 @@ Fields may be added without a bump.
 | `inbound` | resolved edge referrers from outside it, by source kind |
 | `namedIn` | source kinds whose code writes its name with no edge (`unreferenced` only) |
 | `change` | `orphaned` or `added` (with `--base`) |
+| `referrers` | the prod declarations behind `inbound.prod`, as `{fqName, file, line}` (at most 50; omitted when empty) |
 
 ```json
 {

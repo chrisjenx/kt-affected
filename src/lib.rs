@@ -475,6 +475,19 @@ pub struct Declaration {
     /// With a base: `orphaned` (referenced at the base, by code the change touched) or `added`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub change: Option<String>,
+    /// The prod declarations whose edges make up `inbound.prod` (at most 50).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub referrers: Vec<Referrer>,
+}
+
+/// A declaration referencing a reported one.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct Referrer {
+    pub fq_name: String,
+    pub file: String,
+    pub line: u32,
 }
 
 /// What `kt-affected unreferenced --json` prints.
@@ -550,9 +563,14 @@ pub struct TestReach {
 
 /// Declarations nothing references, in the Gradle build at or above `root`. With `opts.base`,
 /// only those the change from it orphaned or added (`opts.head` as for [`select`]); without one,
-/// the whole build. Updates the graph cache as it goes. See `docs/analysis.md`.
-pub fn unreferenced(root: &Path, opts: &SelectOptions) -> Result<Unreferenced, Error> {
-    analyse(root, opts, unused::unreferenced)
+/// the whole build. `max_inbound`: also report prod declarations with up to that many prod
+/// referrers (0: unreferenced only); each record lists them in `referrers`. Updates the graph cache as it goes. See `docs/analysis.md`.
+pub fn unreferenced(
+    root: &Path,
+    opts: &SelectOptions,
+    max_inbound: u32,
+) -> Result<Unreferenced, Error> {
+    analyse(root, opts, max_inbound, unused::unreferenced)
 }
 
 /// Tests that reach no prod declaration, and prod declarations no test reaches. With
@@ -563,12 +581,13 @@ pub fn test_reach(
     opts: &SelectOptions,
     kover: Option<&Path>,
 ) -> Result<TestReach, Error> {
-    analyse(root, opts, |inp| unused::test_reach(inp, kover))
+    analyse(root, opts, 0, |inp| unused::test_reach(inp, kover))
 }
 
 fn analyse<T>(
     root: &Path,
     opts: &SelectOptions,
+    max_inbound: u32,
     run: impl Fn(&unused::Inputs) -> Result<T, String> + Send + Sync,
 ) -> Result<T, Error>
 where
@@ -606,6 +625,7 @@ where
             cfg: &cfg,
             dir: &dir,
             repo: repo.as_ref(),
+            max_inbound,
         })
         .map_err(Error::CouldNotAnswer)
     };

@@ -1,0 +1,5 @@
+why = "unreferenced --max-inbound 1 also reports prod declarations with a single prod referrer (a single-use helper), listing it in `referrers`; one with two referrers is not reported."
+command = "unreferenced"
+args = ["--max-inbound", "1"]
+reported = ["demo.core.formatTotal", "demo.app.receipt", "demo.app.header"]
+not_reported = ["demo.core.currency", "demo.app.main"]

@@ -18,7 +18,7 @@ fn usage() -> ! {
            explain --base REF [same options as select]\n  \
                                             per changed declaration: functional or cosmetic and why;\n  \
                                             per selected test: the path from a seed, edge by edge\n  \
-           unreferenced [--base REF] [--head REF] [--git-dir DIR] [--config FILE] [--json]\n  \
+           unreferenced [--base REF] [--head REF] [--git-dir DIR] [--config FILE] [--max-inbound N] [--json]\n  \
                                             declarations nothing references (with --base: those the\n  \
                                             change orphaned or added)\n  \
            test-reach [--base REF] [same options] [--kover FILE] [--json]\n  \
@@ -240,6 +240,11 @@ pub fn main() {
                 eprintln!("{e}");
                 std::process::exit(3)
             };
+            let max_inbound: u32 = match args.get("--max-inbound").map(|s| s.parse()) {
+                None => 0,
+                Some(Ok(n)) => n,
+                Some(Err(_)) => usage(),
+            };
             let t = std::time::Instant::now();
             let json = args.has("--json");
             let line = |d: &crate::Declaration| {
@@ -262,7 +267,7 @@ pub fn main() {
                 )
             };
             if cmd == "unreferenced" {
-                let r = crate::unreferenced(&root, &opts).unwrap_or_else(|e| fail(e));
+                let r = crate::unreferenced(&root, &opts, max_inbound).unwrap_or_else(|e| fail(e));
                 eprintln!(
                     "unreferenced: {} declarations, {} unparsed files, {} ms",
                     r.declarations.len(),

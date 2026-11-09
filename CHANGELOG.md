@@ -25,7 +25,9 @@ selection results or the plan format.
   references, with inbound edges split into prod, test and fixture (prod code only tests reach
   shows), a name gate for calls through untyped receivers, DI and dispatch bindings as edges,
   `[unreferenced]` entry points, and fail-open on files that do not parse. With `--base`, only the
-  declarations the change orphaned or added. See [docs/analysis.md](docs/analysis.md).
+  declarations the change orphaned or added. `--max-inbound N` also reports declarations with up
+  to `N` prod referrers, each listed in `referrers` (single-use helpers and their caller). See
+  [docs/analysis.md](docs/analysis.md).
 - New `kt-affected test-reach [--base REF] [--kover FILE] [--json]`: tests whose forward walk
   reaches no prod declaration, and prod declarations no test reaches (certainly uncovered).
   `--kover` sums a Kover XML report's line and branch counters per declaration.

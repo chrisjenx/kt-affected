@@ -445,6 +445,27 @@ impl<'a> Code<'a> {
         }
     }
 
+    /// Prod declarations with an edge to `n` from outside it (at most 50), in node order.
+    fn prod_referrers(&self, n: u32) -> Vec<crate::Referrer> {
+        let v = &self.v;
+        let mut rs: Vec<u32> = v
+            .refby(n)
+            .iter()
+            .copied()
+            .filter(|&r| !self.within(r, n) && self.src(r) == Source::Prod)
+            .collect();
+        rs.sort_unstable();
+        rs.dedup();
+        rs.into_iter()
+            .take(50)
+            .map(|r| crate::Referrer {
+                fq_name: self.fq(r),
+                file: v.p.file_path(v.file[r as usize] as usize).to_string(),
+                line: v.lo[r as usize],
+            })
+            .collect()
+    }
+
     fn record(&self, n: u32, inbound: [u32; 3], named: [bool; 3]) -> Declaration {
         let v = &self.v;
         let i = n as usize;
@@ -486,6 +507,7 @@ impl<'a> Code<'a> {
                 .map(|s| s.name().to_string())
                 .collect(),
             change: None,
+            referrers: self.prod_referrers(n),
         }
     }
 }
@@ -651,6 +673,8 @@ pub struct Inputs<'a> {
     pub cfg: &'a Config,
     pub dir: &'a Path,
     pub repo: Option<&'a Repo>,
+    /// Report prod declarations with at most this many prod referrers (0: unreferenced).
+    pub max_inbound: u32,
 }
 
 // ------------------------------------------------------------------ unreferenced
@@ -792,8 +816,8 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
             }
         }
         let open = match c.src(n) {
-            Source::Prod => k[0] == 0,
-            _ => k == [0, 0, 0],
+            Source::Prod => k[0] <= inp.max_inbound,
+            _ => k.iter().sum::<u32>() <= inp.max_inbound,
         };
         if open {
             counts.insert(n, k);
@@ -832,7 +856,11 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
         let mut seen = [false; 3];
         for &d in users.get(&w).into_iter().flatten() {
             let fd = v.file[d as usize];
-            if c.within(d, n) || (private && fd != f) || !c.sees_file(fd, f) {
+            if c.within(d, n)
+                || v.refby(n).contains(&d)
+                || (private && fd != f)
+                || !c.sees_file(fd, f)
+            {
                 continue;
             }
             seen[c.src(d).idx()] = true;
@@ -851,7 +879,12 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
             let name = v.p.str(w);
             for &d in by_name.get(&w).into_iter().flatten() {
                 let fd = v.file[d as usize];
-                if d == n || c.within(d, n) || (private && fd != f) || !c.sees_file(fd, f) {
+                if d == n
+                    || c.within(d, n)
+                    || v.refby(n).contains(&d)
+                    || (private && fd != f)
+                    || !c.sees_file(fd, f)
+                {
                     continue;
                 }
                 let Some(lines) = c.lines(fd) else {

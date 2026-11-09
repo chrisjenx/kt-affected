@@ -68,7 +68,7 @@ kt-affected discover --json                # what static discovery sees: project
 kt-affected discover --gradle-export       # measure static discovery against Gradle (runs ./gradlew)
 kt-affected graph                          # build or update build/kt-affected/graph.bin
 kt-affected verify                         # incremental graph == cold rebuild?
-kt-affected unreferenced [--base REF] [--json]   # declarations nothing references (--base: the ones a change orphaned or added)
+kt-affected unreferenced [--base REF] [--max-inbound N] [--json]   # declarations nothing references (--base: the ones a change orphaned or added)
 kt-affected test-reach [--base REF] [--kover FILE] [--json]   # tests that reach no prod code; prod code no test reaches
 ```
 
