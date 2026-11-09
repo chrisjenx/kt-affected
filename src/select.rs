@@ -74,11 +74,7 @@ pub struct Explain {
     pub inventory: Vec<Group>,
 }
 
-pub fn modules_of(
-    root: &std::path::Path,
-    build: &Build,
-    cfg: &Config,
-) -> (Modules, Dirs) {
+pub fn modules_of(root: &std::path::Path, build: &Build, cfg: &Config) -> (Modules, Dirs) {
     let mut list: Vec<Module> = build
         .projects
         .iter()
@@ -1374,10 +1370,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 Some(x) => Some(Regex::new(x).map_err(|e| e.to_string())?),
                 None => None,
             };
-            if changed
-                .iter()
-                .any(|p| sc.triggered_by(&re, ex.as_ref(), p))
-            {
+            if changed.iter().any(|p| sc.triggered_by(&re, ex.as_ref(), p)) {
                 for (f, fq) in v.test_class.values() {
                     if sc.runs(v.p.file_package(*f as usize), fq) {
                         for key in idx.owner.get(f).into_iter().flatten() {

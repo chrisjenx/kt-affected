@@ -26,6 +26,77 @@ pub struct Config {
     pub di: Di,
     /// Change classification: see [Changes].
     pub changes: Changes,
+    /// What `unreferenced` treats as called from outside the code: see [Unreferenced].
+    pub unreferenced: Unreferenced,
+}
+
+/// Declarations something outside the Kotlin sources calls (a test runner, a framework, reflection,
+/// generated code), so no edge reaches them: `unreferenced` never reports these.
+#[derive(Deserialize, Clone, Debug)]
+#[serde(default, deny_unknown_fields)]
+pub struct Unreferenced {
+    /// Annotations (simple names) marking an entry point. On a class, its constructor properties
+    /// are entries too.
+    pub entry_annotations: Vec<String>,
+    /// Simple names that are entry points wherever they are declared.
+    pub entry_names: Vec<String>,
+    /// Globs (`*` any run of characters) over the simple or fully qualified name: never reported.
+    pub ignored_names: Vec<String>,
+    /// Supertypes (simple names, as written, through in-repo supertypes too) whose subtypes a
+    /// framework instantiates: those types are entries.
+    pub entry_supertypes: Vec<String>,
+}
+
+impl Default for Unreferenced {
+    fn default() -> Self {
+        Unreferenced {
+            entry_annotations: [
+                // test runners
+                "Test",
+                "ParameterizedTest",
+                "RepeatedTest",
+                "TestFactory",
+                "TestTemplate",
+                "BeforeTest",
+                "AfterTest",
+                "BeforeEach",
+                "AfterEach",
+                "BeforeAll",
+                "AfterAll",
+                "Before",
+                "After",
+                "BeforeClass",
+                "AfterClass",
+                "Rule",
+                "ClassRule",
+                "RegisterExtension",
+                "RunWith",
+                "ExtendWith",
+                "Parameters",
+                // tooling, generated code and reflection
+                "Preview",
+                "Provides",
+                "Binds",
+                "BindsInstance",
+                "IntoSet",
+                "IntoMap",
+                "ElementsIntoSet",
+                "Multibinds",
+                "ContributesTo",
+                "BindingContainer",
+                "HiltAndroidApp",
+                "AndroidEntryPoint",
+                "Serializable",
+                "JsExport",
+                "Keep",
+            ]
+            .map(String::from)
+            .to_vec(),
+            entry_names: vec!["main".into()],
+            ignored_names: vec![],
+            entry_supertypes: vec![],
+        }
+    }
 }
 
 /// A class a DI framework binds to its interface is called through that interface: callers of the
@@ -399,7 +470,8 @@ mod tests {
         "#;
         assert!(Config::parse(both).unwrap_err().contains("not both"));
         assert!(Config::parse("[[source_scanner]]\nchanged_path = '^a/'\n").is_err());
-        let bad = "[[source_scanner]]\nchanged_path = 'a'\nexclude_path = '('\ntest_package = 'x'\n";
+        let bad =
+            "[[source_scanner]]\nchanged_path = 'a'\nexclude_path = '('\ntest_package = 'x'\n";
         assert!(Config::parse(bad).unwrap_err().contains("exclude_path"));
         let c = Config::parse(
             "[[source_scanner]]\nchanged_path = '\\.kt$'\nexclude_path = '^backend'\ntest_classes = ['x.A']\n",
@@ -411,8 +483,8 @@ mod tests {
         let ex = regex::Regex::new(sc.exclude_path.as_ref().unwrap()).unwrap();
         assert!(sc.triggered_by(&re, Some(&ex), "app/A.kt"));
         assert!(!sc.triggered_by(&re, Some(&ex), "backend-x/A.kt"));
-        let pkg =
-            Config::parse("[[source_scanner]]\nchanged_path = 'a'\ntest_package = 'co.g'\n").unwrap();
+        let pkg = Config::parse("[[source_scanner]]\nchanged_path = 'a'\ntest_package = 'co.g'\n")
+            .unwrap();
         assert!(pkg.source_scanners[0].runs("co.g.sub", "co.g.sub.T"));
         assert!(!pkg.source_scanners[0].runs("co.gx", "co.gx.T"));
     }

@@ -22,7 +22,14 @@ kt-syntax is, depend on a tag as above (`publish = false` in `Cargo.toml`).
 pub fn select(root: &Path, opts: &SelectOptions) -> Result<Selection, Error>
 pub fn explain(root: &Path, opts: &SelectOptions) -> Result<Explanation, Error>
 pub fn default_base(git_dir: &Path, head: Option<&str>) -> Result<String, Error>
+pub fn unreferenced(root: &Path, opts: &SelectOptions) -> Result<Unreferenced, Error>
+pub fn test_reach(root: &Path, opts: &SelectOptions, kover: Option<&Path>) -> Result<TestReach, Error>
 ```
+
+`unreferenced` and `test_reach` return what `kt-affected unreferenced --json` and `test-reach --json`
+print (`Unreferenced`, `TestReach`, with `Declaration`, `Inbound`, `TestUnit` and `DeclCoverage`
+records; schema in [analysis](analysis.md)). For them `opts.base` is optional: `None` analyses the
+whole build rather than resolving a default base.
 
 `root` is any directory inside the Gradle build; the nearest directory at or above it that holds
 `settings.gradle(.kts)` is the build root, as Gradle resolves it.
@@ -60,6 +67,9 @@ the same camelCase names:
              "selected": 1, "local": true, "failOpenForks": false, "resultDir": "core/build/test-results/jvmTest"}],
  "error": null}
 ```
+
+A group in an included build also has `"build": "<its directory>"`, and its `module` is the
+composite path (`:plugins`); see [configuration](configuration.md#included-builds).
 
 `error` is always `None` in a returned `Selection`: a failure is an `Err`. The field exists so the
 type also reads the JSON the CLI prints when it cannot answer.

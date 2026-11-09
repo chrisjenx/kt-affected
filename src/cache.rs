@@ -298,6 +298,55 @@ impl Packed {
     pub fn discovery(&self) -> &[u8] {
         self.bytes(S_DISCOVERY)
     }
+
+    /// Raw supertype names of node `n`, as written (interned, simple names).
+    pub fn node_supers(&self, n: usize) -> &[u32] {
+        self.csr_row(S_SUPERS_OFF, S_SUPERS, n, 1)
+    }
+}
+
+/// One file's names, as `decl_refs` reads them.
+pub struct DeclRefs {
+    /// Per declaration (in node order), the names its own code writes.
+    pub refs: Vec<Vec<u32>>,
+    /// (alias, the simple name it imports) for each `import a.b.C as D`.
+    pub aliases: Vec<(u32, u32)>,
+}
+
+/// Per file, its [`DeclRefs`], read off the `parses.bin` beside `graph.bin` in `dir`. None when
+/// that file is missing or not this graph's.
+pub fn decl_refs(dir: &Path, p: &Packed) -> Option<Vec<DeclRefs>> {
+    let paths = Paths::new(dir);
+    if !parses_match(&paths.parses, p) {
+        return None;
+    }
+    let f = std::fs::File::open(&paths.parses).ok()?;
+    // SAFETY: read-only map of a file only the (locked) updater rewrites, and only by rename.
+    let map = unsafe { Mmap::map(&f).ok()? };
+    (0..p.n_files())
+        .into_par_iter()
+        .map(|i| {
+            let (off, len) = (
+                p.file_u64(i, F_REC_OFF) as usize,
+                p.file(i)[F_REC_LEN] as usize,
+            );
+            let bytes = map.get(off..off + len * 4)?;
+            let words: Vec<u32> = bytes
+                .chunks_exact(4)
+                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
+                .collect();
+            let r = decode_refs(&words);
+            Some(DeclRefs {
+                aliases: r
+                    .imports
+                    .iter()
+                    .filter(|im| im.alias != NONE && !im.star)
+                    .filter_map(|im| im.segs.last().map(|&last| (im.alias, last)))
+                    .collect(),
+                refs: r.refs,
+            })
+        })
+        .collect()
 }
 
 // ------------------------------------------------------------------ refs records

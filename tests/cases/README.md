@@ -28,6 +28,13 @@ Each directory is one scenario the selector must keep getting right. `tests/case
 | `reasons` | each must be a substring of some reason in the plan |
 | `config` | `kt-affected.toml` text, written outside the repo (one inside is a selector change) |
 | `known_gap` | the tool gets this wrong today; a failure is printed, not fatal, and a pass fails until the mark is removed |
+| `command` | `unreferenced` or `test-reach` instead of `select`, run on the head commit with `--json` |
+| `args` | extra arguments for `command`; `["--base", "HEAD~1"]` limits it to the change |
+| `reported` / `not_reported` | fully qualified declarations that must / must not be reported (`test-reach`: unreached prod code) |
+| `test_only` | `unreferenced`: reported with `inbound.prod == 0` and `inbound.test > 0` |
+| `orphaned` / `added` | `unreferenced --base`: reported with that `change` |
+| `unparsed` | `unreferenced`: files listed as not parsing |
+| `tests_nothing` / `tests_reach` | `test-reach`: `pkg.Class` (whole class) or `pkg.Class.method` that must / must not be listed as reaching nothing |
 
 Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASES_SHOW=1` and
 `-- --nocapture` to print every plan and the known gaps.
@@ -98,8 +105,18 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `stale-target-source-dir` | A leftover iosX64Main directory in a module whose script declares its targets (jvm, iosArm64, iosSimulatorArm64) is not a target: no iosX64Test task exists to run. (known gap) |
 | `tasks-only-excluded-source-set` | `[tasks] only` removing every task of a source set drops it with a reason; the module and its dependents are not failed open and no `*` group is emitted. |
 | `tasks-only-excluded-target-edit` | An edit only an excluded target compiles (iosMain, with `[tasks] only` keeping jvmTest) selects nothing and says so; it does not fail the module open. |
+| `test-reach-base` | test-reach --base limits the report to declarations the change touches: new prod code no test reaches is reported, older unreached code elsewhere is not. |
+| `test-reach-tests-of-nothing` | test-reach: a test class whose code reaches no prod declaration is listed whole, a test method that reaches none (beside one that does) alone, and a test calling prod code not at all. |
+| `test-reach-unreached-prod` | test-reach: prod code no test's forward walk reaches is reported; code a test reaches, an implementation it dispatches to through an interface included, is not. |
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |
 | `test-only-change` | Editing a test selects that test class and no other test of the same code. |
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |
+| `unreferenced-di-entry` | unreferenced: a DI-bound implementation is reached through the interface it binds, and a @Provides function is an entry point; an implementation nothing binds or builds is reported. |
+| `unreferenced-framework-entries` | unreferenced keeps what a framework reaches without an edge (aliased test annotation, @MethodSource, @EnumSource, inherited tests, companion as a value, build-script names) and skips code in no source set. |
+| `unreferenced-member-name-gate` | unreferenced: a member called through an untyped receiver is kept by its name, written in a module that can see it; one only an unrelated module names, and an uncalled private member, are reported. |
+| `unreferenced-orphan-base` | unreferenced --base: a refactor's orphan is reported as orphaned, new unreferenced code as added; code unreferenced before the change is not reported. |
+| `unreferenced-test-only` | unreferenced: prod code only tests call is reported as test-only (inbound.prod 0, inbound.test > 0); a JUnit test method is not reported. |
+| `unreferenced-top-level` | unreferenced: an unreferenced top-level function and class are reported; a cross-module callee, an object read by member access and `main` are not. |
+| `unreferenced-unparsed-file` | unreferenced fails open on a file that does not parse: what it could see counts as referenced and the file is listed; a module it cannot see is still reported. |
 | `unnamed-receiver-chain` | Calls on receivers the linker cannot type are followed hop after hop: tests calling the outer service run; one calling a same-named member elsewhere does not. |
 

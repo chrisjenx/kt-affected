@@ -60,7 +60,16 @@ dispatch = "typed"                        # "names": also keep any test code wri
 [changes]                                 # on by default
 classify = true                           # false: every touched declaration seeds
 cosmetic_annotations = ["Suppress"]       # adding, removing or editing these never changes behaviour
+
+[unreferenced]                            # `kt-affected unreferenced`: what calls code from outside it
+entry_annotations = ["Test", "Preview", "Provides", "Serializable"]  # default: test runners, previews, DI providers, serialization, ...
+entry_names = ["main"]                    # simple names that are entry points wherever declared
+ignored_names = ["*Fake*"]                # globs over the simple or fully qualified name: never reported
+entry_supertypes = ["Activity"]           # a framework instantiates their subtypes
 ```
+
+`[unreferenced]` only changes what `unreferenced` reports, never a selection; the defaults and the
+rules it applies on top are in [analysis](analysis.md#configuration).
 
 `[tasks] local` and `[tasks] only` cut what runs in different ways. `local` keeps every group in the
 plan and marks each with `local`, so a runner can run the local ones now and defer the rest (to CI,

@@ -1,0 +1,6 @@
+why = "unreferenced --base: a declaration the change left with no referrer (a refactor's orphan) is reported as orphaned, one the change added unreferenced as added; one already unreferenced before the change is not reported."
+command = "unreferenced"
+args = ["--base", "HEAD~1"]
+orphaned = ["demo.reports.Formatter.legacy"]
+added = ["demo.reports.Report.preview"]
+not_reported = ["demo.reports.Formatter.alreadyDead", "demo.reports.Formatter.current"]

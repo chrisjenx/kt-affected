@@ -1,0 +1,16 @@
+why = "unreferenced keeps what a framework reaches without an edge: a test annotation imported under an alias, @MethodSource and @EnumSource(X::class), a test class inheriting its tests, a companion used as a value, a plugin class named by a build script string and an object a build script calls by its qualified name; code in no source set is not reported. Each was a false report on a production app."
+command = "unreferenced"
+reported = ["demo.plugins.NeverUsed"]
+not_reported = [
+  "demo.shelves.RouteTest.slot is built",
+  "demo.shelves.RouteTest.Companion.widths",
+  "demo.shelves.Route.LIST",
+  "demo.shelves.Route.DELETE",
+  "demo.shelves.ShelvesWalkerTest",
+  "demo.shelves.Slot.Key",
+  "demo.plugins.ShelvesPlugin",
+  "demo.plugins.WrapperStanza",
+  "demo.plugins.WrapperStanza.inject",
+  "demo.shelves.UpstreamTokens",
+  "demo.shelves.UpstreamTokens.Width",
+]

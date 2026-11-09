@@ -1688,8 +1688,7 @@ pub fn discover(root: &Path) -> Build {
             continue;
         }
         let name = included_build_name(&settings, &dir);
-        if !names.insert(name.clone()) || b.projects.iter().any(|p| p.path == format!(":{name}"))
-        {
+        if !names.insert(name.clone()) || b.projects.iter().any(|p| p.path == format!(":{name}")) {
             b.warnings.push(format!(
                 "included build {dir}: its name `{name}` collides with another build or project; its tests are not selected"
             ));

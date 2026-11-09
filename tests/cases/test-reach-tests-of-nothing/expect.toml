@@ -1,0 +1,4 @@
+why = "test-reach: a test class whose code reaches no prod declaration is listed whole, a test method that reaches none (beside one that does) is listed alone, and a test calling prod code is not listed."
+command = "test-reach"
+tests_nothing = ["demo.pricing.ArithmeticTest", "demo.pricing.MixedTest.testsNothing"]
+tests_reach = ["demo.pricing.PricingTest", "demo.pricing.MixedTest.usesPricing"]

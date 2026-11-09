@@ -1,0 +1,4 @@
+why = "unreferenced: a member called through a receiver the linker cannot type has no edge, but its name is written in a module that can see it, so it is kept; a member whose name only a module that cannot see it writes, and an uncalled private member, are reported."
+command = "unreferenced"
+reported = ["demo.core.Book.shelfMark", "demo.core.Book.neverCalled"]
+not_reported = ["demo.core.Book.display", "demo.core.Book.title", "demo.core.shelf"]
