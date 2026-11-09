@@ -197,9 +197,9 @@ Each command is one graph update plus one pass over it. On a production app of 1
 
 | | warm graph | cold (no cache) |
 |---|---|---|
-| `graph` | | 2.7 to 3.8 s |
-| `unreferenced` | 1.2 to 1.6 s | 1.4x cold `graph` |
+| `graph` | | 2.6 to 3.2 s |
+| `unreferenced` | 1.2 to 1.6 s | 2.9 to 3.0 s (1.1x cold `graph`) |
 | `unreferenced --base` (30 commits) | 2.2 s | |
-| `test-reach` | 2.2 s | 1.4x cold `graph` |
+| `test-reach` | 2.2 s | 3.9 to 4.5 s (1.4x cold `graph`) |
 
 Peak memory is 130 to 190 MB.

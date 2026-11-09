@@ -6,6 +6,32 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.6.0]
+
+- Included builds' tests are selected. Each `includeBuild` is discovered like the root build, and its
+  test source sets become test tasks: a group with `module` set to the composite path
+  (`:<build name>`, `:<build name>:<project>`) and a new `build` field set to the included build's
+  directory. `--format gradle` prints `:plugins:test --tests ..`, which the root build runs. They
+  are selected by graph seeds, by string mentions of ignored paths (a test reading
+  `.github/workflows/deploy.yml`), and by edits to their own tests, which run nothing in the root
+  build. A plugin build's main code is still build logic for the root build, and now also runs its
+  own tests that reach the edit. `discover --json` gains `included`. The graph's module visibility
+  is unchanged. A plan can now hold groups in included builds: runners that build a task path from
+  `module` keep working, and the JSON carries `build` only on those groups.
+- `[[source_scanner]]` takes `test_classes = ["fq.Name", ..]` (instead of `test_package`; setting
+  both, or neither, fails to load) and `exclude_path`, a regex of changed paths that never trigger
+  it. Scanner regexes are checked when the config loads.
+- New `kt-affected unreferenced [--base REF] [--json]`: declarations at any depth nothing
+  references, with inbound edges split into prod, test and fixture (prod code only tests reach
+  shows), a name gate for calls through untyped receivers, DI and dispatch bindings as edges,
+  `[unreferenced]` entry points, and fail-open on files that do not parse. With `--base`, only the
+  declarations the change orphaned or added. See [docs/analysis.md](docs/analysis.md).
+- New `kt-affected test-reach [--base REF] [--kover FILE] [--json]`: tests whose forward walk
+  reaches no prod declaration, and prod declarations no test reaches (certainly uncovered).
+  `--kover` sums a Kover XML report's line and branch counters per declaration.
+- Both new commands print versioned JSON (`"schema": 1`) and are in the library API
+  (`unreferenced`, `test_reach`).
+
 ## [0.5.1]
 
 - A hierarchy template group's Android membership follows the plugin: `withAndroidTarget()` takes
