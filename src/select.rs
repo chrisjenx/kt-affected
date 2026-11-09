@@ -1163,11 +1163,11 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                         .map(|m| m.id.clone())
                 })
                 .collect();
-            // A seed in a plugin build is on no root-build test's classpath (build logic reaches
-            // those through the smoke rule); only its own build's tests, which are never bounded.
+            // A seed outside the root build's modules (an included build's, plugin builds too: one
+            // may also publish a library the root build substitutes) leaves the bound off.
             let seeds_known = node_seeds.iter().all(|&n| {
-                let path = v.p.file_path(v.file[n as usize] as usize);
-                mods.module_of(path).is_some() || included_build_of(path) == Some(true)
+                mods.module_of(v.p.file_path(v.file[n as usize] as usize))
+                    .is_some()
             });
             if seeds_known && !edited.is_empty() {
                 let can = mods.reverse_closure(&edited);
