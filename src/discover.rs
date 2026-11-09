@@ -144,11 +144,33 @@ pub struct Build {
     /// Inputs whose change invalidates discovery (settings, build scripts).
     pub inputs: Vec<String>,
     pub warnings: Vec<String>,
+    /// Each included build, discovered the same way. Selection runs their tests; the graph's
+    /// module visibility never reads them, so linking is as if they were not modelled.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub included: Vec<Included>,
+}
+
+/// An included build (`includeBuild("dir")`) and its projects, renamed into the composite's
+/// namespace: its root project is `:<name>`, a subproject `:a` of it `:<name>:a`, and every `dir`
+/// is relative to the outer build's root. `:<name>:a:test` is how the outer build runs its tasks.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Included {
+    /// Its directory, relative to the outer build's root.
+    pub dir: String,
+    /// Its build name: the directory's name unless `includeBuild(..) { name = ".." }` sets one.
+    pub name: String,
+    pub projects: Vec<Project>,
 }
 
 impl Build {
+    /// A project of this build or, by its composite path, of an included build.
     pub fn project(&self, path: &str) -> Option<&Project> {
-        self.projects.iter().find(|p| p.path == path)
+        self.projects.iter().find(|p| p.path == path).or_else(|| {
+            self.included
+                .iter()
+                .flat_map(|i| &i.projects)
+                .find(|p| p.path == path)
+        })
     }
 
     /// Projects whose sources live in their own directory, longest directory first,
@@ -1653,7 +1675,85 @@ pub fn discover_best(root: &Path) -> Build {
     b
 }
 
+/// Static discovery of the build at `root` and, one level deep, of each build it includes.
 pub fn discover(root: &Path) -> Build {
+    let mut b = discover_one(root);
+    let settings = ["settings.gradle.kts", "settings.gradle"]
+        .iter()
+        .find_map(|f| std::fs::read_to_string(root.join(f)).ok())
+        .unwrap_or_default();
+    let mut names: BTreeSet<String> = BTreeSet::new();
+    for dir in b.included_builds.clone() {
+        if dir.is_empty() || dir == "." || dir.starts_with("..") || !root.join(&dir).is_dir() {
+            continue;
+        }
+        let name = included_build_name(&settings, &dir);
+        if !names.insert(name.clone()) || b.projects.iter().any(|p| p.path == format!(":{name}"))
+        {
+            b.warnings.push(format!(
+                "included build {dir}: its name `{name}` collides with another build or project; its tests are not selected"
+            ));
+            continue;
+        }
+        let inner = discover_one(&root.join(&dir));
+        let at = |rel: &str| {
+            if rel.is_empty() {
+                dir.clone()
+            } else {
+                format!("{dir}/{rel}")
+            }
+        };
+        let rename = |p: &str| {
+            if p == ":" {
+                format!(":{name}")
+            } else {
+                format!(":{name}{p}")
+            }
+        };
+        let projects = inner
+            .projects
+            .into_iter()
+            .filter(|p| !p.dir.starts_with(".."))
+            .map(|mut p| {
+                p.path = rename(&p.path);
+                p.dir = at(&p.dir);
+                p.build_file = p.build_file.as_deref().map(at);
+                p.deps = p.deps.into_iter().map(|(c, t)| (c, rename(&t))).collect();
+                p
+            })
+            .collect();
+        b.inputs.extend(
+            inner
+                .inputs
+                .iter()
+                .filter(|i| !i.starts_with(".."))
+                .map(|i| at(i)),
+        );
+        b.included.push(Included {
+            dir: dir.clone(),
+            name,
+            projects,
+        });
+    }
+    b.inputs.sort();
+    b.inputs.dedup();
+    b
+}
+
+/// An included build's name: `includeBuild("dir") { name = "x" }`, else the directory's name.
+fn included_build_name(settings: &str, dir: &str) -> String {
+    let re = regex::Regex::new(&format!(
+        r#"includeBuild\s*\(?\s*["'](?:\./)?{}/?["']\s*\)?\s*\{{[^{{}}]*?\bname\s*=\s*["']([^"']+)["']"#,
+        regex::escape(dir)
+    ))
+    .unwrap();
+    match re.captures(settings) {
+        Some(c) => c[1].to_string(),
+        None => dir.rsplit('/').next().unwrap_or(dir).to_string(),
+    }
+}
+
+fn discover_one(root: &Path) -> Build {
     let mut warnings = Vec::new();
     let settings_file = script_in(root, "", "settings");
     let settings = settings_file
@@ -2062,6 +2162,7 @@ pub fn discover(root: &Path) -> Build {
         included_builds: settings.included_builds,
         inputs,
         warnings,
+        included: vec![],
     }
 }
 
@@ -2127,6 +2228,7 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
         included_builds: vec![],
         inputs: vec![],
         warnings: vec![],
+        included: vec![],
     })
 }
 

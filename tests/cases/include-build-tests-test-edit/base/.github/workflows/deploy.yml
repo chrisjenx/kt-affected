@@ -1,0 +1,4 @@
+jobs:
+  deploy:
+    steps:
+      - run: ./gradlew build -PbuildId=${{ github.run_id }}

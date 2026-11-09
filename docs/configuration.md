@@ -35,7 +35,12 @@ uiTest = ["jvmTest", "wasmJsBrowserTest"] # override discovery for a source set
 [[source_scanner]]                        # in-house tests that read sources as text (Konsist tests
                                           # are found by their import, no config needed)
 changed_path = '^app/src/main/.+\.kt$'
-test_package = "com.example.guards"
+test_package = "com.example.guards"       # every test class in the package and its subpackages
+
+[[source_scanner]]
+changed_path = '^[^/]+/src/main/.+\.kt$'
+exclude_path = '^backend'                 # optional: matching paths never trigger it (no lookahead in `regex`)
+test_classes = ["com.example.guards.CborGuardTest"]  # these classes only; exclusive with test_package
 
 [[dispatch]]                              # Handler<E> runs only when an E is dispatched
 bases = ["EventHandler"]                  # also through generic bases: Foo : Mid<X>, Mid<E> : EventHandler<E>
@@ -65,6 +70,45 @@ test source set whose every task `only` removes (`iosTest` when only `jvmTest` i
 the same way, with a reason, instead of failing its module open. Use `local` to defer tasks a local
 loop does not run; use `only` to exclude tasks you never want selected. A source set mapped to no
 task at all, without `only` removing any, still runs its module and every dependent whole.
+
+A `[[source_scanner]]` is a test that reads sources as text, so the graph never reaches it. A
+changed path matching `changed_path`, and not `exclude_path` when one is set, runs its tests: every
+test class in `test_package` (and its subpackages), or exactly the fully qualified `test_classes`.
+Set one of the two; a config setting both, or neither, fails to load, as does a regex that does not
+compile. `exclude_path` exists because the `regex` crate has no lookahead: "every production source
+outside `backend*`" is `changed_path = '^[^/]+/src/main/'` plus `exclude_path = '^backend'`.
+
+## Included builds
+
+Each `includeBuild("dir")` in the settings script is discovered like the root build, and its test
+source sets become test tasks of the plan. A group in one has `module` set to the composite path,
+`:<build name>` for the included build's root project and `:<build name>:<project>` for its
+subprojects, and `build` set to the included build's directory. The build name is the directory's
+name unless `includeBuild("dir") { name = "x" }` sets one, as Gradle names it. `--format gradle`
+prints the composite form, which the root build runs directly:
+
+```bash
+./gradlew :plugins:test --tests demo.plugins.BuildVersionTest
+```
+
+To run it inside the included build instead, drop the first segment of `module` and pass `-p`:
+`./gradlew -p gradle/plugins :test --tests ...`. The JSON has `build` only on such groups.
+
+What selects them:
+
+- the graph: a declaration an included build's test reaches changes (its own code, or a library
+  build's code the root build also uses);
+- a mention: an ignored or doc path (`.github/workflows/deploy.yml`) that a test there names in a
+  string, as for any test;
+- an edit to one of its tests, which runs that test and nothing in the root build.
+
+A change to a plugin build's main code is still build logic for the root build (one smoke class per
+task in reach), and runs the included build's tests that reach it as well. A change to anything
+else in an included build, its build script say, runs one smoke class of its own tasks besides
+whatever the root build's rules select. The graph's module visibility does not model included builds,
+so linking and the root build's selection are as before. A name collision (two included builds, or
+an included build and a root-build project, with the same name) leaves that build out, with a
+discovery warning.
 
 A member edit also walks from the member's class to every member of the class's supertypes, so a
 body change to `RepoImpl.update` would reach every caller of `Repo.insert`, and every test holding a

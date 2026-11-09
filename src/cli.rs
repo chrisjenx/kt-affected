@@ -124,6 +124,7 @@ pub fn main() {
                     included_builds: vec![],
                     inputs: vec![],
                     warnings: vec![],
+                    included: vec![],
                 })
             } else {
                 None

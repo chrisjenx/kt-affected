@@ -1,0 +1,4 @@
+why = "Editing a test of an included build runs that test class in its own build and nothing in the root build: test code is not build logic."
+must = ["demo.plugins.JvmLibraryPluginTest@:plugins:test"]
+never = ["demo.plugins.BuildVersionTest"]
+never_tasks = [":core:test"]

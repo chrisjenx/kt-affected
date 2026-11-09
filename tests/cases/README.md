@@ -70,6 +70,9 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `include-build-convention` | A convention plugin in a pluginManagement includeBuild is build logic for every module applying it: each test task runs a smoke class, with a reason. |
 | `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. |
 | `include-build-precompiled-script` | A precompiled script plugin in a pluginManagement includeBuild is build logic for every module: each test task runs a smoke class, with a reason. |
+| `include-build-tests-mention` | An included build's own tests are test tasks too (`:<build name>:test`): one naming an ignored path in a string (a workflow file) runs when that file changes, though nothing in the root build does. |
+| `include-build-tests-own-source` | An edit to a plugin build's own main code runs the tests in that build that reach it through the graph, besides the root build's build-logic smoke class per task. |
+| `include-build-tests-test-edit` | Editing a test of an included build runs that test class in its own build and nothing in the root build: test code is not build logic. |
 | `init-block-not-virtual` | An init block is not virtual: a change running in one subclass's init reaches tests constructing it, never a sibling's through the base class's init. |
 | `koin-factory` | Koin `factory<Iface> { Impl() }`: an impl edit reaches tests resolving the interface. |
 | `koin-single-bind` | Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings. |
@@ -88,6 +91,8 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `settings-computed-includes` | Settings that include projects by walking directories: every directory holding a build script is a project named by its path, so an edit reaches its own tests and its dependents' through projects.books.catalog, and not an unrelated module's. |
 | `settings-project-dsl-leaf-names` | A settings DSL that includes projects by their leaf directory name (`:shop-catalog` in shop-books/shop-catalog): the projects are read from disk under the names the build scripts' own references use, and a directory holding a build script that the settings never names is not a project. |
 | `shared-test-source-set` | A custom test source set that jvmTest and wasmJsTest both dependOn runs under both tasks, and not under a target that doesn't include it. |
+| `source-scanner-exclude-path` | A [[source_scanner]] `exclude_path` keeps matching paths from triggering it: a change under backend* runs only the scanner whose exclude_path does not match it. |
+| `source-scanner-test-classes` | A [[source_scanner]] naming `test_classes` runs only those classes on a matching change, not every class in their package. |
 | `sqldelight-queries` | A .sq change seeds code naming its generated queries (BookQueries/bookQueries), not other .sq files' users. |
 | `sqldelight-same-named-holder` | Two stores each hold their own `private val queries`: a .sq change reaching BookStore.queries must not cross to AuthorStore's same-named private property. |
 | `stale-target-source-dir` | A leftover iosX64Main directory in a module whose script declares its targets (jvm, iosArm64, iosSimulatorArm64) is not a target: no iosX64Test task exists to run. (known gap) |
