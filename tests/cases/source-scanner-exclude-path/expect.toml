@@ -1,0 +1,13 @@
+why = "A [[source_scanner]] `exclude_path` keeps matching paths from triggering it: a change under backend* runs only the scanner whose exclude_path does not match it."
+must = ["demo.guards.NamingGuardTest@:guards:test"]
+never = ["demo.guards.CborGuardTest"]
+config = '''
+[[source_scanner]]
+changed_path = '^[^/]+/src/main/.+\.kt$'
+exclude_path = '^backend'
+test_classes = ["demo.guards.CborGuardTest"]
+
+[[source_scanner]]
+changed_path = '^backend[^/]*/src/main/.+\.kt$'
+test_classes = ["demo.guards.NamingGuardTest"]
+'''

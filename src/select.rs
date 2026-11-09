@@ -1291,11 +1291,16 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         }
         for sc in &cfg.source_scanners {
             let re = Regex::new(&sc.changed_path).map_err(|e| e.to_string())?;
-            if changed.iter().any(|p| re.is_match(p)) {
-                let pfx = format!("{}.", sc.test_package);
+            let ex = match &sc.exclude_path {
+                Some(x) => Some(Regex::new(x).map_err(|e| e.to_string())?),
+                None => None,
+            };
+            if changed
+                .iter()
+                .any(|p| sc.triggered_by(&re, ex.as_ref(), p))
+            {
                 for (f, fq) in v.test_class.values() {
-                    let pkg = v.p.file_package(*f as usize);
-                    if pkg == sc.test_package || pkg.starts_with(&pfx) {
+                    if sc.runs(v.p.file_package(*f as usize), fq) {
                         for key in idx.owner.get(f).into_iter().flatten() {
                             if idx.admits(key, fq) {
                                 picked.entry(key.clone()).or_default().insert(fq.clone());

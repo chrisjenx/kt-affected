@@ -1,0 +1,8 @@
+why = "A [[source_scanner]] naming `test_classes` runs only those classes on a matching change, not every class in their package."
+must = ["demo.guards.CborGuardTest@:guards:test"]
+never = ["demo.guards.NamingGuardTest"]
+config = '''
+[[source_scanner]]
+changed_path = '^[^/]+/src/main/.+\.kt$'
+test_classes = ["demo.guards.CborGuardTest"]
+'''

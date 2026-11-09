@@ -233,9 +233,68 @@ pub struct Tasks {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct SourceScanner {
-    /// A changed path matching this regex selects every test class in `test_package`.
+    /// A changed path matching this regex (and not `exclude_path`) selects the scanner's tests.
     pub changed_path: String,
-    pub test_package: String,
+    /// A changed path matching this regex never triggers the scanner, though `changed_path`
+    /// matches it (the `regex` crate has no lookahead to say "outside these roots").
+    #[serde(default)]
+    pub exclude_path: Option<String>,
+    /// Every test class in this package and its subpackages. Exclusive with `test_classes`.
+    #[serde(default)]
+    pub test_package: Option<String>,
+    /// These fully qualified test classes only. Exclusive with `test_package`.
+    #[serde(default)]
+    pub test_classes: Option<Vec<String>>,
+}
+
+impl SourceScanner {
+    fn validate(&self, i: usize) -> Result<(), String> {
+        let at = format!("[[source_scanner]] #{}", i + 1);
+        match (&self.test_package, &self.test_classes) {
+            (Some(_), Some(_)) => {
+                return Err(format!(
+                    "{at}: set `test_package` or `test_classes`, not both"
+                ));
+            }
+            (None, None) => return Err(format!("{at}: set `test_package` or `test_classes`")),
+            (None, Some(c)) if c.is_empty() => {
+                return Err(format!("{at}: `test_classes` is empty"));
+            }
+            _ => {}
+        }
+        for (key, re) in [
+            ("changed_path", Some(&self.changed_path)),
+            ("exclude_path", self.exclude_path.as_ref()),
+        ] {
+            if let Some(re) = re {
+                regex::Regex::new(re).map_err(|e| format!("{at}: `{key}`: {e}"))?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Does a change to `path` trigger this scanner? (`changed` and `exclude` are its compiled
+    /// `changed_path` and `exclude_path`.)
+    pub fn triggered_by(
+        &self,
+        changed: &regex::Regex,
+        exclude: Option<&regex::Regex>,
+        path: &str,
+    ) -> bool {
+        changed.is_match(path) && !exclude.is_some_and(|x| x.is_match(path))
+    }
+
+    /// Is the test class `fq`, in package `pkg`, one this scanner runs?
+    pub fn runs(&self, pkg: &str, fq: &str) -> bool {
+        if let Some(c) = &self.test_classes {
+            return c.iter().any(|c| c == fq);
+        }
+        let Some(want) = &self.test_package else {
+            return false;
+        };
+        pkg == want
+            || (pkg.starts_with(want.as_str()) && pkg.as_bytes().get(want.len()) == Some(&b'.'))
+    }
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -260,7 +319,16 @@ impl Config {
 
     pub fn load_file(p: &Path) -> Result<Config, String> {
         let text = std::fs::read_to_string(p).map_err(|e| format!("{}: {e}", p.display()))?;
-        toml::from_str(&text).map_err(|e| format!("{}: {e}", p.display()))
+        Config::parse(&text).map_err(|e| format!("{}: {e}", p.display()))
+    }
+
+    /// Parse and validate config text.
+    pub fn parse(text: &str) -> Result<Config, String> {
+        let c: Config = toml::from_str(text).map_err(|e| e.to_string())?;
+        for (i, sc) in c.source_scanners.iter().enumerate() {
+            sc.validate(i)?;
+        }
+        Ok(c)
     }
 
     pub fn is_local_task(&self, task: &str) -> bool {
@@ -319,5 +387,33 @@ mod tests {
         assert_eq!(c.tasks.source_sets["mockedUiTest"].len(), 2);
         assert!(c.dispatch[0].construction_smoke);
         assert!(c.modules.manual.contains(":m"));
+    }
+
+    #[test]
+    fn a_source_scanner_names_a_package_or_classes_never_both() {
+        let both = r#"
+            [[source_scanner]]
+            changed_path = "^a/"
+            test_package = "x"
+            test_classes = ["x.A"]
+        "#;
+        assert!(Config::parse(both).unwrap_err().contains("not both"));
+        assert!(Config::parse("[[source_scanner]]\nchanged_path = '^a/'\n").is_err());
+        let bad = "[[source_scanner]]\nchanged_path = 'a'\nexclude_path = '('\ntest_package = 'x'\n";
+        assert!(Config::parse(bad).unwrap_err().contains("exclude_path"));
+        let c = Config::parse(
+            "[[source_scanner]]\nchanged_path = '\\.kt$'\nexclude_path = '^backend'\ntest_classes = ['x.A']\n",
+        )
+        .unwrap();
+        let sc = &c.source_scanners[0];
+        assert!(sc.runs("x", "x.A") && !sc.runs("x", "x.B"));
+        let re = regex::Regex::new(&sc.changed_path).unwrap();
+        let ex = regex::Regex::new(sc.exclude_path.as_ref().unwrap()).unwrap();
+        assert!(sc.triggered_by(&re, Some(&ex), "app/A.kt"));
+        assert!(!sc.triggered_by(&re, Some(&ex), "backend-x/A.kt"));
+        let pkg =
+            Config::parse("[[source_scanner]]\nchanged_path = 'a'\ntest_package = 'co.g'\n").unwrap();
+        assert!(pkg.source_scanners[0].runs("co.g.sub", "co.g.sub.T"));
+        assert!(!pkg.source_scanners[0].runs("co.gx", "co.gx.T"));
     }
 }
