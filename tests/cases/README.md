@@ -107,14 +107,15 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `tasks-only-excluded-source-set` | `[tasks] only` removing every task of a source set drops it with a reason; the module and its dependents are not failed open and no `*` group is emitted. |
 | `tasks-only-excluded-target-edit` | An edit only an excluded target compiles (iosMain, with `[tasks] only` keeping jvmTest) selects nothing and says so; it does not fail the module open. |
 | `test-reach-base` | test-reach --base limits the report to declarations the change touches: new prod code no test reaches is reported, older unreached code elsewhere is not. |
+| `test-reach-private-callable` | test-reach: a private callable is reached from its own file even after another file of the module wrote the same name first. |
 | `test-reach-tests-of-nothing` | test-reach: a test class whose code reaches no prod declaration is listed whole, a test method that reaches none (beside one that does) alone, and a test calling prod code not at all. |
 | `test-reach-unreached-prod` | test-reach: prod code no test's forward walk reaches is reported; code a test reaches, an implementation it dispatches to through an interface included, is not. |
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |
 | `test-only-change` | Editing a test selects that test class and no other test of the same code. |
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |
 | `unreferenced-di-entry` | unreferenced: a DI-bound implementation is reached through the interface it binds, and a @Provides function is an entry point; an implementation nothing binds or builds is reported. |
-| `unreferenced-framework-entries` | unreferenced keeps what a framework reaches without an edge (aliased test annotation, @MethodSource, @EnumSource, inherited tests, companion as a value, build-script names) and skips code in no source set. |
 | `unreferenced-deep-entry-supertype` | unreferenced: a type whose supertypes reach an `entry_supertypes` name two levels up the in-repo chain is not reported; an unrelated unused type is. |
+| `unreferenced-framework-entries` | unreferenced keeps what a framework reaches without an edge (aliased test annotation, @MethodSource, @EnumSource, inherited tests, companion as a value, build-script names) and skips code in no source set. |
 | `unreferenced-max-inbound` | unreferenced --max-inbound 1 also reports prod declarations with a single prod referrer, listed in `referrers`; one with two referrers is not. |
 | `unreferenced-member-name-gate` | unreferenced: a member called through an untyped receiver is kept by its name, written in a module that can see it; one only an unrelated module names, and an uncalled private member, are reported. |
 | `unreferenced-orphan-base` | unreferenced --base: a refactor's orphan is reported as orphaned, new unreferenced code as added; code unreferenced before the change is not reported. |

@@ -1090,9 +1090,11 @@ struct Walker<'a> {
     c: &'a Code<'a>,
     facts: &'a Facts,
     fwd: crate::graph::Csr,
-    /// name -> callables declaring it.
+    /// name -> the non-private callables declaring it.
     callables: FxHashMap<u32, Vec<u32>>,
     stamp: Vec<u32>,
+    /// (file, name) -> the private callables declaring it: visible in that file alone.
+    private_callables: FxHashMap<(u32, u32), Vec<u32>>,
     generation: u32,
 }
 
@@ -1108,8 +1110,18 @@ impl<'a> Walker<'a> {
         let fwd = crate::graph::Csr::from_pairs(v.n, &pairs);
         let mut callables: FxHashMap<u32, Vec<u32>> = FxHashMap::default();
         for n in 0..v.n as u32 {
-            if matches!(v.kind[n as usize], KIND_FUN | KIND_VAL | KIND_VAR) {
-                callables.entry(v.name[n as usize]).or_default().push(n);
+        let mut private_callables: FxHashMap<(u32, u32), Vec<u32>> = FxHashMap::default();
+            let i = n as usize;
+            if !matches!(v.kind[i], KIND_FUN | KIND_VAL | KIND_VAR) {
+                continue;
+            }
+            if v.dflags[i] & FLAG_PRIVATE != 0 {
+                private_callables
+                    .entry((v.file[i], v.name[i]))
+                    .or_default()
+                    .push(n);
+            } else {
+                callables.entry(v.name[i]).or_default().push(n);
             }
         }
         Walker {
@@ -1118,6 +1130,7 @@ impl<'a> Walker<'a> {
             fwd,
             callables,
             stamp: vec![0; v.n],
+            private_callables,
             generation: 0,
         }
     }
@@ -1164,16 +1177,17 @@ impl<'a> Walker<'a> {
             let module = c.module[f as usize];
             for &w in c.refs_of(x) {
                 if !names.insert((module, w)) {
+                // Private ones are visible from their own file alone: looked up per file, as the
+                // module-wide dedupe below would hide them from a later referrer in that file.
+                for &t in self.private_callables.get(&(f, w)).into_iter().flatten() {
+                    push(t, &mut self.stamp, &mut stack);
+                }
                     continue;
                 }
                 for &t in self.callables.get(&w).into_iter().flatten() {
-                    let ti = t as usize;
-                    if (v.dflags[ti] & FLAG_PRIVATE != 0 && v.file[ti] != f)
-                        || !c.sees_file(f, v.file[ti])
-                    {
-                        continue;
+                    if c.sees_file(f, v.file[t as usize]) {
+                        push(t, &mut self.stamp, &mut stack);
                     }
-                    push(t, &mut self.stamp, &mut stack);
                 }
             }
             // Prod code runs inside its container: a member reached means its class was built.
