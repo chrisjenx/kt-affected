@@ -1734,8 +1734,9 @@ pub fn discover(root: &Path) -> Build {
             projects,
         });
     }
-    b.inputs.sort();
-    b.inputs.dedup();
+    // Appended in order, first occurrence kept: the root build's inputs read as before.
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    b.inputs.retain(|i| seen.insert(i.clone()));
     b
 }
 

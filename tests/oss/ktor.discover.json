@@ -13003,11 +13003,122 @@
     "ktor-utils/build.gradle.kts",
     "ktor-version-catalog/build.gradle.kts",
     "ktor-shared/ktor-websocket-serialization/build.gradle.kts",
-    "ktor-shared/ktor-websockets/build.gradle.kts"
+    "ktor-shared/ktor-websockets/build.gradle.kts",
+    "build-settings-logic/settings.gradle.kts",
+    "build-logic/settings.gradle.kts",
+    "ktor-test-server/settings.gradle.kts"
   ],
   "warnings": [
     "settings: 2 directories holding a build script are never named by settings; not taken as projects",
     "settings: 137 projects taken from directories holding a build script, named by leaf directory name",
     "include: non-literal argument; the projects it adds are taken from directories holding a build script"
+  ],
+  "included": [
+    {
+      "dir": "build-settings-logic",
+      "name": "build-settings-logic",
+      "projects": [
+        {
+          "path": ":build-settings-logic",
+          "dir": "build-settings-logic",
+          "build_file": "build-settings-logic/build.gradle.kts",
+          "deps": [
+            [
+              "implementation",
+              ":build-settings-logic:develocity-patched"
+            ]
+          ],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        },
+        {
+          "path": ":build-settings-logic:develocity-patched",
+          "dir": "build-settings-logic/develocity-patched",
+          "build_file": "build-settings-logic/develocity-patched/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    },
+    {
+      "dir": "build-logic",
+      "name": "build-logic",
+      "projects": [
+        {
+          "path": ":build-logic",
+          "dir": "build-logic",
+          "build_file": "build-logic/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        },
+        {
+          "path": ":build-logic:kdoc-annotator",
+          "dir": "build-logic/kdoc-annotator",
+          "build_file": "build-logic/kdoc-annotator/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            },
+            "test": {
+              "test": true,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {
+            "test": [
+              "test"
+            ]
+          },
+          "implicit": false
+        }
+      ]
+    },
+    {
+      "dir": "ktor-test-server",
+      "name": "ktor-test-server",
+      "projects": [
+        {
+          "path": ":ktor-test-server",
+          "dir": "ktor-test-server",
+          "build_file": "ktor-test-server/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    }
   ]
 }

@@ -612,7 +612,31 @@
     "okio-testing-support/build.gradle.kts",
     "okio-wasifilesystem/build.gradle.kts",
     "okio/jvm/jmh/build.gradle.kts",
-    "samples/build.gradle.kts"
+    "samples/build.gradle.kts",
+    "build-support/settings.gradle.kts"
   ],
-  "warnings": []
+  "warnings": [],
+  "included": [
+    {
+      "dir": "build-support",
+      "name": "build-support",
+      "projects": [
+        {
+          "path": ":build-support",
+          "dir": "build-support",
+          "build_file": "build-support/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    }
+  ]
 }
