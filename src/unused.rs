@@ -793,9 +793,10 @@ pub fn unreferenced(inp: &Inputs, max_inbound: u32) -> Result<Unreferenced, Stri
         let private = v.dflags[i] & FLAG_PRIVATE != 0;
         let (f, w) = (v.file[i], v.name[i]);
         // `d` cannot be a use of `n`: inside it, already an edge, or unable to see it.
+        let edges: FxHashSet<u32> = v.refby(n).iter().copied().collect();
         let skip = |d: u32| {
             let fd = v.file[d as usize];
-            c.within(d, n) || v.refby(n).contains(&d) || (private && fd != f) || !c.sees_file(fd, f)
+            c.within(d, n) || edges.contains(&d) || (private && fd != f) || !c.sees_file(fd, f)
         };
         let prod_only = c.src(n) == Source::Prod;
         let done = |s: &[bool; 3]| {
@@ -1092,9 +1093,9 @@ struct Walker<'a> {
     fwd: crate::graph::Csr,
     /// name -> the non-private callables declaring it.
     callables: FxHashMap<u32, Vec<u32>>,
-    stamp: Vec<u32>,
     /// (file, name) -> the private callables declaring it: visible in that file alone.
     private_callables: FxHashMap<(u32, u32), Vec<u32>>,
+    stamp: Vec<u32>,
     generation: u32,
 }
 
@@ -1109,8 +1110,8 @@ impl<'a> Walker<'a> {
         }
         let fwd = crate::graph::Csr::from_pairs(v.n, &pairs);
         let mut callables: FxHashMap<u32, Vec<u32>> = FxHashMap::default();
-        for n in 0..v.n as u32 {
         let mut private_callables: FxHashMap<(u32, u32), Vec<u32>> = FxHashMap::default();
+        for n in 0..v.n as u32 {
             let i = n as usize;
             if !matches!(v.kind[i], KIND_FUN | KIND_VAL | KIND_VAR) {
                 continue;
@@ -1129,8 +1130,8 @@ impl<'a> Walker<'a> {
             facts,
             fwd,
             callables,
-            stamp: vec![0; v.n],
             private_callables,
+            stamp: vec![0; v.n],
             generation: 0,
         }
     }
@@ -1176,12 +1177,12 @@ impl<'a> Walker<'a> {
             let f = v.file[i];
             let module = c.module[f as usize];
             for &w in c.refs_of(x) {
-                if !names.insert((module, w)) {
                 // Private ones are visible from their own file alone: looked up per file, as the
                 // module-wide dedupe below would hide them from a later referrer in that file.
                 for &t in self.private_callables.get(&(f, w)).into_iter().flatten() {
                     push(t, &mut self.stamp, &mut stack);
                 }
+                if !names.insert((module, w)) {
                     continue;
                 }
                 for &t in self.callables.get(&w).into_iter().flatten() {
