@@ -78,6 +78,7 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. |
 | `include-build-precompiled-script` | A precompiled script plugin in a pluginManagement includeBuild is build logic for every module: each test task runs a smoke class, with a reason. |
 | `include-build-tests-mention` | An included build's own tests are test tasks too (`:<build name>:test`): one naming an ignored path in a string (a workflow file) runs when that file changes, though nothing in the root build does. |
+| `include-build-tests-filter` | An included build's registered Test task keeps its class filter, as in the root build: a class it excludes is never passed to that task, while the unfiltered `test` task still runs it. |
 | `include-build-tests-own-source` | An edit to a plugin build's own main code runs the tests in that build that reach it through the graph, besides the root build's build-logic smoke class per task. |
 | `include-build-tests-test-edit` | Editing a test of an included build runs that test class in its own build and nothing in the root build: test code is not build logic. |
 | `init-block-not-virtual` | An init block is not virtual: a change running in one subclass's init reaches tests constructing it, never a sibling's through the base class's init. |

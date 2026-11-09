@@ -275,7 +275,9 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         only_dropped: Default::default(),
         filters: Default::default(),
     };
-    for p in &build.projects {
+    // An included build's test tasks are selectable too: their filters apply the same way.
+    let included = build.included.iter().flat_map(|inc| &inc.projects);
+    for p in build.projects.iter().chain(included) {
         for (task, f) in &p.test_filters {
             idx.filters
                 .insert((p.path.clone(), task.clone()), f.clone());
