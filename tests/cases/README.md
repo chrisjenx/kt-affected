@@ -28,6 +28,13 @@ Each directory is one scenario the selector must keep getting right. `tests/case
 | `reasons` | each must be a substring of some reason in the plan |
 | `config` | `kt-affected.toml` text, written outside the repo (one inside is a selector change) |
 | `known_gap` | the tool gets this wrong today; a failure is printed, not fatal, and a pass fails until the mark is removed |
+| `command` | `unreferenced` or `test-reach` instead of `select`, run on the head commit with `--json` |
+| `args` | extra arguments for `command`; `["--base", "HEAD~1"]` limits it to the change |
+| `reported` / `not_reported` | fully qualified declarations that must / must not be reported (`test-reach`: unreached prod code) |
+| `test_only` | `unreferenced`: reported with `inbound.prod == 0` and `inbound.test > 0` |
+| `orphaned` / `added` | `unreferenced --base`: reported with that `change` |
+| `unparsed` | `unreferenced`: files listed as not parsing |
+| `tests_nothing` / `tests_reach` | `test-reach`: `pkg.Class` (whole class) or `pkg.Class.method` that must / must not be listed as reaching nothing |
 
 Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASES_SHOW=1` and
 `-- --nocapture` to print every plan and the known gaps.
@@ -70,6 +77,10 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `include-build-convention` | A convention plugin in a pluginManagement includeBuild is build logic for every module applying it: each test task runs a smoke class, with a reason. |
 | `include-build-library` | A composite build's included library (substituted for its coordinates) is code on the app's classpath: an edit to it selects the app tests that call it, not unrelated modules. |
 | `include-build-precompiled-script` | A precompiled script plugin in a pluginManagement includeBuild is build logic for every module: each test task runs a smoke class, with a reason. |
+| `include-build-tests-mention` | An included build's own tests are test tasks too (`:<build name>:test`): one naming an ignored path in a string (a workflow file) runs when that file changes, though nothing in the root build does. |
+| `include-build-tests-filter` | An included build's registered Test task keeps its class filter, as in the root build: a class it excludes is never passed to that task, while the unfiltered `test` task still runs it. |
+| `include-build-tests-own-source` | An edit to a plugin build's own main code runs the tests in that build that reach it through the graph, besides the root build's build-logic smoke class per task. |
+| `include-build-tests-test-edit` | Editing a test of an included build runs that test class in its own build and nothing in the root build: test code is not build logic. |
 | `init-block-not-virtual` | An init block is not virtual: a change running in one subclass's init reaches tests constructing it, never a sibling's through the base class's init. |
 | `koin-factory` | Koin `factory<Iface> { Impl() }`: an impl edit reaches tests resolving the interface. |
 | `koin-single-bind` | Koin `single { Impl(get()) } bind Iface::class`: an impl member edit reaches tests calling that member through get<Iface>(), not other members or other bindings. |
@@ -88,13 +99,28 @@ Run one or a few with `KT_CASES=name,name cargo test --test cases`; add `KT_CASE
 | `settings-computed-includes` | Settings that include projects by walking directories: every directory holding a build script is a project named by its path, so an edit reaches its own tests and its dependents' through projects.books.catalog, and not an unrelated module's. |
 | `settings-project-dsl-leaf-names` | A settings DSL that includes projects by their leaf directory name (`:shop-catalog` in shop-books/shop-catalog): the projects are read from disk under the names the build scripts' own references use, and a directory holding a build script that the settings never names is not a project. |
 | `shared-test-source-set` | A custom test source set that jvmTest and wasmJsTest both dependOn runs under both tasks, and not under a target that doesn't include it. |
+| `source-scanner-exclude-path` | A [[source_scanner]] `exclude_path` keeps matching paths from triggering it: a change under backend* runs only the scanner whose exclude_path does not match it. |
+| `source-scanner-test-classes` | A [[source_scanner]] naming `test_classes` runs only those classes on a matching change, not every class in their package. |
 | `sqldelight-queries` | A .sq change seeds code naming its generated queries (BookQueries/bookQueries), not other .sq files' users. |
 | `sqldelight-same-named-holder` | Two stores each hold their own `private val queries`: a .sq change reaching BookStore.queries must not cross to AuthorStore's same-named private property. |
 | `stale-target-source-dir` | A leftover iosX64Main directory in a module whose script declares its targets (jvm, iosArm64, iosSimulatorArm64) is not a target: no iosX64Test task exists to run. (known gap) |
 | `tasks-only-excluded-source-set` | `[tasks] only` removing every task of a source set drops it with a reason; the module and its dependents are not failed open and no `*` group is emitted. |
 | `tasks-only-excluded-target-edit` | An edit only an excluded target compiles (iosMain, with `[tasks] only` keeping jvmTest) selects nothing and says so; it does not fail the module open. |
+| `test-reach-base` | test-reach --base limits the report to declarations the change touches: new prod code no test reaches is reported, older unreached code elsewhere is not. |
+| `test-reach-private-callable` | test-reach: a private callable is reached from its own file even after another file of the module wrote the same name first. |
+| `test-reach-tests-of-nothing` | test-reach: a test class whose code reaches no prod declaration is listed whole, a test method that reaches none (beside one that does) alone, and a test calling prod code not at all. |
+| `test-reach-unreached-prod` | test-reach: prod code no test's forward walk reaches is reported; code a test reaches, an implementation it dispatches to through an interface included, is not. |
 | `test-graph-accessor` | Services handed out as properties of a test graph object: a service edit reaches only tests that read that accessor, though every test holds the graph. |
 | `test-only-change` | Editing a test selects that test class and no other test of the same code. |
 | `typesafe-accessors-project-dir` | A module moved by `projectDir` is found at its new directory, and `projects.core.moneyModel` is a dependency on it: its dependent's test runs; a module off its classpath with a same-named class doesn't. |
+| `unreferenced-di-entry` | unreferenced: a DI-bound implementation is reached through the interface it binds, and a @Provides function is an entry point; an implementation nothing binds or builds is reported. |
+| `unreferenced-deep-entry-supertype` | unreferenced: a type whose supertypes reach an `entry_supertypes` name two levels up the in-repo chain is not reported; an unrelated unused type is. |
+| `unreferenced-framework-entries` | unreferenced keeps what a framework reaches without an edge (aliased test annotation, @MethodSource, @EnumSource, inherited tests, companion as a value, build-script names) and skips code in no source set. |
+| `unreferenced-max-inbound` | unreferenced --max-inbound 1 also reports prod declarations with a single prod referrer, listed in `referrers`; one with two referrers is not. |
+| `unreferenced-member-name-gate` | unreferenced: a member called through an untyped receiver is kept by its name, written in a module that can see it; one only an unrelated module names, and an uncalled private member, are reported. |
+| `unreferenced-orphan-base` | unreferenced --base: a refactor's orphan is reported as orphaned, new unreferenced code as added; code unreferenced before the change is not reported. |
+| `unreferenced-test-only` | unreferenced: prod code only tests call is reported as test-only (inbound.prod 0, inbound.test > 0); a JUnit test method is not reported. |
+| `unreferenced-top-level` | unreferenced: an unreferenced top-level function and class are reported; a cross-module callee, an object read by member access and `main` are not. |
+| `unreferenced-unparsed-file` | unreferenced fails open on a file that does not parse: what it could see counts as referenced and the file is listed; a module it cannot see is still reported. |
 | `unnamed-receiver-chain` | Calls on receivers the linker cannot type are followed hop after hop: tests calling the outer service run; one calling a same-named member elsewhere does not. |
 

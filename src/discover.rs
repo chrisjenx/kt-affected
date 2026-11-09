@@ -97,7 +97,7 @@ impl TestFilter {
 
 /// Matches `text` against a `*` glob: (the whole pattern matches all of it, some prefix of the
 /// pattern matches all of it so a longer text starting with `text` may match).
-fn glob(pat: &str, text: &str) -> (bool, bool) {
+pub(crate) fn glob(pat: &str, text: &str) -> (bool, bool) {
     let p: Vec<char> = pat.chars().collect();
     // Pattern positions reachable after consuming the text so far (a `*` may absorb nothing).
     let close = |set: &mut Vec<bool>| {
@@ -144,11 +144,33 @@ pub struct Build {
     /// Inputs whose change invalidates discovery (settings, build scripts).
     pub inputs: Vec<String>,
     pub warnings: Vec<String>,
+    /// Each included build, discovered the same way. Selection runs their tests; the graph's
+    /// module visibility never reads them, so linking is as if they were not modelled.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub included: Vec<Included>,
+}
+
+/// An included build (`includeBuild("dir")`) and its projects, renamed into the composite's
+/// namespace: its root project is `:<name>`, a subproject `:a` of it `:<name>:a`, and every `dir`
+/// is relative to the outer build's root. `:<name>:a:test` is how the outer build runs its tasks.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Included {
+    /// Its directory, relative to the outer build's root.
+    pub dir: String,
+    /// Its build name: the directory's name unless `includeBuild(..) { name = ".." }` sets one.
+    pub name: String,
+    pub projects: Vec<Project>,
 }
 
 impl Build {
+    /// A project of this build or, by its composite path, of an included build.
     pub fn project(&self, path: &str) -> Option<&Project> {
-        self.projects.iter().find(|p| p.path == path)
+        self.projects.iter().find(|p| p.path == path).or_else(|| {
+            self.included
+                .iter()
+                .flat_map(|i| &i.projects)
+                .find(|p| p.path == path)
+        })
     }
 
     /// Projects whose sources live in their own directory, longest directory first,
@@ -441,6 +463,8 @@ struct Settings {
     includes: Vec<(String, bool)>, // (path, flat)
     project_dirs: BTreeMap<String, String>,
     included_builds: Vec<String>,
+    /// Included build dir -> the name `includeBuild(..) { name = ".." }` gives it.
+    included_names: BTreeMap<String, String>,
     warnings: Vec<String>,
     /// An `include` takes a computed argument: the projects it adds are found on disk.
     dynamic: bool,
@@ -504,6 +528,7 @@ fn parse_settings(text: &str) -> Settings {
         includes: Vec::new(),
         project_dirs: BTreeMap::new(),
         included_builds: Vec::new(),
+        included_names: BTreeMap::new(),
         warnings: Vec::new(),
         dynamic: false,
         literals: toks
@@ -555,7 +580,25 @@ fn parse_settings(text: &str) -> Settings {
                     i + 1
                 };
                 if let Some(Tok::Str(v, _)) = toks.get(j) {
-                    s.included_builds.push(strip_dir_prefix(v));
+                    let dir = strip_dir_prefix(v);
+                    // `includeBuild("dir") { name = "x" }` names the build.
+                    let after = if j == i + 2 {
+                        close_of(&toks, i + 1) + 1
+                    } else {
+                        j + 1
+                    };
+                    if is_p(toks.get(after), '{') {
+                        let end = close_of(&toks, after).min(toks.len());
+                        for k in after + 1..end {
+                            if ident(&toks[k]) == Some("name")
+                                && is_p(toks.get(k + 1), '=')
+                                && let Some(Tok::Str(n, _)) = toks.get(k + 2)
+                            {
+                                s.included_names.insert(dir.clone(), n.clone());
+                            }
+                        }
+                    }
+                    s.included_builds.push(dir);
                 }
                 i = j;
             }
@@ -1653,7 +1696,75 @@ pub fn discover_best(root: &Path) -> Build {
     b
 }
 
+/// Static discovery of the build at `root` and, one level deep, of each build it includes.
 pub fn discover(root: &Path) -> Build {
+    let mut b = discover_one(root);
+    let given = script_in(root, "", "settings")
+        .and_then(|f| read(root, &f))
+        .map(|t| parse_settings(&t).included_names)
+        .unwrap_or_default();
+    let mut names: BTreeSet<String> = BTreeSet::new();
+    for dir in b.included_builds.clone() {
+        if dir.is_empty() || dir == "." || dir.starts_with("..") || !root.join(&dir).is_dir() {
+            continue;
+        }
+        let name = match given.get(&dir) {
+            Some(n) => n.clone(),
+            None => dir.rsplit('/').next().unwrap_or(&dir).to_string(),
+        };
+        if !names.insert(name.clone()) || b.projects.iter().any(|p| p.path == format!(":{name}")) {
+            b.warnings.push(format!(
+                "included build {dir}: its name `{name}` collides with another build or project; its tests are not selected"
+            ));
+            continue;
+        }
+        let inner = discover_one(&root.join(&dir));
+        let at = |rel: &str| {
+            if rel.is_empty() {
+                dir.clone()
+            } else {
+                format!("{dir}/{rel}")
+            }
+        };
+        let rename = |p: &str| {
+            if p == ":" {
+                format!(":{name}")
+            } else {
+                format!(":{name}{p}")
+            }
+        };
+        let projects = inner
+            .projects
+            .into_iter()
+            .filter(|p| !p.dir.starts_with(".."))
+            .map(|mut p| {
+                p.path = rename(&p.path);
+                p.dir = at(&p.dir);
+                p.build_file = p.build_file.as_deref().map(at);
+                p.deps = p.deps.into_iter().map(|(c, t)| (c, rename(&t))).collect();
+                p
+            })
+            .collect();
+        b.inputs.extend(
+            inner
+                .inputs
+                .iter()
+                .filter(|i| !i.starts_with(".."))
+                .map(|i| at(i)),
+        );
+        b.included.push(Included {
+            dir: dir.clone(),
+            name,
+            projects,
+        });
+    }
+    // Appended in order, first occurrence kept: the root build's inputs read as before.
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    b.inputs.retain(|i| seen.insert(i.clone()));
+    b
+}
+
+fn discover_one(root: &Path) -> Build {
     let mut warnings = Vec::new();
     let settings_file = script_in(root, "", "settings");
     let settings = settings_file
@@ -1667,6 +1778,7 @@ pub fn discover(root: &Path) -> Build {
             includes: vec![],
             project_dirs: BTreeMap::new(),
             included_builds: vec![],
+            included_names: BTreeMap::new(),
             warnings: vec![],
             dynamic: false,
             literals: BTreeSet::new(),
@@ -2062,6 +2174,7 @@ pub fn discover(root: &Path) -> Build {
         included_builds: settings.included_builds,
         inputs,
         warnings,
+        included: vec![],
     }
 }
 
@@ -2127,6 +2240,7 @@ pub fn read_export(root: &Path, dir: &Path) -> std::io::Result<Build> {
         included_builds: vec![],
         inputs: vec![],
         warnings: vec![],
+        included: vec![],
     })
 }
 
@@ -2484,6 +2598,19 @@ mod tests {
         let s = "pluginManagement {\n  includeBuild(\"build-logic\")\n  repositories { gradlePluginPortal() }\n}\nincludeBuild(\"./shared-lib\")\n";
         let got: Vec<String> = plugin_management_builds(s).into_iter().collect();
         assert_eq!(vec!["build-logic".to_string()], got);
+    }
+
+    #[test]
+    fn an_include_build_block_may_name_the_build() {
+        let s = parse_settings(
+            "includeBuild(\"$rootDir/tools/gen\") { name = \"codegen\" }\nincludeBuild 'plain'\nincludeBuild('lib') {\n  name = 'shared'\n}\n",
+        );
+        assert_eq!(s.included_builds, vec!["tools/gen", "plain", "lib"]);
+        let want: BTreeMap<String, String> = [("tools/gen", "codegen"), ("lib", "shared")]
+            .into_iter()
+            .map(|(d, n)| (d.to_string(), n.to_string()))
+            .collect();
+        assert_eq!(s.included_names, want);
     }
 
     #[test]

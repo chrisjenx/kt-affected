@@ -33,6 +33,7 @@ mod parse;
 mod route;
 mod seeds;
 mod select;
+mod unused;
 
 #[cfg(feature = "cli")]
 mod bench;
@@ -386,22 +387,52 @@ fn selection(p: select::Plan) -> (Selection, Option<select::Explain>) {
 }
 
 fn run(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+    in_pool(opts, || plan(root, opts, explain))
+}
+
+/// `f` on `opts.threads` threads when set, else on the global pool.
+fn in_pool<T: Send>(
+    opts: &SelectOptions,
+    f: impl FnOnce() -> Result<T, Error> + Send,
+) -> Result<T, Error> {
     match opts.threads {
         Some(n) => match rayon::ThreadPoolBuilder::new().num_threads(n).build() {
-            Ok(pool) => pool.install(|| plan(root, opts, explain)),
+            Ok(pool) => pool.install(f),
             Err(e) => Err(Error::Graph(format!("thread pool: {e}"))),
         },
-        None => plan(root, opts, explain),
+        None => f(),
     }
 }
 
-fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+/// The build root at or above `root`, and its config (`opts.config` when set).
+fn root_and_config(root: &Path, opts: &SelectOptions) -> Result<(PathBuf, config::Config), Error> {
     let root = find_build_root(root).ok_or_else(|| Error::NoBuildRoot(root.to_path_buf()))?;
     let cfg = match &opts.config {
         Some(f) => config::Config::load_file(f),
         None => config::Config::load(&root),
     }
     .map_err(Error::Config)?;
+    Ok((root, cfg))
+}
+
+/// The cache dir, the discovered build and the graph, updated to the working tree.
+fn open_graph(
+    root: &Path,
+    opts: &SelectOptions,
+) -> Result<(PathBuf, discover::Build, cache::Packed), Error> {
+    let dir = opts
+        .cache_dir
+        .clone()
+        .unwrap_or_else(|| root.join("build/kt-affected"));
+    let build = load_build(root, &dir, opts.static_discovery);
+    let (_, packed) =
+        cache::update_open(root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
+    let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
+    Ok((dir, build, packed))
+}
+
+fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+    let (root, cfg) = root_and_config(root, opts)?;
     let git_dir = opts.git_dir.clone().unwrap_or_else(|| root.clone());
     let base = match &opts.base {
         Some(b) => b.clone(),
@@ -409,14 +440,7 @@ fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan
     };
     let repo =
         git::Repo::new(git_dir, root.clone(), &base, opts.head.clone()).map_err(Error::Git)?;
-    let dir = opts
-        .cache_dir
-        .clone()
-        .unwrap_or_else(|| root.join("build/kt-affected"));
-    let build = load_build(&root, &dir, opts.static_discovery);
-    let (_, packed) =
-        cache::update_open(&root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
-    let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
+    let (_, build, packed) = open_graph(&root, opts)?;
     select::select(&select::Inputs {
         repo: &repo,
         build: &build,
@@ -425,6 +449,192 @@ fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan
         explain,
     })
     .map_err(Error::CouldNotAnswer)
+}
+
+// ------------------------------------------------------------------ analysis
+
+/// The version of the [`Unreferenced`] and [`TestReach`] JSON: bumped on any incompatible change.
+pub const ANALYSIS_SCHEMA: u32 = unused::SCHEMA;
+
+/// Edge referrers of a declaration from outside it, by the source set kind they lie in.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Inbound {
+    pub prod: u32,
+    pub test: u32,
+    /// `testFixtures` source sets.
+    pub fixture: u32,
+}
+
+/// One declaration in an [`Unreferenced`] or [`TestReach`] report.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct Declaration {
+    /// `pkg.Outer.member`.
+    pub fq_name: String,
+    /// `class`, `interface`, `object`, `typealias`, `enum_entry`, `function`, `property` or
+    /// `constructor_property`.
+    pub kind: String,
+    /// Relative to the build root.
+    pub file: String,
+    /// 1-based, inclusive.
+    pub start_line: u32,
+    pub end_line: u32,
+    /// `public`, `internal`, `protected` or `private`, as written.
+    pub visibility: String,
+    /// Where it is declared: `prod`, `test` or `fixture`.
+    pub source: String,
+    /// Declared inside a type.
+    pub member: bool,
+    /// An operator Kotlin calls without its name (`a + b`): no edge reaches one, so callers
+    /// usually skip these.
+    pub operator: bool,
+    pub inbound: Inbound,
+    /// Source kinds whose code writes the name with no edge to it (`unreferenced`): a test-only
+    /// name use keeps a prod declaration in the report, as test-only.
+    #[serde(default)]
+    pub named_in: Vec<String>,
+    /// With a base: `orphaned` (referenced at the base, by code the change touched) or `added`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub change: Option<String>,
+    /// The prod declarations whose edges make up `inbound.prod` (at most 50).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub referrers: Vec<Referrer>,
+}
+
+/// A declaration referencing a reported one.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct Referrer {
+    pub fq_name: String,
+    pub file: String,
+    pub line: u32,
+}
+
+/// What `kt-affected unreferenced --json` prints.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Unreferenced {
+    /// [`ANALYSIS_SCHEMA`].
+    pub schema: u32,
+    /// The base the report is limited to, if any.
+    pub base: Option<String>,
+    /// Prod declarations no prod code references (their `inbound.test`/`fixture` may not be
+    /// zero), and test and fixture declarations nothing references.
+    pub declarations: Vec<Declaration>,
+    /// Files that do not parse. Every declaration one of them could reference counts as
+    /// referenced, so none of those is reported.
+    pub unparsed: Vec<String>,
+}
+
+/// A test class or method in a [`TestReach`] report.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct TestUnit {
+    /// Fully qualified test class.
+    pub class: String,
+    /// The test method; `None`: the whole class (every member) reaches nothing.
+    pub method: Option<String>,
+    pub file: String,
+    pub start_line: u32,
+    pub end_line: u32,
+}
+
+/// Covered and missed counters.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct CoverageCount {
+    pub covered: u32,
+    pub missed: u32,
+}
+
+/// A coverage report's counters over one declaration's lines (nested declarations included).
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct DeclCoverage {
+    pub fq_name: String,
+    pub kind: String,
+    pub file: String,
+    pub start_line: u32,
+    pub end_line: u32,
+    /// Lines with any covered instruction, and lines with only missed ones.
+    pub lines: CoverageCount,
+    pub branches: CoverageCount,
+    pub instructions: CoverageCount,
+}
+
+/// What `kt-affected test-reach --json` prints.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct TestReach {
+    /// [`ANALYSIS_SCHEMA`].
+    pub schema: u32,
+    pub base: Option<String>,
+    /// Test classes and methods whose forward walk reaches no prod declaration.
+    pub tests_reaching_nothing: Vec<TestUnit>,
+    /// Prod declarations no test's forward walk reaches: certainly run by no test.
+    pub unreached: Vec<Declaration>,
+    /// Per prod declaration, a Kover report's counters (empty without one).
+    #[serde(default)]
+    pub coverage: Vec<DeclCoverage>,
+}
+
+/// Declarations nothing references, in the Gradle build at or above `root`. With `opts.base`,
+/// only those the change from it orphaned or added (`opts.head` as for [`select`]); without one,
+/// the whole build. `max_inbound`: also report prod declarations with up to that many prod
+/// referrers (0: unreferenced only); each record lists them in `referrers`. Updates the graph cache as it goes. See `docs/analysis.md`.
+pub fn unreferenced(
+    root: &Path,
+    opts: &SelectOptions,
+    max_inbound: u32,
+) -> Result<Unreferenced, Error> {
+    analyse(root, opts, |inp| unused::unreferenced(inp, max_inbound))
+}
+
+/// Tests that reach no prod declaration, and prod declarations no test reaches. With
+/// `opts.base`, limited to declarations the change touches. `kover`: a Kover XML report, whose
+/// line counters are summed per prod declaration.
+pub fn test_reach(
+    root: &Path,
+    opts: &SelectOptions,
+    kover: Option<&Path>,
+) -> Result<TestReach, Error> {
+    analyse(root, opts, |inp| unused::test_reach(inp, kover))
+}
+
+fn analyse<T: Send>(
+    root: &Path,
+    opts: &SelectOptions,
+    run: impl FnOnce(&unused::Inputs) -> Result<T, String> + Send,
+) -> Result<T, Error> {
+    in_pool(opts, || {
+        let (root, cfg) = root_and_config(root, opts)?;
+        let repo = match &opts.base {
+            Some(b) => {
+                let git_dir = opts.git_dir.clone().unwrap_or_else(|| root.clone());
+                Some(
+                    git::Repo::new(git_dir, root.clone(), b, opts.head.clone())
+                        .map_err(Error::Git)?,
+                )
+            }
+            None => None,
+        };
+        let (dir, build, packed) = open_graph(&root, opts)?;
+        run(&unused::Inputs {
+            root: &root,
+            build: &build,
+            packed: &packed,
+            cfg: &cfg,
+            dir: &dir,
+            repo: repo.as_ref(),
+        })
+        .map_err(Error::CouldNotAnswer)
+    })
 }
 
 /// The nearest directory at or above `start` holding a settings file, as Gradle resolves its build.

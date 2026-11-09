@@ -2414,7 +2414,31 @@
     "samples/star/coil-rule/build.gradle.kts",
     "samples/tacos/build.gradle.kts",
     "samples/tutorial/build.gradle.kts",
-    "samples/tutorial/androidApp/build.gradle.kts"
+    "samples/tutorial/androidApp/build.gradle.kts",
+    "build-logic/settings.gradle.kts"
   ],
-  "warnings": []
+  "warnings": [],
+  "included": [
+    {
+      "dir": "build-logic",
+      "name": "build-logic",
+      "projects": [
+        {
+          "path": ":build-logic",
+          "dir": "build-logic",
+          "build_file": "build-logic/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    }
+  ]
 }

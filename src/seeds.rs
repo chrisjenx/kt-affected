@@ -170,6 +170,12 @@ impl<'a> View<'a> {
         v
     }
 
+    /// Is the interned name `s` one Kotlin calls without its being written (an operator,
+    /// `toString`, `hashCode`)?
+    pub fn is_implicit(&self, s: u32) -> bool {
+        self.implicit.contains(&s)
+    }
+
     /// The interned id of `s`, if any declaration or reference wrote it.
     pub fn string_id(&self, s: &str) -> Option<u32> {
         let p = self.p;

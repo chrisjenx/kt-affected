@@ -1,0 +1,5 @@
+why = "A private callable is reached from its own file even after another file of the module wrote the same name first: test-reach never reports code a test runs."
+command = "test-reach"
+tests_reach = ["demo.books.ShelfTest"]
+reported = ["demo.books.catalogHeader"]
+not_reported = ["demo.books.render", "demo.books.catalogLines", "demo.books.shelfTitles"]

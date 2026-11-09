@@ -17,8 +17,14 @@ fn usage() -> ! {
                                             the test plan for base..head (or base..work tree)\n  \
            explain --base REF [same options as select]\n  \
                                             per changed declaration: functional or cosmetic and why;\n  \
-                                            per selected test: the path from a seed, edge by edge\n\
-         --base defaults to the merge-base with origin/HEAD (else origin/main, else origin/master).\n\
+                                            per selected test: the path from a seed, edge by edge\n  \
+           unreferenced [--base REF] [--head REF] [--git-dir DIR] [--config FILE] [--max-inbound N] [--json]\n  \
+                                            declarations nothing references (with --base: those the\n  \
+                                            change orphaned or added)\n  \
+           test-reach [--base REF] [same options] [--kover FILE] [--json]\n  \
+                                            tests reaching no prod code; prod code no test reaches\n\
+         select/explain: --base defaults to the merge-base with origin/HEAD (else origin/main, else\n\
+         origin/master). unreferenced/test-reach: no --base means the whole build.\n\
          --version prints the version.",
         env!("CARGO_PKG_VERSION")
     );
@@ -124,6 +130,7 @@ pub fn main() {
                     included_builds: vec![],
                     inputs: vec![],
                     warnings: vec![],
+                    included: vec![],
                 })
             } else {
                 None
@@ -216,6 +223,109 @@ pub fn main() {
             let lines = cache::dump_edges(&p);
             std::fs::write(&out, lines.join("\n") + "\n").unwrap();
             eprintln!("rust: {} nodes, {} lines", p.n_nodes(), lines.len());
+        }
+        "unreferenced" | "test-reach" => {
+            let mut opts = crate::SelectOptions::new()
+                .git_dir(
+                    args.get("--git-dir")
+                        .map(PathBuf::from)
+                        .unwrap_or_else(|| root.clone()),
+                )
+                .cache_dir(dir)
+                .static_discovery(args.has("--static-discovery"));
+            opts.base = args.get("--base");
+            opts.head = args.get("--head");
+            opts.config = args.get("--config").map(PathBuf::from);
+            let fail = |e: crate::Error| -> ! {
+                eprintln!("{e}");
+                std::process::exit(3)
+            };
+            let max_inbound: u32 = match args.get("--max-inbound").map(|s| s.parse()) {
+                None => 0,
+                Some(Ok(n)) => n,
+                Some(Err(_)) => usage(),
+            };
+            let t = std::time::Instant::now();
+            let json = args.has("--json");
+            let line = |d: &crate::Declaration| {
+                format!(
+                    "{}:{}\t{} {} {} [{}] prod={} test={} fixture={}{}{}",
+                    d.file,
+                    d.start_line,
+                    d.visibility,
+                    d.kind,
+                    d.fq_name,
+                    d.source,
+                    d.inbound.prod,
+                    d.inbound.test,
+                    d.inbound.fixture,
+                    if d.operator { " operator" } else { "" },
+                    d.change
+                        .as_deref()
+                        .map(|c| format!(" ({c})"))
+                        .unwrap_or_default()
+                )
+            };
+            if cmd == "unreferenced" {
+                let r = crate::unreferenced(&root, &opts, max_inbound).unwrap_or_else(|e| fail(e));
+                eprintln!(
+                    "unreferenced: {} declarations, {} unparsed files, {} ms",
+                    r.declarations.len(),
+                    r.unparsed.len(),
+                    t.elapsed().as_millis()
+                );
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&r).unwrap());
+                } else {
+                    for d in &r.declarations {
+                        println!("{}", line(d));
+                    }
+                    for f in &r.unparsed {
+                        println!("unparsed: {f} (what it could reference is kept)");
+                    }
+                }
+            } else {
+                let kover = args.get("--kover").map(PathBuf::from);
+                let r =
+                    crate::test_reach(&root, &opts, kover.as_deref()).unwrap_or_else(|e| fail(e));
+                eprintln!(
+                    "test-reach: {} tests reaching nothing, {} prod declarations unreached, {} ms",
+                    r.tests_reaching_nothing.len(),
+                    r.unreached.len(),
+                    t.elapsed().as_millis()
+                );
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&r).unwrap());
+                } else {
+                    println!("tests reaching no prod declaration:");
+                    for u in &r.tests_reaching_nothing {
+                        println!(
+                            "  {}:{}\t{}{}",
+                            u.file,
+                            u.start_line,
+                            u.class,
+                            u.method
+                                .as_deref()
+                                .map(|m| format!(".{m}"))
+                                .unwrap_or_else(|| " (whole class)".into())
+                        );
+                    }
+                    println!("prod declarations no test reaches:");
+                    for d in &r.unreached {
+                        println!("  {}", line(d));
+                    }
+                    for c in &r.coverage {
+                        println!(
+                            "  coverage {} lines {}/{} branches {}/{}",
+                            c.fq_name,
+                            c.lines.covered,
+                            c.lines.covered + c.lines.missed,
+                            c.branches.covered,
+                            c.branches.covered + c.branches.missed
+                        );
+                    }
+                }
+            }
         }
         "select" | "explain" => {
             let git_dir = args

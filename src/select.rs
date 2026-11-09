@@ -9,7 +9,7 @@
 use crate::cache::Packed;
 use crate::change;
 use crate::config::{CONFIG_FILE, Config};
-use crate::discover::{Build, KMP_TARGETS, is_test_source_set};
+use crate::discover::{Build, KMP_TARGETS, Project, is_test_source_set};
 use crate::git::{Hunk, Repo};
 use crate::route::{self, Ctx, Module, Modules, Routing};
 use crate::seeds::{self, Routes, View};
@@ -44,6 +44,12 @@ pub struct Group {
     pub fail_open_forks: bool,
     /// `<module dir>/build/test-results/<task>`, relative to the build root, when the module is known.
     pub result_dir: Option<String>,
+    /// The included build the task belongs to (its directory, relative to the build root), when
+    /// it is not the root build's. `module` is then the composite path (`:plugins`,
+    /// `:plugins:sub`): run it as `./gradlew :plugins:test`, or inside the included build as
+    /// `./gradlew -p <build> :test` (`module` with its first segment dropped).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build: Option<String>,
 }
 
 /// What `select` computed; the public `Selection` is built from it.
@@ -68,30 +74,21 @@ pub struct Explain {
     pub inventory: Vec<Group>,
 }
 
-pub fn modules_of(
-    root: &std::path::Path,
-    build: &Build,
-    cfg: &Config,
-) -> (Modules, BTreeMap<String, String>) {
-    let mut list: Vec<Module> = build
-        .projects
-        .iter()
-        .filter(|p| !p.dir.is_empty() && p.dir != ".")
-        .map(|p| Module {
-            id: p.path.clone(),
-            prefix: format!("{}/", p.dir.trim_end_matches('/')),
-            source_dirs: p.source_dirs.clone(),
-        })
-        .collect();
-    list.sort_by(|a, b| {
-        b.prefix
-            .len()
-            .cmp(&a.prefix.len())
-            .then(a.prefix.cmp(&b.prefix))
-    });
-    let ids: BTreeSet<&str> = list.iter().map(|m| m.id.as_str()).collect();
-    let mut deps: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-    for p in &build.projects {
+fn module_of_project(p: &Project) -> Module {
+    Module {
+        id: p.path.clone(),
+        prefix: format!("{}/", p.dir.trim_end_matches('/')),
+        source_dirs: p.source_dirs.clone(),
+    }
+}
+
+/// Each of `projects`' dependencies on another project in `ids`, into `deps`.
+fn deps_within(
+    projects: &[Project],
+    ids: &BTreeSet<&str>,
+    deps: &mut BTreeMap<String, BTreeSet<String>>,
+) {
+    for p in projects {
         let set: BTreeSet<String> = p
             .deps
             .iter()
@@ -102,6 +99,29 @@ pub fn modules_of(
             deps.insert(p.path.clone(), set);
         }
     }
+}
+
+/// Longest prefix first, so a nested module wins over the one it sits in.
+fn sort_longest_first(list: &mut [Module]) {
+    list.sort_by(|a, b| {
+        b.prefix
+            .len()
+            .cmp(&a.prefix.len())
+            .then(a.prefix.cmp(&b.prefix))
+    });
+}
+
+pub fn modules_of(root: &std::path::Path, build: &Build, cfg: &Config) -> (Modules, Dirs) {
+    let mut list: Vec<Module> = build
+        .projects
+        .iter()
+        .filter(|p| !p.dir.is_empty() && p.dir != ".")
+        .map(module_of_project)
+        .collect();
+    sort_longest_first(&mut list);
+    let ids: BTreeSet<&str> = list.iter().map(|m| m.id.as_str()).collect();
+    let mut deps: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    deps_within(&build.projects, &ids, &mut deps);
     let mut db = BTreeSet::new();
     if let Some(marker) = &cfg.database.module_marker {
         for p in &build.projects {
@@ -119,12 +139,43 @@ pub fn modules_of(
             }
         }
     }
-    let dirs = build
+    let mut dirs: Dirs = build
         .projects
         .iter()
-        .map(|p| (p.path.clone(), p.dir.clone()))
+        .map(|p| (p.path.clone(), (p.dir.clone(), None)))
         .collect();
+    for inc in &build.included {
+        for p in &inc.projects {
+            dirs.insert(p.path.clone(), (p.dir.clone(), Some(inc.dir.clone())));
+        }
+    }
     (Modules { list, deps, db }, dirs)
+}
+
+/// Gradle project path -> (its directory, the included build's directory when it is in one).
+pub type Dirs = BTreeMap<String, (String, Option<String>)>;
+
+/// `mods` plus every included build's projects, whose test tasks a selection may run. Routing a
+/// changed path and bounding by classpath read `mods` alone: an included build is not a module
+/// of the build that includes it.
+/// None when the build includes none: `mods` itself is the answer.
+pub fn with_included(mods: &Modules, build: &Build) -> Option<Modules> {
+    if build.included.is_empty() {
+        return None;
+    }
+    let mut list = mods.list.clone();
+    let mut deps = mods.deps.clone();
+    for inc in &build.included {
+        let ids: BTreeSet<&str> = inc.projects.iter().map(|p| p.path.as_str()).collect();
+        list.extend(inc.projects.iter().map(module_of_project));
+        deps_within(&inc.projects, &ids, &mut deps);
+    }
+    sort_longest_first(&mut list);
+    Some(Modules {
+        list,
+        deps,
+        db: mods.db.clone(),
+    })
 }
 
 /// Conventional test task per source-set name, for a module discovery found no test task in.
@@ -224,7 +275,9 @@ fn test_index(v: &View, mods: &Modules, build: &Build, cfg: &Config) -> Index {
         only_dropped: Default::default(),
         filters: Default::default(),
     };
-    for p in &build.projects {
+    // An included build's test tasks are selectable too: their filters apply the same way.
+    let included = build.included.iter().flat_map(|inc| &inc.projects);
+    for p in build.projects.iter().chain(included) {
         for (task, f) in &p.test_filters {
             idx.filters
                 .insert((p.path.clone(), task.clone()), f.clone());
@@ -572,7 +625,7 @@ fn class_literal_referrers(
     out
 }
 
-fn label_of(v: &View, n: u32) -> String {
+pub(crate) fn label_of(v: &View, n: u32) -> String {
     let mut parts = Vec::new();
     let mut m = n as i32;
     while m >= 0 {
@@ -745,7 +798,10 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
     let v = View::new(inp.packed);
     let mut explain: Option<Box<Explain>> = inp.explain.then(Default::default);
     let (mods, dirs) = modules_of(&repo.root, build, cfg);
-    let idx = test_index(&v, &mods, build, cfg);
+    // The test tasks a plan may run: the root build's and every included build's.
+    let with_inc = with_included(&mods, build);
+    let tmods = with_inc.as_ref().unwrap_or(&mods);
+    let idx = test_index(&v, tmods, build, cfg);
     let changed = repo.changed()?;
     let got = repo.hunks();
     let have_hunks = got.is_some();
@@ -827,10 +883,23 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 .iter()
                 .any(|p| path.starts_with(p.as_str()))
         {
-            route::named_only(path, &mods, &mut routing);
+            route::named_only(path, tmods, &mut routing);
             continue;
         }
         let Some(module) = mods.module_of(path).cloned() else {
+            // Code of an included build whose projects are modelled: its own tests reach it
+            // through the graph. Test code there changes nothing else; main code of a plugin
+            // build is still build logic for the root build, routed below.
+            if let Some(inc) = tmods.module_of(path) {
+                if path.ends_with(".kt") && v.path_file.contains_key(path.as_str()) {
+                    seed_files.insert(path.clone());
+                    if in_test_source_set(tmods, path) || included_build_of(path) == Some(false) {
+                        continue;
+                    }
+                } else {
+                    routing.smoke_modules.insert(inc.id.clone());
+                }
+            }
             // An included library build is substituted for its coordinates: its code is on the
             // classpath of whoever depends on them, and the graph links it like any other.
             if path.ends_with(".kt")
@@ -846,7 +915,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                 .iter()
                 .any(|s| path.ends_with(s.as_str()))
             {
-                route::named_only(path, &mods, &mut routing);
+                route::named_only(path, tmods, &mut routing);
                 continue;
             }
             if route::route(path, &mods, cfg, &ctx, &mut routing) {
@@ -900,13 +969,23 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         full_modules.insert(module.id.clone());
     }
     if global_full {
-        full_modules = mods.all();
+        full_modules = tmods.all();
     } else if !full_modules.is_empty() {
-        full_modules = mods.reverse_closure(&full_modules);
+        full_modules = tmods.reverse_closure(&full_modules);
     }
     full_modules.extend(classpath_readers);
     full_modules.extend(routing.full_modules.iter().cloned());
     reasons.append(&mut routing.reasons);
+    // A name sought everywhere in the root build is sought in the included builds too.
+    if !build.included.is_empty() {
+        let everywhere = mods.all();
+        let included_ids: BTreeSet<String> = tmods.all().difference(&everywhere).cloned().collect();
+        for m in &mut routing.mentions {
+            if m.modules.is_superset(&everywhere) {
+                m.modules.extend(included_ids.iter().cloned());
+            }
+        }
+    }
 
     // Mentions become one-line hunks on the lines that write the name.
     let mut mention_only: BTreeSet<String> = BTreeSet::new();
@@ -916,7 +995,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         let files: Vec<(&str, Option<&str>)> = (0..v.p.n_files())
             .map(|f| {
                 let path = v.p.file_path(f);
-                (path, mods.module_of(path).map(|m| m.id.as_str()))
+                (path, tmods.module_of(path).map(|m| m.id.as_str()))
             })
             .collect();
         let read_sync = |p: &str| -> Option<String> {
@@ -1048,7 +1127,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             Some(h) => node_seeds.extend(h),
             None => node_seeds.extend(ids),
         }
-        if in_test_source_set(&mods, path) {
+        if in_test_source_set(tmods, path) {
             node_seeds.extend(tests_in.get(&f).into_iter().flatten().copied());
         }
     }
@@ -1084,6 +1163,8 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
                         .map(|m| m.id.clone())
                 })
                 .collect();
+            // A seed outside the root build's modules (an included build's, plugin builds too: one
+            // may also publish a library the root build substitutes) leaves the bound off.
             let seeds_known = node_seeds.iter().all(|&n| {
                 mods.module_of(v.p.file_path(v.file[n as usize] as usize))
                     .is_some()
@@ -1290,12 +1371,10 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             }
         }
         for sc in &cfg.source_scanners {
-            let re = Regex::new(&sc.changed_path).map_err(|e| e.to_string())?;
-            if changed.iter().any(|p| re.is_match(p)) {
-                let pfx = format!("{}.", sc.test_package);
+            let hit = sc.matcher()?;
+            if changed.iter().any(|p| hit(p)) {
                 for (f, fq) in v.test_class.values() {
-                    let pkg = v.p.file_package(*f as usize);
-                    if pkg == sc.test_package || pkg.starts_with(&pfx) {
+                    if sc.runs(v.p.file_package(*f as usize), fq) {
                         for key in idx.owner.get(f).into_iter().flatten() {
                             if idx.admits(key, fq) {
                                 picked.entry(key.clone()).or_default().insert(fq.clone());
@@ -1365,7 +1444,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
             );
             continue;
         }
-        let prefix = mods
+        let prefix = tmods
             .list
             .iter()
             .find(|m| m.id == g.module)
@@ -1388,7 +1467,7 @@ pub fn select(inp: &Inputs) -> Result<Plan, String> {
         }
     }
     reasons.extend(omitted.into_values());
-    reasons.extend(only_reasons(&idx, &mods, &changed, &kept));
+    reasons.extend(only_reasons(&idx, tmods, &changed, &kept));
     Ok(Plan {
         base: repo.base.clone(),
         changed_files: changed,
@@ -1444,7 +1523,7 @@ fn group(
     total: usize,
     full: bool,
     cfg: &Config,
-    dirs: &BTreeMap<String, String>,
+    dirs: &Dirs,
 ) -> Group {
     Group {
         module: module.into(),
@@ -1457,7 +1536,8 @@ fn group(
         fail_open_forks: cfg.modules.fail_open_forks.contains(module),
         result_dir: dirs
             .get(module)
-            .map(|d| format!("{d}/build/test-results/{task}")),
+            .map(|(d, _)| format!("{d}/build/test-results/{task}")),
+        build: dirs.get(module).and_then(|(_, b)| b.clone()),
     }
 }
 
@@ -1624,6 +1704,7 @@ mod tests {
             included_builds: vec![],
             inputs: vec![],
             warnings: vec![],
+            included: vec![],
         };
         let jvm: BTreeSet<(String, String)> = [(":core".into(), "jvm".into())].into();
         assert!(compiles_any(&build, ":core", "jvmTest", &jvm));

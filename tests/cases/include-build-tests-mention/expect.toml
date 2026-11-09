@@ -1,0 +1,4 @@
+why = "An included build's own tests are test tasks too (`:<build name>:test`): one naming an ignored path in a string (a workflow file) runs when that file changes, though nothing in the root build does."
+must = ["demo.plugins.BuildVersionTest@:plugins:test"]
+never = ["demo.plugins.JvmLibraryPluginTest"]
+never_tasks = [":core:test"]

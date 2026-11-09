@@ -14461,10 +14461,34 @@
     "tests/detekt-rules/build.gradle.kts",
     "tests/konsist/build.gradle.kts",
     "tests/testutils/build.gradle.kts",
-    "tests/uitests/build.gradle.kts"
+    "tests/uitests/build.gradle.kts",
+    "plugins/settings.gradle.kts"
   ],
   "warnings": [
     "settings: 257 projects taken from directories holding a build script, named by directory path",
     "include: non-literal argument; the projects it adds are taken from directories holding a build script"
+  ],
+  "included": [
+    {
+      "dir": "plugins",
+      "name": "plugins",
+      "projects": [
+        {
+          "path": ":plugins",
+          "dir": "plugins",
+          "build_file": "plugins/build.gradle.kts",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    }
   ]
 }

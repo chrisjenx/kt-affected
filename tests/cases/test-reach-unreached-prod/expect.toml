@@ -1,0 +1,4 @@
+why = "test-reach: prod code no test's forward walk reaches is reported (a member never called, an object no test touches); code a test reaches, an implementation it dispatches to through an interface included, is not."
+command = "test-reach"
+reported = ["demo.library.Loans.overdueFine", "demo.library.Reports", "demo.library.Reports.yearly"]
+not_reported = ["demo.library.Loans.count", "demo.library.MemoryLoanRepo.open", "demo.library.LoanRepo.open", "demo.library.loans"]

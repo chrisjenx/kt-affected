@@ -1,0 +1,4 @@
+why = "unreferenced: prod code only tests call is reported with inbound.prod = 0 and inbound.test > 0 (test-only), and a test method JUnit runs is not reported."
+command = "unreferenced"
+test_only = ["demo.billing.Invoice.debugDump"]
+not_reported = ["demo.billing.Invoice.total", "demo.billing.InvoiceTest", "demo.billing.InvoiceTest.dumps"]

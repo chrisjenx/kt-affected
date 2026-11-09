@@ -1,0 +1,4 @@
+why = "unreferenced: a DI-bound implementation (@ContributesBinding) is reached through the interface it binds, and a @Provides function is an entry point: neither is reported; an implementation nothing binds or builds is."
+command = "unreferenced"
+reported = ["demo.orders.LeftoverOrderRepo"]
+not_reported = ["demo.orders.SqlOrderRepo", "demo.orders.SqlOrderRepo.find", "demo.orders.ClockModule.clock", "demo.orders.OrderRepo.find"]

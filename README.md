@@ -50,7 +50,7 @@ In GitHub Actions:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: chrisjenx/kt-affected@v0.5.1
+- uses: chrisjenx/kt-affected@v0.6.0
   id: affected
 - if: steps.affected.outputs.gradle-args != ''
   run: ./gradlew ${{ steps.affected.outputs.gradle-args }}
@@ -68,7 +68,11 @@ kt-affected discover --json                # what static discovery sees: project
 kt-affected discover --gradle-export       # measure static discovery against Gradle (runs ./gradlew)
 kt-affected graph                          # build or update build/kt-affected/graph.bin
 kt-affected verify                         # incremental graph == cold rebuild?
+kt-affected unreferenced [--base REF] [--max-inbound N] [--json]   # declarations nothing references (--base: the ones a change orphaned or added)
+kt-affected test-reach [--base REF] [--kover FILE] [--json]   # tests that reach no prod code; prod code no test reaches
 ```
+
+`unreferenced` and `test-reach` read the same graph; see [analysis](docs/analysis.md).
 
 `--base` defaults to the merge-base with `origin/HEAD`. Without `--head`, the plan covers the work
 tree, uncommitted changes included.
@@ -79,7 +83,7 @@ The same selector is a Rust library, for tools that want the plan without spawni
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.5.1", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.6.0", default-features = false }
 ```
 
 ```rust
@@ -170,6 +174,7 @@ for like on one runner.
 
 - [How it works](docs/how-it-works.md): discovery, the graph, incremental updates, selection, the cosmetic classifier
 - [Configuration](docs/configuration.md): `kt-affected.toml`
+- [Analysis](docs/analysis.md): `unreferenced` and `test-reach`, and their JSON schema
 - [CI and pre-push](docs/ci.md)
 - [Library](docs/library.md): the Rust API
 - [Accuracy](docs/accuracy.md): how it was validated, and what is not yet measured

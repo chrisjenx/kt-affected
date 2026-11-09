@@ -1,0 +1,4 @@
+why = "unreferenced: a top-level function and a class no code references are reported; one called from another module, an object read by a member access, and `main` (an entry name) are not."
+command = "unreferenced"
+reported = ["demo.core.legacySlug", "demo.core.Unused"]
+not_reported = ["demo.core.slug", "demo.core.Catalog", "demo.core.Catalog.NAME", "demo.app.main", "demo.app.bookPath"]

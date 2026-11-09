@@ -1,0 +1,5 @@
+why = "An edit to a plugin build's own main code runs the tests in that build that reach it through the graph, besides the root build's build-logic smoke class per task."
+must = ["demo.plugins.BuildVersionTest@:plugins:test"]
+never = ["demo.plugins.JvmLibraryPluginTest"]
+smoke_tasks = [":core:test"]
+reasons = ["gradle/plugins/src/main/kotlin/demo/plugins/BuildVersion.kt: build logic"]

@@ -1784,7 +1784,56 @@
     "sqldelight-idea-plugin/build.gradle",
     "sqlite-migrations/build.gradle",
     "sqlite-migrations/environment/build.gradle",
-    "test-util/build.gradle"
+    "test-util/build.gradle",
+    "buildLogic/settings.gradle"
   ],
-  "warnings": []
+  "warnings": [],
+  "included": [
+    {
+      "dir": "buildLogic",
+      "name": "buildLogic",
+      "projects": [
+        {
+          "path": ":buildLogic",
+          "dir": "buildLogic",
+          "build_file": "buildLogic/build.gradle",
+          "deps": [],
+          "source_sets": {},
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        },
+        {
+          "path": ":buildLogic:multiplatform-convention",
+          "dir": "buildLogic/multiplatform-convention",
+          "build_file": "buildLogic/multiplatform-convention/build.gradle",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        },
+        {
+          "path": ":buildLogic:toolchain-convention",
+          "dir": "buildLogic/toolchain-convention",
+          "build_file": "buildLogic/toolchain-convention/build.gradle",
+          "deps": [],
+          "source_sets": {
+            "main": {
+              "test": false,
+              "depends_on": []
+            }
+          },
+          "targets": [],
+          "test_tasks": {},
+          "implicit": false
+        }
+      ]
+    }
+  ]
 }

@@ -1,0 +1,5 @@
+why = "unreferenced fails open on a file that does not parse: what it could reference (its own module and :core, which it depends on) counts as referenced and the file is listed; a module it cannot see is still reported."
+command = "unreferenced"
+unparsed = ["app/src/main/kotlin/demo/app/Broken.kt"]
+reported = ["demo.other.stray"]
+not_reported = ["demo.core.Helper", "demo.core.Helper.assist"]

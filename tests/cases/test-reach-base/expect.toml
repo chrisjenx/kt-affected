@@ -1,0 +1,5 @@
+why = "test-reach --base limits the report to declarations the change touches: new prod code no test reaches is reported, older unreached code elsewhere is not."
+command = "test-reach"
+args = ["--base", "HEAD~1"]
+reported = ["demo.library.Renewals", "demo.library.Renewals.renew"]
+not_reported = ["demo.library.Reports.yearly", "demo.library.Loans.overdueFine"]

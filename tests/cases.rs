@@ -42,6 +42,112 @@ struct Expect {
     config: Option<String>,
     /// The tool does not handle this yet: a failure is reported, not fatal; a pass is stale.
     known_gap: Option<String>,
+    /// `unreferenced` or `test-reach` instead of `select`; run on the head commit with `args`
+    /// (`["--base", "HEAD~1"]` to limit it to the change) and the keys below checked.
+    command: Option<String>,
+    #[serde(default)]
+    args: Vec<String>,
+    /// Fully qualified declarations that must be reported (`unreferenced`: unreferenced;
+    /// `test-reach`: no test reaches them).
+    #[serde(default)]
+    reported: Vec<String>,
+    #[serde(default)]
+    not_reported: Vec<String>,
+    /// `unreferenced`: reported with no prod referrer but some test one.
+    #[serde(default)]
+    test_only: Vec<String>,
+    /// `unreferenced --base`: reported as orphaned / as added by the change.
+    #[serde(default)]
+    orphaned: Vec<String>,
+    #[serde(default)]
+    added: Vec<String>,
+    /// `unreferenced`: files listed as not parsing.
+    #[serde(default)]
+    unparsed: Vec<String>,
+    /// `test-reach`: `pkg.Class` (the whole class) or `pkg.Class.method` reaching nothing.
+    #[serde(default)]
+    tests_nothing: Vec<String>,
+    /// `test-reach`: classes or methods that must not be listed as reaching nothing.
+    #[serde(default)]
+    tests_reach: Vec<String>,
+}
+
+/// The failures of an `unreferenced` or `test-reach` case's JSON against its expectations.
+fn check_analysis(e: &Expect, out: &serde_json::Value) -> Vec<String> {
+    let mut wrong = Vec::new();
+    let decls = out
+        .get("declarations")
+        .or_else(|| out.get("unreached"))
+        .and_then(|d| d.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let find = |fq: &str| decls.iter().find(|d| d["fqName"] == fq);
+    for fq in &e.reported {
+        if find(fq).is_none() {
+            wrong.push(format!("not reported: {fq}"));
+        }
+    }
+    for fq in &e.not_reported {
+        if find(fq).is_some() {
+            wrong.push(format!("wrongly reported: {fq}"));
+        }
+    }
+    for fq in &e.test_only {
+        match find(fq) {
+            Some(d) if d["inbound"]["prod"] == 0 && d["inbound"]["test"].as_u64() > Some(0) => {}
+            Some(d) => wrong.push(format!("{fq} reported, but not as test-only: {d}")),
+            None => wrong.push(format!("not reported as test-only: {fq}")),
+        }
+    }
+    for (want, list) in [("orphaned", &e.orphaned), ("added", &e.added)] {
+        for fq in list {
+            match find(fq) {
+                Some(d) if d["change"] == want => {}
+                Some(d) => wrong.push(format!("{fq} reported, but not as {want}: {d}")),
+                None => wrong.push(format!("not reported as {want}: {fq}")),
+            }
+        }
+    }
+    let unparsed: Vec<&str> = out["unparsed"]
+        .as_array()
+        .map(|a| a.iter().filter_map(|s| s.as_str()).collect())
+        .unwrap_or_default();
+    for f in &e.unparsed {
+        if !unparsed.contains(&f.as_str()) {
+            wrong.push(format!("not listed as unparsed: {f}"));
+        }
+    }
+    let units: Vec<String> = out["testsReachingNothing"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .map(|u| match u["method"].as_str() {
+                    Some(m) => format!("{}.{m}", u["class"].as_str().unwrap_or("")),
+                    None => u["class"].as_str().unwrap_or("").to_string(),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    for t in &e.tests_nothing {
+        if !units.contains(t) {
+            wrong.push(format!("not listed as reaching nothing: {t}"));
+        }
+    }
+    for t in &e.tests_reach {
+        if units
+            .iter()
+            .any(|u| u == t || u.starts_with(&format!("{t}.")))
+        {
+            wrong.push(format!("wrongly listed as reaching nothing: {t}"));
+        }
+    }
+    if !wrong.is_empty() {
+        wrong.push(format!(
+            "    output:\n{}",
+            serde_json::to_string_pretty(out).unwrap_or_default()
+        ));
+    }
+    wrong
 }
 
 #[derive(Deserialize)]
@@ -218,13 +324,23 @@ fn run_case(dir: &Path, scratch: &Path) -> Result<Vec<String>, String> {
     git(&root, &["add", "-A"])?;
     git(&root, &["commit", "-qm", "head", "--allow-empty"])?;
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_kt-affected"));
-    cmd.args([
-        "select", "--base", "HEAD~1", "--head", "HEAD", "--format", "json",
-    ])
-    .arg("--root")
-    .arg(&root)
-    .arg("--cache-dir")
-    .arg(scratch.join("cache"));
+    match &e.command {
+        Some(c) => {
+            cmd.arg(c).args(&e.args).arg("--json");
+            if e.args.iter().any(|a| a == "--base") {
+                cmd.args(["--head", "HEAD"]);
+            }
+        }
+        None => {
+            cmd.args([
+                "select", "--base", "HEAD~1", "--head", "HEAD", "--format", "json",
+            ]);
+        }
+    }
+    cmd.arg("--root")
+        .arg(&root)
+        .arg("--cache-dir")
+        .arg(scratch.join("cache"));
     if let Some(c) = &e.config {
         let f = scratch.join("kt-affected.toml");
         std::fs::write(&f, c).map_err(|e| e.to_string())?;
@@ -239,14 +355,27 @@ fn run_case(dir: &Path, scratch: &Path) -> Result<Vec<String>, String> {
             String::from_utf8_lossy(&out.stderr)
         ));
     }
-    let plan: Plan = serde_json::from_str(&stdout).map_err(|e| format!("{e}: {stdout}"))?;
-    let mut wrong = check(&e, &plan);
-    if std::env::var_os("KT_CASES_SHOW").is_some() {
-        eprintln!("{}:\n{}", dir.display(), describe(&plan));
-    }
-    if !wrong.is_empty() {
-        wrong.push(describe(&plan));
-    }
+    let wrong = if e.command.is_some() {
+        let v: serde_json::Value =
+            serde_json::from_str(&stdout).map_err(|e| format!("{e}: {stdout}"))?;
+        if v["schema"] != 1 {
+            return Err(format!("no `\"schema\": 1` in {stdout}"));
+        }
+        if std::env::var_os("KT_CASES_SHOW").is_some() {
+            eprintln!("{}:\n{stdout}", dir.display());
+        }
+        check_analysis(&e, &v)
+    } else {
+        let plan: Plan = serde_json::from_str(&stdout).map_err(|e| format!("{e}: {stdout}"))?;
+        let mut wrong = check(&e, &plan);
+        if std::env::var_os("KT_CASES_SHOW").is_some() {
+            eprintln!("{}:\n{}", dir.display(), describe(&plan));
+        }
+        if !wrong.is_empty() {
+            wrong.push(describe(&plan));
+        }
+        wrong
+    };
     let _ = std::fs::remove_dir_all(scratch); // best effort: Windows may still hold a handle
     Ok(match (e.known_gap, wrong.is_empty()) {
         (Some(gap), true) => vec![format!(

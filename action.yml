@@ -6,7 +6,7 @@ branding:
 
 inputs:
   version:
-    description: Release tag to install (e.g. v0.5.1), or "latest".
+    description: Release tag to install (e.g. v0.6.0), or "latest".
     default: latest
   base:
     description: Git ref to compare against. Default is the pull request's base commit, else the merge-base with origin's default branch.
