@@ -14,7 +14,7 @@
 
 use crate::cache::Packed;
 use crate::config::Config;
-use crate::discover::{Build, is_test_source_set};
+use crate::discover::{Build, glob, is_test_source_set};
 use crate::git::Repo;
 use crate::parse::{
     FLAG_ANY_SEMANTICS, FLAG_CTOR_PROP, FLAG_INITIALIZED, FLAG_OVERRIDE, FLAG_PRIVATE,
@@ -32,53 +32,6 @@ use std::path::Path;
 pub const SCHEMA: u32 = 1;
 
 const NONE: u32 = u32::MAX;
-
-/// Names Kotlin calls without their being written (`a + b`, `x[i]`, `by lazy`, destructuring,
-/// string templates, `==`).
-const IMPLICIT_NAMES: &[&str] = &[
-    "getValue",
-    "setValue",
-    "provideDelegate",
-    "invoke",
-    "plus",
-    "minus",
-    "times",
-    "div",
-    "rem",
-    "mod",
-    "rangeTo",
-    "rangeUntil",
-    "contains",
-    "get",
-    "set",
-    "iterator",
-    "next",
-    "hasNext",
-    "compareTo",
-    "equals",
-    "inc",
-    "dec",
-    "unaryMinus",
-    "unaryPlus",
-    "not",
-    "plusAssign",
-    "minusAssign",
-    "timesAssign",
-    "divAssign",
-    "remAssign",
-    "component1",
-    "component2",
-    "component3",
-    "component4",
-    "component5",
-    "component6",
-    "component7",
-    "component8",
-    "component9",
-    "component10",
-    "toString",
-    "hashCode",
-];
 
 /// Words a referrer of an enum writes when it uses every entry without naming one.
 const ENUM_WIDE: &[&str] = &[
@@ -235,7 +188,8 @@ impl<'a> Code<'a> {
     ) -> Result<Code<'a>, String> {
         let v = View::new(p);
         let (mods, _) = crate::select::modules_of(root, build, cfg);
-        let tmods = crate::select::with_included(&mods, build);
+        let with_inc = crate::select::with_included(&mods, build);
+        let tmods = with_inc.as_ref().unwrap_or(&mods);
         let ids: Vec<String> = mods.list.iter().map(|m| m.id.clone()).collect();
         let index: FxHashMap<&str, u32> = ids
             .iter()
@@ -254,7 +208,7 @@ impl<'a> Code<'a> {
         let (mut source, mut compiled, mut module) = (Vec::new(), Vec::new(), Vec::new());
         for f in 0..p.n_files() {
             let path = p.file_path(f);
-            let (s, c) = source_of(&tmods, path);
+            let (s, c) = source_of(tmods, path);
             source.push(s);
             compiled.push(c);
             module.push(
@@ -360,24 +314,13 @@ impl<'a> Code<'a> {
         false
     }
 
-    fn label(&self, n: u32) -> String {
-        let v = &self.v;
-        let mut parts = Vec::new();
-        let mut m = n as i32;
-        while m >= 0 {
-            parts.push(v.p.str(v.name[m as usize]));
-            m = v.parent[m as usize];
-        }
-        parts.reverse();
-        parts.join(".")
-    }
-
     fn fq(&self, n: u32) -> String {
         let pkg = self.v.p.file_package(self.v.file[n as usize] as usize);
+        let label = crate::select::label_of(&self.v, n);
         if pkg.is_empty() {
-            self.label(n)
+            label
         } else {
-            format!("{pkg}.{}", self.label(n))
+            format!("{pkg}.{label}")
         }
     }
 
@@ -466,10 +409,17 @@ impl<'a> Code<'a> {
             .collect()
     }
 
-    fn record(&self, n: u32, inbound: [u32; 3], named: [bool; 3]) -> Declaration {
+    /// `head`: [`Code::header`] of `n`; `referrers`: list its prod referrers.
+    fn record(
+        &self,
+        n: u32,
+        head: &str,
+        inbound: [u32; 3],
+        named: [bool; 3],
+        referrers: bool,
+    ) -> Declaration {
         let v = &self.v;
         let i = n as usize;
-        let head = self.header(n);
         let words: BTreeSet<&str> = head
             .split(|c: char| !(c.is_alphanumeric() || c == '_'))
             .filter(|w| !w.is_empty())
@@ -494,7 +444,7 @@ impl<'a> Code<'a> {
             member: v.parent[i] >= 0,
             operator: words.contains("operator")
                 || (v.kind[i] == KIND_FUN
-                    && IMPLICIT_NAMES.contains(&v.p.str(v.name[i]))
+                    && v.is_implicit(v.name[i])
                     && words.contains("override")),
             inbound: Inbound {
                 prod: inbound[0],
@@ -507,18 +457,33 @@ impl<'a> Code<'a> {
                 .map(|s| s.name().to_string())
                 .collect(),
             change: None,
-            referrers: self.prod_referrers(n),
+            referrers: if referrers {
+                self.prod_referrers(n)
+            } else {
+                Vec::new()
+            },
         }
     }
 }
 
-/// Byte offset of `word` as a whole identifier in `text`.
-fn word_at(text: &str, word: &str) -> Option<usize> {
+/// Byte offsets of `word` as a whole identifier in `text` (`is_w`: an identifier byte).
+fn word_hits<'t>(
+    text: &'t str,
+    word: &'t str,
+    is_w: fn(u8) -> bool,
+) -> impl Iterator<Item = usize> + 't {
     let b = text.as_bytes();
-    let is_w = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'`';
-    text.match_indices(word).map(|(i, _)| i).find(|&i| {
+    text.match_indices(word).map(|(i, _)| i).filter(move |&i| {
         (i == 0 || !is_w(b[i - 1])) && (i + word.len() >= b.len() || !is_w(b[i + word.len()]))
     })
+}
+
+/// Byte offset of `word` as a whole identifier in `text`, a backticked name included.
+fn word_at(text: &str, word: &str) -> Option<usize> {
+    word_hits(text, word, |c| {
+        c.is_ascii_alphanumeric() || c == b'_' || c == b'`'
+    })
+    .next()
 }
 
 /// `text` with `@Ann`, `@a.b.Ann(...)` and `@get:Ann` removed.
@@ -555,31 +520,6 @@ fn strip_annotations(text: &str) -> String {
         i += 1;
     }
     out
-}
-
-/// A `*` glob over the whole text.
-fn glob(pat: &str, text: &str) -> bool {
-    let parts: Vec<&str> = pat.split('*').collect();
-    if parts.len() == 1 {
-        return pat == text;
-    }
-    let mut rest = text;
-    for (k, part) in parts.iter().enumerate() {
-        if k == 0 {
-            match rest.strip_prefix(part) {
-                Some(r) => rest = r,
-                None => return false,
-            }
-        } else if k == parts.len() - 1 {
-            return rest.ends_with(part);
-        } else {
-            match rest.find(part) {
-                Some(at) => rest = &rest[at + part.len()..],
-                None => return false,
-            }
-        }
-    }
-    true
 }
 
 /// Facts both commands derive from the graph once.
@@ -673,33 +613,29 @@ pub struct Inputs<'a> {
     pub cfg: &'a Config,
     pub dir: &'a Path,
     pub repo: Option<&'a Repo>,
-    /// Report prod declarations with at most this many prod referrers (0: unreferenced).
-    pub max_inbound: u32,
 }
 
 // ------------------------------------------------------------------ unreferenced
 
-pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
+/// `max_inbound`: also report prod declarations with at most this many prod referrers.
+pub fn unreferenced(inp: &Inputs, max_inbound: u32) -> Result<Unreferenced, String> {
     let c = Code::new(inp.root, inp.build, inp.cfg, inp.packed, inp.dir)?;
     let v = &c.v;
     let cfg = &inp.cfg.unreferenced;
     let facts = facts(&c, inp.cfg);
-    let ids = |names: &[String]| -> FxHashSet<u32> {
-        names.iter().filter_map(|a| v.string_id(a)).collect()
+    let ids = |names: &mut dyn Iterator<Item = &str>| -> FxHashSet<u32> {
+        names.filter_map(|a| v.string_id(a)).collect()
     };
-    let entry_ann = ids(&cfg.entry_annotations);
-    let entry_names = ids(&cfg.entry_names);
+    let entry_ann = ids(&mut cfg.entry_annotations.iter().map(String::as_str));
+    let entry_names = ids(&mut cfg.entry_names.iter().map(String::as_str));
     let entry_supers: FxHashSet<&str> = cfg.entry_supertypes.iter().map(String::as_str).collect();
-    let enum_wide = ids(&ENUM_WIDE.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+    let enum_wide = ids(&mut ENUM_WIDE.iter().copied());
     let unparsed: Vec<u32> = (0..v.p.n_files() as u32)
         .filter(|&f| v.p.file_error(f as usize))
         .collect();
 
     let (by_config, by_manifest) = named_by_config(inp.root, inp.build);
-    let test_ann = ids(&TEST_ANNOTATIONS
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>());
+    let test_ann = test_annotation_ids(v);
     // Types holding tests: a subclass runs them.
     let mut test_bases: FxHashSet<u32> = v.test_class.keys().copied().collect();
     for n in 0..v.n as u32 {
@@ -728,6 +664,8 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
     };
     let entry = |n: u32| -> bool {
         let i = n as usize;
+        let fq_cell = std::cell::OnceCell::new();
+        let fq = || fq_cell.get_or_init(|| c.fq(n)).as_str();
         if v.dflags[i] & (FLAG_OVERRIDE | FLAG_TEST_ROOT) != 0
             || facts.overriders.contains_key(&n)
             || entry_names.contains(&v.name[i])
@@ -737,11 +675,10 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
         }
         if !cfg.ignored_names.is_empty() {
             let name = v.p.str(v.name[i]);
-            let fq = c.fq(n);
             if cfg
                 .ignored_names
                 .iter()
-                .any(|g| glob(g, name) || glob(g, &fq))
+                .any(|g| glob(g, name).0 || glob(g, fq()).0)
             {
                 return true;
             }
@@ -752,20 +689,22 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
         // Named by a build script or framework config (a member through `a.b.T.member`, a type
         // through any name under it).
         if !by_config.is_empty() {
-            let fq = c.fq(n);
-            if by_config.contains(&fq)
-                || (is_type_kind(v.kind[i])
-                    && by_config
-                        .range(format!("{fq}.")..)
-                        .next()
-                        .is_some_and(|s| s.starts_with(&format!("{fq}."))))
-            {
+            if by_config.contains(fq()) {
                 return true;
+            }
+            if is_type_kind(v.kind[i]) {
+                let under = format!("{}.", fq());
+                if by_config
+                    .range(under.clone()..)
+                    .next()
+                    .is_some_and(|s| s.starts_with(&under))
+                {
+                    return true;
+                }
             }
         }
         if is_type_kind(v.kind[i]) {
-            let fq = c.fq(n);
-            if by_manifest.iter().any(|r| fq.ends_with(r.as_str())) {
+            if by_manifest.iter().any(|r| fq().ends_with(r.as_str())) {
                 return true;
             }
             // A test class whose tests it inherits: the runner instantiates it.
@@ -816,8 +755,8 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
             }
         }
         let open = match c.src(n) {
-            Source::Prod => k[0] <= inp.max_inbound,
-            _ => k.iter().sum::<u32>() <= inp.max_inbound,
+            Source::Prod => k[0] <= max_inbound,
+            _ => k.iter().sum::<u32>() <= max_inbound,
         };
         if open {
             counts.insert(n, k);
@@ -853,20 +792,11 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
         let i = n as usize;
         let private = v.dflags[i] & FLAG_PRIVATE != 0;
         let (f, w) = (v.file[i], v.name[i]);
-        let mut seen = [false; 3];
-        for &d in users.get(&w).into_iter().flatten() {
+        // `d` cannot be a use of `n`: inside it, already an edge, or unable to see it.
+        let skip = |d: u32| {
             let fd = v.file[d as usize];
-            if c.within(d, n)
-                || v.refby(n).contains(&d)
-                || (private && fd != f)
-                || !c.sees_file(fd, f)
-            {
-                continue;
-            }
-            seen[c.src(d).idx()] = true;
-        }
-        // A declaration's refs leave out its own name: `fun save() = store.save()` writes `save`
-        // without a ref. A same-named declaration whose text writes the name again may call it.
+            c.within(d, n) || v.refby(n).contains(&d) || (private && fd != f) || !c.sees_file(fd, f)
+        };
         let prod_only = c.src(n) == Source::Prod;
         let done = |s: &[bool; 3]| {
             if prod_only {
@@ -875,18 +805,24 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
                 s.iter().any(|&b| b)
             }
         };
+        let mut seen = [false; 3];
+        for &d in users.get(&w).into_iter().flatten() {
+            if !skip(d) {
+                seen[c.src(d).idx()] = true;
+                if done(&seen) {
+                    break;
+                }
+            }
+        }
+        // A declaration's refs leave out its own name: `fun save() = store.save()` writes `save`
+        // without a ref. A same-named declaration whose text writes the name again may call it.
         if !done(&seen) {
             let name = v.p.str(w);
             for &d in by_name.get(&w).into_iter().flatten() {
-                let fd = v.file[d as usize];
-                if d == n
-                    || c.within(d, n)
-                    || v.refby(n).contains(&d)
-                    || (private && fd != f)
-                    || !c.sees_file(fd, f)
-                {
+                if d == n || skip(d) {
                     continue;
                 }
+                let fd = v.file[d as usize];
                 let Some(lines) = c.lines(fd) else {
                     seen[c.src(d).idx()] = true; // unreadable: assume it calls it
                     continue;
@@ -912,6 +848,7 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
 
     // Pass 3: enum-wide use, files that do not parse, `actual`, overload groups.
     let mut enum_used: FxHashMap<u32, bool> = FxHashMap::default();
+    let mut heads: FxHashMap<u32, String> = FxHashMap::default();
     let errored_sees =
         |n: u32| -> bool { unparsed.iter().any(|&f| c.sees_file(f, v.file[n as usize])) };
     cands.retain(|&n| {
@@ -929,7 +866,7 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
                 return false;
             }
         }
-        if !unparsed.is_empty() && errored_sees(n) {
+        if errored_sees(n) {
             return false;
         }
         if c.named_in_string(n) {
@@ -938,9 +875,13 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
         let head = c.header(n);
         // A companion is what the class name means as a value (`ctx[Key]`, `Base(Key)`): its
         // members are reported, never it.
-        !(word_at(&head, "actual").is_some()
+        let entry = word_at(&head, "actual").is_some()
             || word_at(&head, "external").is_some()
-            || (v.kind[n as usize] == KIND_OBJECT && word_at(&head, "companion").is_some()))
+            || (v.kind[n as usize] == KIND_OBJECT && word_at(&head, "companion").is_some());
+        if !entry {
+            heads.insert(n, head);
+        }
+        !entry
     });
     let open: FxHashSet<u32> = cands.iter().copied().collect();
     let group = |n: u32| -> (i64, u32) {
@@ -971,22 +912,23 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
             .all(|m| open.contains(m) || !reportable(&c, *m))
     });
 
-    let mut out: Vec<Declaration> = cands
-        .iter()
-        .map(|&n| c.record(n, counts[&n], named.get(&n).copied().unwrap_or_default()))
-        .collect();
-    if let Some(repo) = inp.repo {
-        let keep = since_base(&c, repo, &cands)?;
-        out = cands
-            .iter()
-            .zip(out)
-            .filter_map(|(n, mut d)| {
-                keep.get(n).map(|ch| {
-                    d.change = Some(ch.to_string());
-                    d
-                })
-            })
-            .collect();
+    let keep = match inp.repo {
+        Some(repo) => Some(since_base(&c, repo, &cands)?),
+        None => None,
+    };
+    let mut out: Vec<Declaration> = Vec::new();
+    for &n in &cands {
+        let change = match &keep {
+            Some(k) => match k.get(&n) {
+                Some(ch) => Some(ch.to_string()),
+                None => continue,
+            },
+            None => None,
+        };
+        let named = named.get(&n).copied().unwrap_or_default();
+        let mut d = c.record(n, &heads[&n], counts[&n], named, max_inbound > 0);
+        d.change = change;
+        out.push(d);
     }
     out.sort_by(|a, b| (&a.file, a.start_line).cmp(&(&b.file, b.start_line)));
     Ok(Unreferenced {
@@ -1001,13 +943,7 @@ pub fn unreferenced(inp: &Inputs) -> Result<Unreferenced, String> {
 }
 
 fn count_words(line: &str, word: &str) -> usize {
-    let b = line.as_bytes();
-    let is_w = |c: u8| c.is_ascii_alphanumeric() || c == b'_';
-    line.match_indices(word)
-        .filter(|&(i, _)| {
-            (i == 0 || !is_w(b[i - 1])) && (i + word.len() >= b.len() || !is_w(b[i + word.len()]))
-        })
-        .count()
+    word_hits(line, word, |c| c.is_ascii_alphanumeric() || c == b'_').count()
 }
 
 /// Of the unreferenced `cands`, those the change from `repo.base` made so ("orphaned": code at
@@ -1156,7 +1092,6 @@ struct Walker<'a> {
     fwd: crate::graph::Csr,
     /// name -> callables declaring it.
     callables: FxHashMap<u32, Vec<u32>>,
-    implicit: FxHashSet<u32>,
     stamp: Vec<u32>,
     generation: u32,
 }
@@ -1177,16 +1112,11 @@ impl<'a> Walker<'a> {
                 callables.entry(v.name[n as usize]).or_default().push(n);
             }
         }
-        let implicit = IMPLICIT_NAMES
-            .iter()
-            .filter_map(|s| v.string_id(s))
-            .collect();
         Walker {
             c,
             facts,
             fwd,
             callables,
-            implicit,
             stamp: vec![0; v.n],
             generation: 0,
         }
@@ -1206,18 +1136,15 @@ impl<'a> Walker<'a> {
         let g = self.generation;
         let mut stack: Vec<u32> = Vec::new();
         let mut names: FxHashSet<(u32, u32)> = FxHashSet::default();
-        for &s in start {
-            if self.stamp[s as usize] != g {
-                self.stamp[s as usize] = g;
-                stack.push(s);
-            }
-        }
         let push = |x: u32, stamp: &mut Vec<u32>, stack: &mut Vec<u32>| {
             if stamp[x as usize] != g {
                 stamp[x as usize] = g;
                 stack.push(x);
             }
         };
+        for &s in start {
+            push(s, &mut self.stamp, &mut stack);
+        }
         while let Some(x) = stack.pop() {
             seen(x);
             if stop(x) {
@@ -1264,7 +1191,7 @@ impl<'a> Walker<'a> {
                         && (v.rides[ki]
                             || matches!(v.kind[ki], KIND_INIT | KIND_CONSTRUCTOR)
                             || v.dflags[ki] & FLAG_INITIALIZED != 0
-                            || self.implicit.contains(&v.name[ki]))
+                            || v.is_implicit(v.name[ki]))
                     {
                         push(k, &mut self.stamp, &mut stack);
                     }
@@ -1275,14 +1202,18 @@ impl<'a> Walker<'a> {
     }
 }
 
+fn test_annotation_ids(v: &View) -> FxHashSet<u32> {
+    TEST_ANNOTATIONS
+        .iter()
+        .filter_map(|s| v.string_id(s))
+        .collect()
+}
+
 /// Test units: per test class, its test methods (annotated), or the class itself when it has none
 /// (specs whose tests are lambdas).
 fn test_units(c: &Code) -> Vec<(u32, Vec<u32>)> {
     let v = &c.v;
-    let ann: FxHashSet<u32> = TEST_ANNOTATIONS
-        .iter()
-        .filter_map(|s| v.string_id(s))
-        .collect();
+    let ann = test_annotation_ids(v);
     let mut roots: Vec<u32> = v
         .test_class
         .keys()
@@ -1367,7 +1298,7 @@ pub fn test_reach(inp: &Inputs, kover: Option<&Path>) -> Result<TestReach, Strin
             .filter(|&n| c.within(n, r))
             .collect();
         all_starts.extend(whole.iter().copied());
-        let class_scoped = in_scope(r) || whole.iter().any(|&n| in_scope(n));
+        let class_scoped = whole.iter().any(|&n| in_scope(n));
         if !class_scoped {
             continue;
         }
@@ -1395,7 +1326,7 @@ pub fn test_reach(inp: &Inputs, kover: Option<&Path>) -> Result<TestReach, Strin
         if !reached[n as usize] {
             let mut k = [0u32; 3];
             inbound(&c, n, &mut k);
-            unreached.push(c.record(n, k, [false; 3]));
+            unreached.push(c.record(n, &c.header(n), k, [false; 3], true));
         }
     }
     unreached.sort_by(|a, b| (&a.file, a.start_line).cmp(&(&b.file, b.start_line)));
@@ -1485,17 +1416,19 @@ fn parse_kover(xml: &str) -> FxHashMap<(String, String), BTreeMap<u32, [u32; 4]>
     let (mut pkg, mut file) = (String::new(), None::<String>);
     for raw in xml.split('<').skip(1) {
         let tag = raw.split('>').next().unwrap_or("");
-        if let Some(rest) = tag.strip_prefix("package ") {
-            pkg = attr(&format!(" {rest}"), "name")
-                .unwrap_or_default()
-                .replace('/', ".");
-        } else if let Some(rest) = tag.strip_prefix("sourcefile ") {
-            file = attr(&format!(" {rest}"), "name");
+        // `attr` finds ` key="`: the element name before the first attribute supplies the space.
+        if tag.starts_with("package ") {
+            pkg = attr(tag, "name").unwrap_or_default().replace('/', ".");
+        } else if tag.starts_with("sourcefile ") {
+            file = attr(tag, "name");
         } else if tag.starts_with("/sourcefile") {
             file = None;
-        } else if let (Some(rest), Some(f)) = (tag.strip_prefix("line "), &file) {
-            let t = format!(" {rest}");
-            let num = |k: &str| attr(&t, k).and_then(|s| s.parse::<u32>().ok()).unwrap_or(0);
+        } else if let (true, Some(f)) = (tag.starts_with("line "), &file) {
+            let num = |k: &str| {
+                attr(tag, k)
+                    .and_then(|s| s.parse::<u32>().ok())
+                    .unwrap_or(0)
+            };
             let nr = num("nr");
             if nr > 0 {
                 lines
@@ -1531,9 +1464,6 @@ mod tests {
 
     #[test]
     fn globs_and_headers() {
-        assert!(glob("*Fake*", "FakeRepo"));
-        assert!(glob("demo.*.main", "demo.app.main"));
-        assert!(!glob("Fake*", "RepoFake"));
         assert_eq!(
             strip_annotations("@Suppress(\"x\") @get:Rule internal fun"),
             "  internal fun"

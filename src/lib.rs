@@ -387,22 +387,52 @@ fn selection(p: select::Plan) -> (Selection, Option<select::Explain>) {
 }
 
 fn run(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+    in_pool(opts, || plan(root, opts, explain))
+}
+
+/// `f` on `opts.threads` threads when set, else on the global pool.
+fn in_pool<T: Send>(
+    opts: &SelectOptions,
+    f: impl FnOnce() -> Result<T, Error> + Send,
+) -> Result<T, Error> {
     match opts.threads {
         Some(n) => match rayon::ThreadPoolBuilder::new().num_threads(n).build() {
-            Ok(pool) => pool.install(|| plan(root, opts, explain)),
+            Ok(pool) => pool.install(f),
             Err(e) => Err(Error::Graph(format!("thread pool: {e}"))),
         },
-        None => plan(root, opts, explain),
+        None => f(),
     }
 }
 
-fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+/// The build root at or above `root`, and its config (`opts.config` when set).
+fn root_and_config(root: &Path, opts: &SelectOptions) -> Result<(PathBuf, config::Config), Error> {
     let root = find_build_root(root).ok_or_else(|| Error::NoBuildRoot(root.to_path_buf()))?;
     let cfg = match &opts.config {
         Some(f) => config::Config::load_file(f),
         None => config::Config::load(&root),
     }
     .map_err(Error::Config)?;
+    Ok((root, cfg))
+}
+
+/// The cache dir, the discovered build and the graph, updated to the working tree.
+fn open_graph(
+    root: &Path,
+    opts: &SelectOptions,
+) -> Result<(PathBuf, discover::Build, cache::Packed), Error> {
+    let dir = opts
+        .cache_dir
+        .clone()
+        .unwrap_or_else(|| root.join("build/kt-affected"));
+    let build = load_build(root, &dir, opts.static_discovery);
+    let (_, packed) =
+        cache::update_open(root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
+    let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
+    Ok((dir, build, packed))
+}
+
+fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan, Error> {
+    let (root, cfg) = root_and_config(root, opts)?;
     let git_dir = opts.git_dir.clone().unwrap_or_else(|| root.clone());
     let base = match &opts.base {
         Some(b) => b.clone(),
@@ -410,14 +440,7 @@ fn plan(root: &Path, opts: &SelectOptions, explain: bool) -> Result<select::Plan
     };
     let repo =
         git::Repo::new(git_dir, root.clone(), &base, opts.head.clone()).map_err(Error::Git)?;
-    let dir = opts
-        .cache_dir
-        .clone()
-        .unwrap_or_else(|| root.join("build/kt-affected"));
-    let build = load_build(&root, &dir, opts.static_discovery);
-    let (_, packed) =
-        cache::update_open(&root, &build, &dir, false).map_err(|e| Error::Graph(e.to_string()))?;
-    let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
+    let (_, build, packed) = open_graph(&root, opts)?;
     select::select(&select::Inputs {
         repo: &repo,
         build: &build,
@@ -570,7 +593,7 @@ pub fn unreferenced(
     opts: &SelectOptions,
     max_inbound: u32,
 ) -> Result<Unreferenced, Error> {
-    analyse(root, opts, max_inbound, unused::unreferenced)
+    analyse(root, opts, |inp| unused::unreferenced(inp, max_inbound))
 }
 
 /// Tests that reach no prod declaration, and prod declarations no test reaches. With
@@ -581,25 +604,16 @@ pub fn test_reach(
     opts: &SelectOptions,
     kover: Option<&Path>,
 ) -> Result<TestReach, Error> {
-    analyse(root, opts, 0, |inp| unused::test_reach(inp, kover))
+    analyse(root, opts, |inp| unused::test_reach(inp, kover))
 }
 
-fn analyse<T>(
+fn analyse<T: Send>(
     root: &Path,
     opts: &SelectOptions,
-    max_inbound: u32,
-    run: impl Fn(&unused::Inputs) -> Result<T, String> + Send + Sync,
-) -> Result<T, Error>
-where
-    T: Send,
-{
-    let go = || -> Result<T, Error> {
-        let root = find_build_root(root).ok_or_else(|| Error::NoBuildRoot(root.to_path_buf()))?;
-        let cfg = match &opts.config {
-            Some(f) => config::Config::load_file(f),
-            None => config::Config::load(&root),
-        }
-        .map_err(Error::Config)?;
+    run: impl FnOnce(&unused::Inputs) -> Result<T, String> + Send,
+) -> Result<T, Error> {
+    in_pool(opts, || {
+        let (root, cfg) = root_and_config(root, opts)?;
         let repo = match &opts.base {
             Some(b) => {
                 let git_dir = opts.git_dir.clone().unwrap_or_else(|| root.clone());
@@ -610,14 +624,7 @@ where
             }
             None => None,
         };
-        let dir = opts
-            .cache_dir
-            .clone()
-            .unwrap_or_else(|| root.join("build/kt-affected"));
-        let build = load_build(&root, &dir, opts.static_discovery);
-        let (_, packed) = cache::update_open(&root, &build, &dir, false)
-            .map_err(|e| Error::Graph(e.to_string()))?;
-        let packed = packed.ok_or_else(|| Error::Graph("no graph".into()))?;
+        let (dir, build, packed) = open_graph(&root, opts)?;
         run(&unused::Inputs {
             root: &root,
             build: &build,
@@ -625,17 +632,9 @@ where
             cfg: &cfg,
             dir: &dir,
             repo: repo.as_ref(),
-            max_inbound,
         })
         .map_err(Error::CouldNotAnswer)
-    };
-    match opts.threads {
-        Some(n) => match rayon::ThreadPoolBuilder::new().num_threads(n).build() {
-            Ok(pool) => pool.install(go),
-            Err(e) => Err(Error::Graph(format!("thread pool: {e}"))),
-        },
-        None => go(),
-    }
+    })
 }
 
 /// The nearest directory at or above `start` holding a settings file, as Gradle resolves its build.

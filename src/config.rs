@@ -333,26 +333,22 @@ impl SourceScanner {
             }
             _ => {}
         }
-        for (key, re) in [
-            ("changed_path", Some(&self.changed_path)),
-            ("exclude_path", self.exclude_path.as_ref()),
-        ] {
-            if let Some(re) = re {
-                regex::Regex::new(re).map_err(|e| format!("{at}: `{key}`: {e}"))?;
-            }
-        }
+        let _checked = self.matcher().map_err(|e| format!("{at}: {e}"))?;
         Ok(())
     }
 
-    /// Does a change to `path` trigger this scanner? (`changed` and `exclude` are its compiled
-    /// `changed_path` and `exclude_path`.)
-    pub fn triggered_by(
-        &self,
-        changed: &regex::Regex,
-        exclude: Option<&regex::Regex>,
-        path: &str,
-    ) -> bool {
-        changed.is_match(path) && !exclude.is_some_and(|x| x.is_match(path))
+    /// Does a change to a path trigger this scanner? (`changed_path` and not `exclude_path`.)
+    pub fn matcher(&self) -> Result<impl Fn(&str) -> bool + use<>, String> {
+        let compile =
+            |key: &str, re: &str| regex::Regex::new(re).map_err(|e| format!("`{key}`: {e}"));
+        let changed = compile("changed_path", &self.changed_path)?;
+        let exclude = match &self.exclude_path {
+            Some(x) => Some(compile("exclude_path", x)?),
+            None => None,
+        };
+        Ok(move |path: &str| {
+            changed.is_match(path) && !exclude.as_ref().is_some_and(|x| x.is_match(path))
+        })
     }
 
     /// Is the test class `fq`, in package `pkg`, one this scanner runs?
@@ -479,10 +475,9 @@ mod tests {
         .unwrap();
         let sc = &c.source_scanners[0];
         assert!(sc.runs("x", "x.A") && !sc.runs("x", "x.B"));
-        let re = regex::Regex::new(&sc.changed_path).unwrap();
-        let ex = regex::Regex::new(sc.exclude_path.as_ref().unwrap()).unwrap();
-        assert!(sc.triggered_by(&re, Some(&ex), "app/A.kt"));
-        assert!(!sc.triggered_by(&re, Some(&ex), "backend-x/A.kt"));
+        let hit = sc.matcher().unwrap();
+        assert!(hit("app/A.kt"));
+        assert!(!hit("backend-x/A.kt"));
         let pkg = Config::parse("[[source_scanner]]\nchanged_path = 'a'\ntest_package = 'co.g'\n")
             .unwrap();
         assert!(pkg.source_scanners[0].runs("co.g.sub", "co.g.sub.T"));

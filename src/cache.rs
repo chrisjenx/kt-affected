@@ -313,6 +313,20 @@ pub struct DeclRefs {
     pub aliases: Vec<(u32, u32)>,
 }
 
+/// File `i`'s refs record in a mapped `parses.bin` written alongside `p`; None when out of range.
+fn file_refs(map: &[u8], p: &Packed, i: usize) -> Option<FileRefs> {
+    let (off, len) = (
+        p.file_u64(i, F_REC_OFF) as usize,
+        p.file(i)[F_REC_LEN] as usize,
+    );
+    let words: Vec<u32> = map
+        .get(off..off + len * 4)?
+        .chunks_exact(4)
+        .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
+        .collect();
+    Some(decode_refs(&words))
+}
+
 /// Per file, its [`DeclRefs`], read off the `parses.bin` beside `graph.bin` in `dir`. None when
 /// that file is missing or not this graph's.
 pub fn decl_refs(dir: &Path, p: &Packed) -> Option<Vec<DeclRefs>> {
@@ -326,16 +340,7 @@ pub fn decl_refs(dir: &Path, p: &Packed) -> Option<Vec<DeclRefs>> {
     (0..p.n_files())
         .into_par_iter()
         .map(|i| {
-            let (off, len) = (
-                p.file_u64(i, F_REC_OFF) as usize,
-                p.file(i)[F_REC_LEN] as usize,
-            );
-            let bytes = map.get(off..off + len * 4)?;
-            let words: Vec<u32> = bytes
-                .chunks_exact(4)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect();
-            let r = decode_refs(&words);
+            let r = file_refs(&map, p, i)?;
             Some(DeclRefs {
                 aliases: r
                     .imports
@@ -1163,16 +1168,8 @@ fn update_locked(
             _ => unreachable!(),
         };
         let p = old.as_ref().unwrap();
-        let (off, len) = (
-            p.file_u64(o, F_REC_OFF) as usize,
-            p.file(o)[F_REC_LEN] as usize,
-        );
-        let bytes = &parses_old.as_ref().expect("parses.bin missing")[off..off + len * 4];
-        let words: Vec<u32> = bytes
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect();
-        decode_refs(&words)
+        let map = parses_old.as_ref().expect("parses.bin missing");
+        file_refs(map, p, o).expect("parses.bin out of step with graph.bin")
     };
     let prof = std::env::var_os("KT_AFFECTED_PROFILE").is_some();
     if prof {
@@ -1474,15 +1471,7 @@ fn delta(
         None => return bail("parses.bin missing"),
     };
     let old_refs = |o: usize| -> FileRefs {
-        let (off, len) = (
-            p.file_u64(o, F_REC_OFF) as usize,
-            p.file(o)[F_REC_LEN] as usize,
-        );
-        let words: Vec<u32> = parses_old[off..off + len * 4]
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect();
-        decode_refs(&words)
+        file_refs(&parses_old, p, o).expect("parses.bin out of step with graph.bin")
     };
 
     // ---- reparse, and keep only edits that leave every declaration in place

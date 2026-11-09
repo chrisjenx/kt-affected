@@ -97,7 +97,7 @@ impl TestFilter {
 
 /// Matches `text` against a `*` glob: (the whole pattern matches all of it, some prefix of the
 /// pattern matches all of it so a longer text starting with `text` may match).
-fn glob(pat: &str, text: &str) -> (bool, bool) {
+pub(crate) fn glob(pat: &str, text: &str) -> (bool, bool) {
     let p: Vec<char> = pat.chars().collect();
     // Pattern positions reachable after consuming the text so far (a `*` may absorb nothing).
     let close = |set: &mut Vec<bool>| {
@@ -463,6 +463,8 @@ struct Settings {
     includes: Vec<(String, bool)>, // (path, flat)
     project_dirs: BTreeMap<String, String>,
     included_builds: Vec<String>,
+    /// Included build dir -> the name `includeBuild(..) { name = ".." }` gives it.
+    included_names: BTreeMap<String, String>,
     warnings: Vec<String>,
     /// An `include` takes a computed argument: the projects it adds are found on disk.
     dynamic: bool,
@@ -526,6 +528,7 @@ fn parse_settings(text: &str) -> Settings {
         includes: Vec::new(),
         project_dirs: BTreeMap::new(),
         included_builds: Vec::new(),
+        included_names: BTreeMap::new(),
         warnings: Vec::new(),
         dynamic: false,
         literals: toks
@@ -577,7 +580,25 @@ fn parse_settings(text: &str) -> Settings {
                     i + 1
                 };
                 if let Some(Tok::Str(v, _)) = toks.get(j) {
-                    s.included_builds.push(strip_dir_prefix(v));
+                    let dir = strip_dir_prefix(v);
+                    // `includeBuild("dir") { name = "x" }` names the build.
+                    let after = if j == i + 2 {
+                        close_of(&toks, i + 1) + 1
+                    } else {
+                        j + 1
+                    };
+                    if is_p(toks.get(after), '{') {
+                        let end = close_of(&toks, after).min(toks.len());
+                        for k in after + 1..end {
+                            if ident(&toks[k]) == Some("name")
+                                && is_p(toks.get(k + 1), '=')
+                                && let Some(Tok::Str(n, _)) = toks.get(k + 2)
+                            {
+                                s.included_names.insert(dir.clone(), n.clone());
+                            }
+                        }
+                    }
+                    s.included_builds.push(dir);
                 }
                 i = j;
             }
@@ -1678,16 +1699,19 @@ pub fn discover_best(root: &Path) -> Build {
 /// Static discovery of the build at `root` and, one level deep, of each build it includes.
 pub fn discover(root: &Path) -> Build {
     let mut b = discover_one(root);
-    let settings = ["settings.gradle.kts", "settings.gradle"]
-        .iter()
-        .find_map(|f| std::fs::read_to_string(root.join(f)).ok())
+    let given = script_in(root, "", "settings")
+        .and_then(|f| read(root, &f))
+        .map(|t| parse_settings(&t).included_names)
         .unwrap_or_default();
     let mut names: BTreeSet<String> = BTreeSet::new();
     for dir in b.included_builds.clone() {
         if dir.is_empty() || dir == "." || dir.starts_with("..") || !root.join(&dir).is_dir() {
             continue;
         }
-        let name = included_build_name(&settings, &dir);
+        let name = match given.get(&dir) {
+            Some(n) => n.clone(),
+            None => dir.rsplit('/').next().unwrap_or(&dir).to_string(),
+        };
         if !names.insert(name.clone()) || b.projects.iter().any(|p| p.path == format!(":{name}")) {
             b.warnings.push(format!(
                 "included build {dir}: its name `{name}` collides with another build or project; its tests are not selected"
@@ -1740,19 +1764,6 @@ pub fn discover(root: &Path) -> Build {
     b
 }
 
-/// An included build's name: `includeBuild("dir") { name = "x" }`, else the directory's name.
-fn included_build_name(settings: &str, dir: &str) -> String {
-    let re = regex::Regex::new(&format!(
-        r#"includeBuild\s*\(?\s*["'](?:\./)?{}/?["']\s*\)?\s*\{{[^{{}}]*?\bname\s*=\s*["']([^"']+)["']"#,
-        regex::escape(dir)
-    ))
-    .unwrap();
-    match re.captures(settings) {
-        Some(c) => c[1].to_string(),
-        None => dir.rsplit('/').next().unwrap_or(dir).to_string(),
-    }
-}
-
 fn discover_one(root: &Path) -> Build {
     let mut warnings = Vec::new();
     let settings_file = script_in(root, "", "settings");
@@ -1767,6 +1778,7 @@ fn discover_one(root: &Path) -> Build {
             includes: vec![],
             project_dirs: BTreeMap::new(),
             included_builds: vec![],
+            included_names: BTreeMap::new(),
             warnings: vec![],
             dynamic: false,
             literals: BTreeSet::new(),
@@ -2586,6 +2598,19 @@ mod tests {
         let s = "pluginManagement {\n  includeBuild(\"build-logic\")\n  repositories { gradlePluginPortal() }\n}\nincludeBuild(\"./shared-lib\")\n";
         let got: Vec<String> = plugin_management_builds(s).into_iter().collect();
         assert_eq!(vec!["build-logic".to_string()], got);
+    }
+
+    #[test]
+    fn an_include_build_block_may_name_the_build() {
+        let s = parse_settings(
+            "includeBuild(\"$rootDir/tools/gen\") { name = \"codegen\" }\nincludeBuild 'plain'\nincludeBuild('lib') {\n  name = 'shared'\n}\n",
+        );
+        assert_eq!(s.included_builds, vec!["tools/gen", "plain", "lib"]);
+        let want: BTreeMap<String, String> = [("tools/gen", "codegen"), ("lib", "shared")]
+            .into_iter()
+            .map(|(d, n)| (d.to_string(), n.to_string()))
+            .collect();
+        assert_eq!(s.included_names, want);
     }
 
     #[test]
