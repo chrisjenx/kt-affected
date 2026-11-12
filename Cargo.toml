@@ -44,7 +44,7 @@ memmap2 = "0.9"
 bytemuck = "1"
 rustc-hash = "2"
 regex = "1"
-toml = "0.8"
+toml = "1.2"
 
 [dev-dependencies]
 libc = "0.2"
