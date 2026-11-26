@@ -34,16 +34,16 @@ jobs:
           - { target: element-x-android, shard: 4/4 }
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .replay/repos/${{ matrix.target }}
           key: replay-repo-${{ matrix.target }}-${{ github.run_id }}-${{ strategy.job-index }}
           restore-keys: replay-repo-${{ matrix.target }}-
       - run: python3 replay/replay.py run ${{ matrix.target }} --frozen --shard ${{ matrix.shard }} --workers 3 --shard-out shards
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shard-${{ strategy.job-index }}
           path: shards/
@@ -56,15 +56,15 @@ jobs:
         target: [circuit, element-x-android]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: .replay/repos/${{ matrix.target }}
           key: replay-repo-${{ matrix.target }}-
           restore-keys: replay-repo-${{ matrix.target }}-
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: shard-*
           path: shards
@@ -72,7 +72,7 @@ jobs:
       - run: python3 replay/replay.py run ${{ matrix.target }} --frozen --shards-from shards --out-date ci
       - name: Compare with the committed results
         run: python3 replay/replay.py compare ${{ matrix.target }} --out-date ci >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: results-${{ matrix.target }}
