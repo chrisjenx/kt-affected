@@ -6,7 +6,7 @@ instead of spawning the binary and parsing its JSON.
 
 ```toml
 [dependencies]
-kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.6.0", default-features = false }
+kt-affected = { git = "https://github.com/chrisjenx/kt-affected", tag = "v0.7.0", default-features = false }
 ```
 
 `default-features = false` leaves out the `cli` feature, which only builds the binary. The library
@@ -64,7 +64,7 @@ the same camelCase names:
 ```json
 {"base": "…", "changedFiles": ["…"], "reasons": ["…"],
  "groups": [{"module": ":core", "task": "jvmTest", "classes": ["…"], "full": false, "total": 12,
-             "selected": 1, "local": true, "failOpenForks": false, "resultDir": "core/build/test-results/jvmTest"}],
+             "selected": 1, "local": true, "failOpenForks": false, "directOnly": false, "resultDir": "core/build/test-results/jvmTest"}],
  "error": null}
 ```
 
