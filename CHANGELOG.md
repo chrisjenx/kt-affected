@@ -6,6 +6,12 @@ selection results or the plan format.
 
 ## [Unreleased]
 
+## [0.7.0]
+
+- Each group carries `directOnly`: its module is listed in `[modules] direct_only`, so only a change
+  under its own directory selects it. A runner that carries earlier passes forward by selecting the
+  change since them can't rely on that selection to reach such a module, and should re-run it.
+
 ## [0.6.0]
 
 - Included builds' tests are selected. Each `includeBuild` is discovered like the root build, and its

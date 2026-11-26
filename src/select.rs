@@ -42,6 +42,10 @@ pub struct Group {
     pub local: bool,
     /// The module is listed in `[modules] fail_open_forks`: a whole run of it needs parallel forks.
     pub fail_open_forks: bool,
+    /// The module is listed in `[modules] direct_only`: only a change under its own directory
+    /// selects it, so no selection reaches it from a change elsewhere.
+    #[serde(default)]
+    pub direct_only: bool,
     /// `<module dir>/build/test-results/<task>`, relative to the build root, when the module is known.
     pub result_dir: Option<String>,
     /// The included build the task belongs to (its directory, relative to the build root), when
@@ -1534,6 +1538,7 @@ fn group(
         total,
         local: task != UNMAPPED_TASK && cfg.is_local_task(task),
         fail_open_forks: cfg.modules.fail_open_forks.contains(module),
+        direct_only: cfg.modules.direct_only.contains(module),
         result_dir: dirs
             .get(module)
             .map(|(d, _)| format!("{d}/build/test-results/{task}")),
@@ -1888,6 +1893,25 @@ mod tests {
                 .iter()
                 .any(|r| r == ":lib: test source set with no test task")
         );
+    }
+
+    /// A direct-only module's group says so: a runner carrying passes across changes must not
+    /// trust a later selection to reach it from a change outside the module.
+    #[test]
+    fn a_direct_only_module_group_is_flagged() {
+        let f = repo_fixture("direct-only-flag");
+        f.write("lib/src/main/kotlin/x/RepoImpl.kt", REPO_IMPL_EDITED);
+        let flags = |cfg: &Config| {
+            f.select(cfg)
+                .groups
+                .iter()
+                .map(|g| g.direct_only)
+                .collect::<Vec<_>>()
+        };
+        let mut cfg = Config::default();
+        assert_eq!(flags(&cfg), [false]);
+        cfg.modules.direct_only.insert(":lib".into());
+        assert_eq!(flags(&cfg), [true]);
     }
 
     /// A body edit to one member no longer walks to every caller of its interface's other members.
